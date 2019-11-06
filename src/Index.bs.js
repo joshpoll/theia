@@ -3,9 +3,12 @@
 var List = require("bs-platform/lib/js/list.js");
 var React = require("react");
 var ReactDom = require("react-dom");
+var ReludeParse = require("relude-parse/src/ReludeParse.bs.js");
+var ReludeParse_Parser = require("relude-parse/src/ReludeParse_Parser.bs.js");
 var SML$ReasonReactExamples = require("./Theia/SML/SML.bs.js");
 var Theia$ReasonReactExamples = require("./Theia/Theia.bs.js");
 var SMLExamples$ReasonReactExamples = require("./Theia/SML/SMLExamples.bs.js");
+var HaMLet2SMLAM$ReasonReactExamples = require("./Theia/SML/HaMLet2SMLAM.bs.js");
 var SMLToTheiaIR$ReasonReactExamples = require("./Theia/SML/SMLToTheiaIR.bs.js");
 var ExampleStyles$ReasonReactExamples = require("./ExampleStyles.bs.js");
 
@@ -120,9 +123,16 @@ ReactDom.render(React.createElement(Theia$ReasonReactExamples.make, {
           theiaIRTraces: List.map(trace, tests)
         }), makeContainer("Theia"));
 
+console.log(ReludeParse_Parser.runParser("1", ReludeParse_Parser.anyDigit));
+
+console.log(HaMLet2SMLAM$ReasonReactExamples.output);
+
+var P = 0;
+
 exports.firaCode = firaCode;
 exports.style = style;
 exports.makeContainer = makeContainer;
 exports.tests = tests;
 exports.trace = trace;
+exports.P = P;
 /* firaCode Not a pure module */

@@ -79,3 +79,10 @@ ReactDOMRe.render(
   <Theia theiaIRTraces={List.map(trace, tests)} />,
   makeContainer("Theia"),
 );
+
+module P = ReludeParse.Parser;
+open P.Infix; 
+
+Js.Console.log(P.runParser("1", P.anyDigit));
+
+Js.Console.log(HaMLet2SMLAM.output);
