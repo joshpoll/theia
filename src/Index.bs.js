@@ -1,12 +1,21 @@
 'use strict';
 
+var List = require("bs-platform/lib/js/list.js");
 var React = require("react");
 var ReactDom = require("react-dom");
+var SML$ReasonReactExamples = require("./Theia/SML/SML.bs.js");
+var Theia$ReasonReactExamples = require("./Theia/Theia.bs.js");
+var SMLExamples$ReasonReactExamples = require("./Theia/SML/SMLExamples.bs.js");
+var SMLToTheiaIR$ReasonReactExamples = require("./Theia/SML/SMLToTheiaIR.bs.js");
 var ExampleStyles$ReasonReactExamples = require("./ExampleStyles.bs.js");
-var BlinkingGreeting$ReasonReactExamples = require("./BlinkingGreeting/BlinkingGreeting.bs.js");
-var FetchedDogPictures$ReasonReactExamples = require("./FetchedDogPictures/FetchedDogPictures.bs.js");
-var ReducerFromReactJSDocs$ReasonReactExamples = require("./ReducerFromReactJSDocs/ReducerFromReactJSDocs.bs.js");
-var ReasonUsingJSUsingReason$ReasonReactExamples = require("./ReasonUsingJSUsingReason/ReasonUsingJSUsingReason.bs.js");
+
+var firaCode = document.createElement("link");
+
+firaCode.rel = "stylesheet";
+
+firaCode.href = "https://cdn.jsdelivr.net/gh/tonsky/FiraCode@1.206/distr/fira_code.css";
+
+document.head.appendChild(firaCode);
 
 var style = document.createElement("style");
 
@@ -28,16 +37,92 @@ function makeContainer(text) {
   return content;
 }
 
-ReactDom.render(React.createElement(BlinkingGreeting$ReasonReactExamples.make, {
-          children: "Hello!"
-        }), makeContainer("Blinking Greeting"));
+var tests_000 = /* record */[
+  /* name */"ex0",
+  /* example */SMLExamples$ReasonReactExamples.ex0
+];
 
-ReactDom.render(React.createElement(ReducerFromReactJSDocs$ReasonReactExamples.make, { }), makeContainer("Reducer From ReactJS Docs"));
+var tests_001 = /* :: */[
+  /* record */[
+    /* name */"ex1",
+    /* example */SMLExamples$ReasonReactExamples.ex1
+  ],
+  /* :: */[
+    /* record */[
+      /* name */"ex2",
+      /* example */SMLExamples$ReasonReactExamples.ex2
+    ],
+    /* :: */[
+      /* record */[
+        /* name */"ex3",
+        /* example */SMLExamples$ReasonReactExamples.ex3
+      ],
+      /* :: */[
+        /* record */[
+          /* name */"ex4",
+          /* example */SMLExamples$ReasonReactExamples.ex4
+        ],
+        /* :: */[
+          /* record */[
+            /* name */"ex5",
+            /* example */SMLExamples$ReasonReactExamples.ex5
+          ],
+          /* :: */[
+            /* record */[
+              /* name */"ex6",
+              /* example */SMLExamples$ReasonReactExamples.ex6
+            ],
+            /* :: */[
+              /* record */[
+                /* name */"ex7",
+                /* example */SMLExamples$ReasonReactExamples.ex7
+              ],
+              /* :: */[
+                /* record */[
+                  /* name */"ex8",
+                  /* example */SMLExamples$ReasonReactExamples.ex8
+                ],
+                /* :: */[
+                  /* record */[
+                    /* name */"ex9",
+                    /* example */SMLExamples$ReasonReactExamples.ex9
+                  ],
+                  /* :: */[
+                    /* record */[
+                      /* name */"ex10",
+                      /* example */SMLExamples$ReasonReactExamples.ex10
+                    ],
+                    /* [] */0
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+];
 
-ReactDom.render(React.createElement(FetchedDogPictures$ReasonReactExamples.make, { }), makeContainer("Fetched Dog Pictures"));
+var tests = /* :: */[
+  tests_000,
+  tests_001
+];
 
-ReactDom.render(React.createElement(ReasonUsingJSUsingReason$ReasonReactExamples.make, { }), makeContainer("Reason Using JS Using Reason"));
+function trace(param) {
+  return /* record */[
+          /* name */param[/* name */0],
+          /* states */List.map(SMLToTheiaIR$ReasonReactExamples.smlToTheiaIR, SML$ReasonReactExamples.interpretTrace(param[/* example */1]))
+        ];
+}
 
+ReactDom.render(React.createElement(Theia$ReasonReactExamples.make, {
+          theiaIRTraces: List.map(trace, tests)
+        }), makeContainer("Theia"));
+
+exports.firaCode = firaCode;
 exports.style = style;
 exports.makeContainer = makeContainer;
-/* style Not a pure module */
+exports.tests = tests;
+exports.trace = trace;
+/* firaCode Not a pure module */

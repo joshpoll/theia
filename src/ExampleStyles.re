@@ -4,7 +4,8 @@ let reasonReactBlue = "#48a9dc";
 // bucklescript.github.io/docs/en/interop-cheatsheet#string-unicode-interpolation
 // This allows us to conveniently write CSS, together with variables, by
 // constructing a string
-let style = {j|
+
+/* let style = {j|
   body {
     background-color: rgb(224, 226, 229);
     display: flex;
@@ -40,5 +41,25 @@ let style = {j|
     background-color: white;
     padding: 16px;
     border-radius: 0px 0px 12px 12px;
+  }
+|j}; */
+
+let style = {j|
+  body {
+    font-family: 'Fira Code', monospace;    
+  }
+
+  button {
+    background-color: white;
+    color: black;
+    box-shadow: 0 0 0 1px black;
+    border: none;
+    padding: 8px;
+    font-size: 16px;
+  }
+
+  button:active {
+    background-color: $reasonReactBlue;
+    color: white;
   }
 |j};
