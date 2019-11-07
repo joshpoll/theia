@@ -69,7 +69,11 @@ type record = list((lab, val_))
 and val_ =
   | SVAL(sVal)
   | BASVAL(basVal)
-  | RECORD(record);
+  | RECORD(record)
+  /* TODO: second argument should be an entire env */
+  | FCNCLOSURE(match, valEnv, valEnv)
+
+and valEnv = list((vid, val_));
 
 type strDec =
   | DEC(dec)
@@ -95,8 +99,6 @@ type focus =
   | Record(record)
   | Program(program)
   | Empty;
-
-type valEnv = list((vid, val_));
 
 type ctxt =
   | LETD(hole, exp)
@@ -286,9 +288,17 @@ let step = (c: configuration): option(configuration) =>
       env,
     })
 
+  // [108]
+  | {rewrite: {focus: Exp(FN(m)), ctxts}, env} =>
+    Some({
+      rewrite: {
+        focus: Val(FCNCLOSURE(m, env, [])),
+        ctxts,
+      },
+      env,
+    })
   /* Matches */
   /* Match Rules */
-
   /* Declarations */
   // [114]
   | {rewrite: {focus: Dec(VAL(vb)), ctxts}, env} =>

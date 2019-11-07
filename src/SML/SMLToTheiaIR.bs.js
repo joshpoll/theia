@@ -339,6 +339,23 @@ function compileVal_(v) {
                     ]
                   ]);
         }
+    case /* FCNCLOSURE */3 :
+        return /* Value2 */Block.__(8, [
+                  /* :: */[
+                    "closure",
+                    /* [] */0
+                  ],
+                  /* :: */[
+                    compileMatch(v[0]),
+                    /* :: */[
+                      compileEnv(v[1]),
+                      /* :: */[
+                        compileEnv(v[2]),
+                        /* [] */0
+                      ]
+                    ]
+                  ]
+                ]);
     
   }
 }
@@ -401,6 +418,17 @@ function compileRecord(r) {
   }
 }
 
+function compileKVs(param) {
+  return /* KV2 */Block.__(7, [/* tuple */[
+              /* Atom */Block.__(0, [param[0]]),
+              compileVal_(param[1])
+            ]]);
+}
+
+function compileEnv(e) {
+  return /* Map2 */Block.__(5, [List.rev(List.map(compileKVs, e))]);
+}
+
 function compileStrDec(sd) {
   if (sd.tag) {
     return /* Apply2 */Block.__(1, [
@@ -433,7 +461,7 @@ function compileTopDec(td) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "SMLToTheiaIR.re",
-            118,
+            124,
             2
           ]
         ];
@@ -447,7 +475,7 @@ function compileProgram(param) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "SMLToTheiaIR.re",
-            122,
+            128,
             21
           ]
         ];
@@ -704,17 +732,6 @@ function compileCtxt(c) {
   }
 }
 
-function compileKVs(param) {
-  return /* KV2 */Block.__(7, [/* tuple */[
-              /* Atom */Block.__(0, [param[0]]),
-              compileVal_(param[1])
-            ]]);
-}
-
-function compileEnv(e) {
-  return /* Map2 */Block.__(5, [List.rev(List.map(compileKVs, e))]);
-}
-
 function compileRewrite(param) {
   return /* Kont2 */Block.__(6, [
             compileFocus(param[/* focus */0]),
@@ -757,13 +774,13 @@ exports.compilePat = compilePat;
 exports.compileSVal = compileSVal;
 exports.compileVal_ = compileVal_;
 exports.compileRecord = compileRecord;
+exports.compileKVs = compileKVs;
+exports.compileEnv = compileEnv;
 exports.compileStrDec = compileStrDec;
 exports.compileTopDec = compileTopDec;
 exports.compileProgram = compileProgram;
 exports.compileFocus = compileFocus;
 exports.compileCtxt = compileCtxt;
-exports.compileKVs = compileKVs;
-exports.compileEnv = compileEnv;
 exports.compileRewrite = compileRewrite;
 exports.smlToTheiaIR = smlToTheiaIR;
 /* react Not a pure module */

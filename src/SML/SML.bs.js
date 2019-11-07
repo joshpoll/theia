@@ -7,53 +7,42 @@ var TheiaUtil$ReasonReactExamples = require("../Theia/TheiaUtil.bs.js");
 
 function apply(f, v) {
   if (f === "+") {
-    switch (v.tag | 0) {
-      case /* SVAL */0 :
-      case /* BASVAL */1 :
-          return Pervasives.failwith("unknown built-in function: " + f);
-      case /* RECORD */2 :
-          var match = v[0];
-          if (match) {
-            var match$1 = match[0];
-            if (match$1[0] === "1") {
-              var match$2 = match$1[1];
-              switch (match$2.tag | 0) {
-                case /* SVAL */0 :
-                    var match$3 = match[1];
-                    if (match$3) {
-                      var match$4 = match$3[0];
-                      if (match$4[0] === "2") {
-                        var match$5 = match$4[1];
-                        switch (match$5.tag | 0) {
-                          case /* SVAL */0 :
-                              if (match$3[1]) {
-                                return Pervasives.failwith("unknown built-in function: " + f);
-                              } else {
-                                return /* SVAL */Block.__(0, [/* INT */[match$2[0][0] + match$5[0][0] | 0]]);
-                              }
-                          case /* BASVAL */1 :
-                          case /* RECORD */2 :
-                              return Pervasives.failwith("unknown built-in function: " + f);
-                          
-                        }
-                      } else {
-                        return Pervasives.failwith("unknown built-in function: " + f);
-                      }
-                    } else {
-                      return Pervasives.failwith("unknown built-in function: " + f);
-                    }
-                case /* BASVAL */1 :
-                case /* RECORD */2 :
-                    return Pervasives.failwith("unknown built-in function: " + f);
-                
+    if (v.tag === /* RECORD */2) {
+      var match = v[0];
+      if (match) {
+        var match$1 = match[0];
+        if (match$1[0] === "1") {
+          var match$2 = match$1[1];
+          if (match$2.tag) {
+            return Pervasives.failwith("unknown built-in function: " + f);
+          } else {
+            var match$3 = match[1];
+            if (match$3) {
+              var match$4 = match$3[0];
+              if (match$4[0] === "2") {
+                var match$5 = match$4[1];
+                if (match$5.tag) {
+                  return Pervasives.failwith("unknown built-in function: " + f);
+                } else if (match$3[1]) {
+                  return Pervasives.failwith("unknown built-in function: " + f);
+                } else {
+                  return /* SVAL */Block.__(0, [/* INT */[match$2[0][0] + match$5[0][0] | 0]]);
+                }
+              } else {
+                return Pervasives.failwith("unknown built-in function: " + f);
               }
             } else {
               return Pervasives.failwith("unknown built-in function: " + f);
             }
-          } else {
-            return Pervasives.failwith("unknown built-in function: " + f);
           }
-      
+        } else {
+          return Pervasives.failwith("unknown built-in function: " + f);
+        }
+      } else {
+        return Pervasives.failwith("unknown built-in function: " + f);
+      }
+    } else {
+      return Pervasives.failwith("unknown built-in function: " + f);
     }
   } else {
     return Pervasives.failwith("unknown built-in function: " + f);
@@ -189,7 +178,18 @@ function step(c) {
                         /* env */c[/* env */1]
                       ];
             case /* FN */2 :
-                return ;
+                var env$1 = c[/* env */1];
+                return /* record */[
+                        /* rewrite : record */[
+                          /* focus : Val */Block.__(2, [/* FCNCLOSURE */Block.__(3, [
+                                  match$7[0],
+                                  env$1,
+                                  /* [] */0
+                                ])]),
+                          /* ctxts */match[/* ctxts */1]
+                        ],
+                        /* env */env$1
+                      ];
             
           }
       case /* Val */2 :
@@ -217,42 +217,36 @@ function step(c) {
                           ];
                   }
               case /* APPL */3 :
-                  switch (v.tag | 0) {
-                    case /* BASVAL */1 :
-                        var match$10 = match[/* ctxts */1];
-                        return /* record */[
-                                /* rewrite : record */[
-                                  /* focus : AtExp */Block.__(0, [match$10[0][1]]),
-                                  /* ctxts : :: */[
-                                    /* APPR */Block.__(4, [
-                                        /* BASVAL */Block.__(1, [v[0]]),
-                                        /* () */0
-                                      ]),
-                                    match$10[1]
-                                  ]
-                                ],
-                                /* env */c[/* env */1]
-                              ];
-                    case /* SVAL */0 :
-                    case /* RECORD */2 :
-                        return ;
-                    
+                  if (v.tag === /* BASVAL */1) {
+                    var match$10 = match[/* ctxts */1];
+                    return /* record */[
+                            /* rewrite : record */[
+                              /* focus : AtExp */Block.__(0, [match$10[0][1]]),
+                              /* ctxts : :: */[
+                                /* APPR */Block.__(4, [
+                                    /* BASVAL */Block.__(1, [v[0]]),
+                                    /* () */0
+                                  ]),
+                                match$10[1]
+                              ]
+                            ],
+                            /* env */c[/* env */1]
+                          ];
+                  } else {
+                    return ;
                   }
               case /* APPR */4 :
                   var match$11 = match$9[0];
-                  switch (match$11.tag | 0) {
-                    case /* BASVAL */1 :
-                        return /* record */[
-                                /* rewrite : record */[
-                                  /* focus : Val */Block.__(2, [apply(match$11[0], v)]),
-                                  /* ctxts */match$8[1]
-                                ],
-                                /* env */c[/* env */1]
-                              ];
-                    case /* SVAL */0 :
-                    case /* RECORD */2 :
-                        return ;
-                    
+                  if (match$11.tag === /* BASVAL */1) {
+                    return /* record */[
+                            /* rewrite : record */[
+                              /* focus : Val */Block.__(2, [apply(match$11[0], v)]),
+                              /* ctxts */match$8[1]
+                            ],
+                            /* env */c[/* env */1]
+                          ];
+                  } else {
+                    return ;
                   }
               case /* EXPROWE */6 :
                   var match$12 = match$9[3];

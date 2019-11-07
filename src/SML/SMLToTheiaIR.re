@@ -90,6 +90,8 @@ let rec compileVal_ = v =>
   | RECORD([]) => Value2([], [Atom(React.string("()"))])
   | RECORD(r) =>
     Value2([], [Apply2([React.string("{"), React.string("}")], [compileRecord(r)])])
+  | FCNCLOSURE(m, e, ve) =>
+    Value2(["closure"], [compileMatch(m), compileEnv(e), compileEnv(ve)])
   }
 
 and compileRecord = r =>
@@ -102,7 +104,11 @@ and compileRecord = r =>
       [<> </>, React.string("="), React.string(", "), <> </>],
       [Atom(React.string(l)), compileVal_(v), compileRecord(r)],
     )
-  };
+  }
+
+and compileKVs = ((k, v)) => KV2((Atom(React.string(k)), compileVal_(v)))
+
+and compileEnv = e => Map2(List.map(compileKVs, e) |> List.rev);
 
 let rec compileStrDec = sd =>
   switch (sd) {
@@ -186,10 +192,6 @@ let compileCtxt = c =>
       holePos: 2,
     }
   };
-
-let compileKVs = ((k, v)) => KV2((Atom(React.string(k)), compileVal_(v)));
-
-let compileEnv = e => Map2(List.map(compileKVs, e) |> List.rev);
 
 let compileRewrite = ({focus, ctxts}) =>
   Kont2(compileFocus(focus), List.map(compileCtxt, ctxts));
