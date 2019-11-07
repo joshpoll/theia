@@ -85,7 +85,7 @@ function compileValBind(vb) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "SMLToTheiaIR.re",
-            46,
+            53,
             2
           ]
         ];
@@ -373,7 +373,7 @@ function compileTopDec(td) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "SMLToTheiaIR.re",
-            88,
+            106,
             2
           ]
         ];
@@ -387,7 +387,7 @@ function compileProgram(p) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "SMLToTheiaIR.re",
-            93,
+            111,
             2
           ]
         ];

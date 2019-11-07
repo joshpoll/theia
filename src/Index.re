@@ -35,28 +35,31 @@ let makeContainer = text => {
 
 // All 4 examples.
 /* ReactDOMRe.render(
-  <BlinkingGreeting>
-    {React.string("Hello!")}
-  </BlinkingGreeting>,
-  makeContainer("Blinking Greeting"),
-); */
+     <BlinkingGreeting>
+       {React.string("Hello!")}
+     </BlinkingGreeting>,
+     makeContainer("Blinking Greeting"),
+   ); */
 
 /* ReactDOMRe.render(
-  <ReducerFromReactJSDocs />,
-  makeContainer("Reducer From ReactJS Docs"),
-); */
+     <ReducerFromReactJSDocs />,
+     makeContainer("Reducer From ReactJS Docs"),
+   ); */
 
 /* ReactDOMRe.render(
-  <FetchedDogPictures />,
-  makeContainer("Fetched Dog Pictures"),
-); */
+     <FetchedDogPictures />,
+     makeContainer("Fetched Dog Pictures"),
+   ); */
 
 /* ReactDOMRe.render(
-  <ReasonUsingJSUsingReason />,
-  makeContainer("Reason Using JS Using Reason"),
-); */
+     <ReasonUsingJSUsingReason />,
+     makeContainer("Reason Using JS Using Reason"),
+   ); */
 
-type test = {name: string, example: SML.focus};
+type test = {
+  name: string,
+  example: SML.focus,
+};
 
 let tests =
   SMLExamples.[
@@ -72,16 +75,13 @@ let tests =
     {name: "ex9", example: ex9},
     {name: "ex10", example: ex10},
     {name: "ex11", example: ex11},
-  ]
+  ];
 
-let trace = ({name, example}) => Theia.{name, states: example |> SML.interpretTrace |> List.map(SMLToTheiaIR.smlToTheiaIR)};
+let trace = ({name, example}) =>
+  Theia.{name, states: example |> SML.interpretTrace |> List.map(SMLToTheiaIR.smlToTheiaIR)};
 
-ReactDOMRe.render(
-  <Theia theiaIRTraces={List.map(trace, tests)} />,
-  makeContainer("Theia"),
-);
+ReactDOMRe.render(<Theia theiaIRTraces={List.map(trace, tests)} />, makeContainer("Theia"));
 
-let line = HaMLet2SMLAM.testJson |> Json.parseOrRaise
-                |> HaMLet2SMLAM.Decode.node;
+let line = HaMLet2SMLAM.testJson |> Json.parseOrRaise |> HaMLet2SMLAM.Decode.node;
 Js.Console.log(line);
 Js.Console.log(line |> HaMLet2SMLAM.compileProgram);
