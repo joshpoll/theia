@@ -1,21 +1,10 @@
 'use strict';
 
-var Json = require("@glennsl/bs-json/src/Json.bs.js");
 var Block = require("bs-platform/lib/js/block.js");
-var HaMLet2SMLAM$ReasonReactExamples = require("./HaMLet2SMLAM.bs.js");
 
-var ex11 = /* Program */Block.__(9, [HaMLet2SMLAM$ReasonReactExamples.compileProgram(HaMLet2SMLAM$ReasonReactExamples.Decode.node(Json.parseOrRaise(HaMLet2SMLAM$ReasonReactExamples.testJson)))]);
+var ex0 = "\n{\"node\": \"Program\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 2 }, \"args\": [\n  {\"node\": \"STRDECTopDec\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n    {\"node\": \"DECStrDec\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n      {\"node\": \"VALDec\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n        {\"node\": \"Seq\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n        ]}\n,        {\"node\": \"PLAINValBind\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n          {\"node\": \"ATPat\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n            {\"node\": \"IDAtPat\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n              {\"node\": \"LongVId\", \"args\": [\"it\"]}\n            ]}\n          ]}\n,          {\"node\": \"ATExp\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n            {\"node\": \"SCONAtExp\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n              {\"node\": \"INTSCon\", \"args\": [5]}\n            ]}\n          ]}\n,null        ]}\n      ]}\n    ]}\n,null  ]}\n,null]}\n";
 
-var ex0 = /* AtExp */Block.__(0, [/* SCON */Block.__(0, [/* INT */[5]])]);
-
-var ex1 = /* AtExp */Block.__(0, [/* LET */Block.__(3, [
-        /* VAL */[/* PLAIN */[
-            /* ATPAT */[/* ID */["x"]],
-            /* ATEXP */Block.__(0, [/* SCON */Block.__(0, [/* INT */[5]])]),
-            undefined
-          ]],
-        /* ATEXP */Block.__(0, [/* ID */Block.__(1, ["x"])])
-      ])]);
+var ex1 = "\n{\"node\": \"Program\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 5, \"col2\": 4 }, \"args\": [\n  {\"node\": \"STRDECTopDec\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 5, \"col2\": 3 }, \"args\": [\n    {\"node\": \"DECStrDec\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 5, \"col2\": 3 }, \"args\": [\n      {\"node\": \"VALDec\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 5, \"col2\": 3 }, \"args\": [\n        {\"node\": \"Seq\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n        ]}\n,        {\"node\": \"PLAINValBind\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 5, \"col2\": 3 }, \"args\": [\n          {\"node\": \"ATPat\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n            {\"node\": \"IDAtPat\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n              {\"node\": \"LongVId\", \"args\": [\"it\"]}\n            ]}\n          ]}\n,          {\"node\": \"ATExp\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 5, \"col2\": 3 }, \"args\": [\n            {\"node\": \"LETAtExp\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 5, \"col2\": 3 }, \"args\": [\n              {\"node\": \"VALDec\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 2, \"col1\": 2, \"line2\": 3, \"col2\": 0 }, \"args\": [\n                {\"node\": \"Seq\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 3, \"col1\": 0, \"line2\": 3, \"col2\": 0 }, \"args\": [\n                ]}\n,                {\"node\": \"PLAINValBind\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 2, \"col1\": 6, \"line2\": 3, \"col2\": 0 }, \"args\": [\n                  {\"node\": \"ATPat\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 2, \"col1\": 6, \"line2\": 2, \"col2\": 7 }, \"args\": [\n                    {\"node\": \"IDAtPat\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 2, \"col1\": 6, \"line2\": 2, \"col2\": 7 }, \"args\": [\n                      {\"node\": \"LongVId\", \"args\": [\"x\"]}\n                    ]}\n                  ]}\n,                  {\"node\": \"ATExp\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 2, \"col1\": 10, \"line2\": 2, \"col2\": 11 }, \"args\": [\n                    {\"node\": \"SCONAtExp\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 2, \"col1\": 10, \"line2\": 2, \"col2\": 11 }, \"args\": [\n                      {\"node\": \"INTSCon\", \"args\": [5]}\n                    ]}\n                  ]}\n,null                ]}\n              ]}\n,              {\"node\": \"ATExp\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 4, \"col1\": 2, \"line2\": 4, \"col2\": 3 }, \"args\": [\n                {\"node\": \"IDAtExp\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 4, \"col1\": 2, \"line2\": 4, \"col2\": 3 }, \"args\": [\n                  {\"node\": \"LongVId\", \"args\": [\"x\"]}\n                ]}\n              ]}\n            ]}\n          ]}\n,null        ]}\n      ]}\n    ]}\n,null  ]}\n,null]}\n";
 
 var ex2 = /* TopDec */Block.__(6, [/* STRDEC */[
       /* DEC */Block.__(0, [/* VAL */[/* PLAIN */[
@@ -258,5 +247,4 @@ exports.ex7 = ex7;
 exports.ex8 = ex8;
 exports.ex9 = ex9;
 exports.ex10 = ex10;
-exports.ex11 = ex11;
-/* ex11 Not a pure module */
+/* No side effect */

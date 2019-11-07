@@ -119,6 +119,24 @@ function program(json) {
           ]);
 }
 
+function letatexp(json) {
+  return /* LETAtExp */Block.__(12, [
+            Json_decode.field("sourceMap", sourceMap, json),
+            Json_decode.field("args", (function (param) {
+                    return Json_decode.pair(node, node, param);
+                  }), json)
+          ]);
+}
+
+function idatexp(json) {
+  return /* IDAtExp */Block.__(13, [
+            Json_decode.field("sourceMap", sourceMap, json),
+            List.hd(Json_decode.field("args", (function (param) {
+                        return Json_decode.list(node, param);
+                      }), json))
+          ]);
+}
+
 function node(json) {
   return Json_decode.andThen((function (s) {
                 switch (s) {
@@ -128,10 +146,14 @@ function node(json) {
                       return atpat;
                   case "DECStrDec" :
                       return decstrdec;
+                  case "IDAtExp" :
+                      return idatexp;
                   case "IDAtPat" :
                       return idatpat;
                   case "INTSCon" :
                       return intscon;
+                  case "LETAtExp" :
+                      return letatexp;
                   case "LongVId" :
                       return longvid;
                   case "PLAINValBind" :
@@ -168,6 +190,8 @@ var Decode = {
   decstrdec: decstrdec,
   strdectopdec: strdectopdec,
   program: program,
+  letatexp: letatexp,
+  idatexp: idatexp,
   node: node
 };
 
@@ -192,7 +216,7 @@ function compileProgram(p) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            116,
+            129,
             2
           ]
         ];
@@ -220,7 +244,7 @@ function compileTopDec(td) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            122,
+            135,
             2
           ]
         ];
@@ -235,7 +259,7 @@ function compileStrDec(sd) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            128,
+            141,
             2
           ]
         ];
@@ -250,7 +274,7 @@ function compileDec(d) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            133,
+            146,
             2
           ]
         ];
@@ -281,7 +305,7 @@ function compileValBind(vb) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            138,
+            151,
             2
           ]
         ];
@@ -296,7 +320,7 @@ function compilePat(p) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            145,
+            158,
             2
           ]
         ];
@@ -311,7 +335,7 @@ function compileAtPat(ap) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            150,
+            163,
             2
           ]
         ];
@@ -326,7 +350,7 @@ function compileLongVId(x) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            155,
+            168,
             2
           ]
         ];
@@ -341,7 +365,7 @@ function compileExp(e) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            160,
+            173,
             2
           ]
         ];
@@ -349,17 +373,26 @@ function compileExp(e) {
 }
 
 function compileAtExp(a) {
-  if (a.tag === /* SCONAtExp */1) {
-    return /* SCON */Block.__(0, [compileSCon(a[1])]);
-  } else {
-    throw [
-          Caml_builtin_exceptions.match_failure,
-          /* tuple */[
-            "HaMLet2SMLAM.re",
-            165,
-            2
-          ]
-        ];
+  switch (a.tag | 0) {
+    case /* SCONAtExp */1 :
+        return /* SCON */Block.__(0, [compileSCon(a[1])]);
+    case /* LETAtExp */12 :
+        var match = a[1];
+        return /* LET */Block.__(3, [
+                  compileDec(match[0]),
+                  compileExp(match[1])
+                ]);
+    case /* IDAtExp */13 :
+        return /* ID */Block.__(1, [compileLongVId(a[1])]);
+    default:
+      throw [
+            Caml_builtin_exceptions.match_failure,
+            /* tuple */[
+              "HaMLet2SMLAM.re",
+              178,
+              2
+            ]
+          ];
   }
 }
 
@@ -369,7 +402,7 @@ function compileSCon(sc) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            170,
+            185,
             2
           ]
         ];
@@ -377,10 +410,6 @@ function compileSCon(sc) {
     return /* INT */[sc[0]];
   }
 }
-
-var testJson = "\n{\n  \"node\": \"Program\",\n  \"sourceMap\": {\n    \"file\": \"(input 1)\",\n    \"line1\": 1,\n    \"col1\": 0,\n    \"line2\": 1,\n    \"col2\": 10\n  },\n  \"args\": [\n    {\n      \"node\": \"STRDECTopDec\",\n      \"sourceMap\": {\n        \"file\": \"(input 1)\",\n        \"line1\": 1,\n        \"col1\": 0,\n        \"line2\": 1,\n        \"col2\": 9\n      },\n      \"args\": [\n        {\n          \"node\": \"DECStrDec\",\n          \"sourceMap\": {\n            \"file\": \"(input 1)\",\n            \"line1\": 1,\n            \"col1\": 0,\n            \"line2\": 1,\n            \"col2\": 9\n          },\n          \"args\": [\n            {\n              \"node\": \"VALDec\",\n              \"sourceMap\": {\n                \"file\": \"(input 1)\",\n                \"line1\": 1,\n                \"col1\": 0,\n                \"line2\": 1,\n                \"col2\": 9\n              },\n              \"args\": [\n                {\n                  \"node\": \"Seq\",\n                  \"sourceMap\": {\n                    \"file\": \"(input 1)\",\n                    \"line1\": 1,\n                    \"col1\": 9,\n                    \"line2\": 1,\n                    \"col2\": 9\n                  },\n                  \"args\": []\n                },\n                {\n                  \"node\": \"PLAINValBind\",\n                  \"sourceMap\": {\n                    \"file\": \"(input 1)\",\n                    \"line1\": 1,\n                    \"col1\": 4,\n                    \"line2\": 1,\n                    \"col2\": 9\n                  },\n                  \"args\": [\n                    {\n                      \"node\": \"ATPat\",\n                      \"sourceMap\": {\n                        \"file\": \"(input 1)\",\n                        \"line1\": 1,\n                        \"col1\": 4,\n                        \"line2\": 1,\n                        \"col2\": 5\n                      },\n                      \"args\": [\n                        {\n                          \"node\": \"IDAtPat\",\n                          \"sourceMap\": {\n                            \"file\": \"(input 1)\",\n                            \"line1\": 1,\n                            \"col1\": 4,\n                            \"line2\": 1,\n                            \"col2\": 5\n                          },\n                          \"args\": [\n                            {\n                              \"node\": \"LongVId\",\n                              \"args\": [\n                                \"x\"\n                              ]\n                            }\n                          ]\n                        }\n                      ]\n                    },\n                    {\n                      \"node\": \"ATExp\",\n                      \"sourceMap\": {\n                        \"file\": \"(input 1)\",\n                        \"line1\": 1,\n                        \"col1\": 8,\n                        \"line2\": 1,\n                        \"col2\": 9\n                      },\n                      \"args\": [\n                        {\n                          \"node\": \"SCONAtExp\",\n                          \"sourceMap\": {\n                            \"file\": \"(input 1)\",\n                            \"line1\": 1,\n                            \"col1\": 8,\n                            \"line2\": 1,\n                            \"col2\": 9\n                          },\n                          \"args\": [\n                            {\n                              \"node\": \"INTSCon\",\n                              \"args\": [\n                                1\n                              ]\n                            }\n                          ]\n                        }\n                      ]\n                    },\n                    null\n                  ]\n                }\n              ]\n            }\n          ]\n        },\n        null\n      ]\n    },\n    null\n  ]\n}\n";
-
-var testJsonSmall = "\n\n{\n                  \"node\": \"PLAINValBind\",\n                  \"sourceMap\": {\n                    \"file\": \"(input 1)\",\n                    \"line1\": 1,\n                    \"col1\": 4,\n                    \"line2\": 1,\n                    \"col2\": 9\n                  },\n                  \"args\": [\n                    {\n                      \"node\": \"ATPat\",\n                      \"sourceMap\": {\n                        \"file\": \"(input 1)\",\n                        \"line1\": 1,\n                        \"col1\": 4,\n                        \"line2\": 1,\n                        \"col2\": 5\n                      },\n                      \"args\": [\n                        {\n                          \"node\": \"IDAtPat\",\n                          \"sourceMap\": {\n                            \"file\": \"(input 1)\",\n                            \"line1\": 1,\n                            \"col1\": 4,\n                            \"line2\": 1,\n                            \"col2\": 5\n                          },\n                          \"args\": [\n                            {\n                              \"node\": \"LongVId\",\n                              \"args\": [\n                                \"x\"\n                              ]\n                            }\n                          ]\n                        }\n                      ]\n                    },\n                    {\n                      \"node\": \"ATExp\",\n                      \"sourceMap\": {\n                        \"file\": \"(input 1)\",\n                        \"line1\": 1,\n                        \"col1\": 8,\n                        \"line2\": 1,\n                        \"col2\": 9\n                      },\n                      \"args\": [\n                        {\n                          \"node\": \"SCONAtExp\",\n                          \"sourceMap\": {\n                            \"file\": \"(input 1)\",\n                            \"line1\": 1,\n                            \"col1\": 8,\n                            \"line2\": 1,\n                            \"col2\": 9\n                          },\n                          \"args\": [\n                            {\n                              \"node\": \"INTSCon\",\n                              \"args\": [\n                                1\n                              ]\n                            }\n                          ]\n                        }\n                      ]\n                    },\n                    null\n                  ]\n                }\n\n";
 
 exports.Decode = Decode;
 exports.compileProgram = compileProgram;
@@ -394,6 +423,4 @@ exports.compileLongVId = compileLongVId;
 exports.compileExp = compileExp;
 exports.compileAtExp = compileAtExp;
 exports.compileSCon = compileSCon;
-exports.testJson = testJson;
-exports.testJsonSmall = testJsonSmall;
 /* No side effect */

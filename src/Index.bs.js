@@ -2,6 +2,7 @@
 
 var Json = require("@glennsl/bs-json/src/Json.bs.js");
 var List = require("bs-platform/lib/js/list.js");
+var Block = require("bs-platform/lib/js/block.js");
 var React = require("react");
 var ReactDom = require("react-dom");
 var SML$ReasonReactExamples = require("./SML/SML.bs.js");
@@ -40,67 +41,61 @@ function makeContainer(text) {
 }
 
 var tests_000 = /* record */[
-  /* name */"ex0",
-  /* example */SMLExamples$ReasonReactExamples.ex0
+  /* name */"ex2",
+  /* example */SMLExamples$ReasonReactExamples.ex2
 ];
 
 var tests_001 = /* :: */[
   /* record */[
-    /* name */"ex1",
-    /* example */SMLExamples$ReasonReactExamples.ex1
+    /* name */"ex3",
+    /* example */SMLExamples$ReasonReactExamples.ex3
   ],
   /* :: */[
     /* record */[
-      /* name */"ex2",
-      /* example */SMLExamples$ReasonReactExamples.ex2
+      /* name */"ex4",
+      /* example */SMLExamples$ReasonReactExamples.ex4
     ],
     /* :: */[
       /* record */[
-        /* name */"ex3",
-        /* example */SMLExamples$ReasonReactExamples.ex3
+        /* name */"ex5",
+        /* example */SMLExamples$ReasonReactExamples.ex5
       ],
       /* :: */[
         /* record */[
-          /* name */"ex4",
-          /* example */SMLExamples$ReasonReactExamples.ex4
+          /* name */"ex6",
+          /* example */SMLExamples$ReasonReactExamples.ex6
         ],
         /* :: */[
           /* record */[
-            /* name */"ex5",
-            /* example */SMLExamples$ReasonReactExamples.ex5
+            /* name */"ex7",
+            /* example */SMLExamples$ReasonReactExamples.ex7
           ],
           /* :: */[
             /* record */[
-              /* name */"ex6",
-              /* example */SMLExamples$ReasonReactExamples.ex6
+              /* name */"ex8",
+              /* example */SMLExamples$ReasonReactExamples.ex8
             ],
             /* :: */[
               /* record */[
-                /* name */"ex7",
-                /* example */SMLExamples$ReasonReactExamples.ex7
+                /* name */"ex9",
+                /* example */SMLExamples$ReasonReactExamples.ex9
               ],
               /* :: */[
                 /* record */[
-                  /* name */"ex8",
-                  /* example */SMLExamples$ReasonReactExamples.ex8
+                  /* name */"ex10",
+                  /* example */SMLExamples$ReasonReactExamples.ex10
                 ],
                 /* :: */[
                   /* record */[
-                    /* name */"ex9",
-                    /* example */SMLExamples$ReasonReactExamples.ex9
+                    /* name */"ex0",
+                    /* example : Program */Block.__(9, [HaMLet2SMLAM$ReasonReactExamples.compileProgram(HaMLet2SMLAM$ReasonReactExamples.Decode.node(Json.parseOrRaise(SMLExamples$ReasonReactExamples.ex0)))])
                   ],
                   /* :: */[
                     /* record */[
-                      /* name */"ex10",
-                      /* example */SMLExamples$ReasonReactExamples.ex10
+                      /* name */"ex1",
+                      /* example : Program */Block.__(9, [HaMLet2SMLAM$ReasonReactExamples.compileProgram(HaMLet2SMLAM$ReasonReactExamples.Decode.node(Json.parseOrRaise(SMLExamples$ReasonReactExamples.ex1)))])
                     ],
-                    /* :: */[
-                      /* record */[
-                        /* name */"ex11",
-                        /* example */SMLExamples$ReasonReactExamples.ex11
-                      ],
-                      /* [] */0
-                    ]
+                    /* [] */0
                   ]
                 ]
               ]
@@ -128,16 +123,9 @@ ReactDom.render(React.createElement(Theia$ReasonReactExamples.make, {
           theiaIRTraces: List.map(trace, tests)
         }), makeContainer("Theia"));
 
-var line = HaMLet2SMLAM$ReasonReactExamples.Decode.node(Json.parseOrRaise(HaMLet2SMLAM$ReasonReactExamples.testJson));
-
-console.log(line);
-
-console.log(HaMLet2SMLAM$ReasonReactExamples.compileProgram(line));
-
 exports.firaCode = firaCode;
 exports.style = style;
 exports.makeContainer = makeContainer;
 exports.tests = tests;
 exports.trace = trace;
-exports.line = line;
 /* firaCode Not a pure module */

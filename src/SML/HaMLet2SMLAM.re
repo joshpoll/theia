@@ -19,7 +19,9 @@ type ast =
   | VALDec(sourceMap, (ast, ast))
   | DECStrDec(sourceMap, ast)
   | STRDECTopDec(sourceMap, (ast, option(ast)))
-  | Program(sourceMap, (ast, option(ast)));
+  | Program(sourceMap, (ast, option(ast)))
+  | LETAtExp(sourceMap, (ast, ast))
+  | IDAtExp(sourceMap, ast);
 
 module Decode = {
   open Json.Decode;
@@ -86,6 +88,15 @@ module Decode = {
       json |> field("args", pair(node, nullAs(None))),
     )
 
+  and letatexp = json =>
+    LETAtExp(json |> field("sourceMap", sourceMap), json |> field("args", pair(node, node)))
+
+  and idatexp = json =>
+    IDAtExp(
+      json |> field("sourceMap", sourceMap),
+      json |> field("args", list(node)) |> List.hd,
+    )
+
   and node = json => {
     (
       field("node", string)
@@ -103,6 +114,8 @@ module Decode = {
            | "DECStrDec" => decstrdec
            | "STRDECTopDec" => strdectopdec
            | "Program" => program
+           | "LETAtExp" => letatexp
+           | "IDAtExp" => idatexp
            | _ => failwith("Unknown node type: " ++ s)
            }
          )
@@ -164,224 +177,11 @@ and compileExp = e =>
 and compileAtExp = a =>
   switch (a) {
   | SCONAtExp(_, sc) => SML.SCON(compileSCon(sc))
+  | LETAtExp(_, (d, e)) => SML.LET(compileDec(d), compileExp(e))
+  | IDAtExp(_, x) => SML.ID(compileLongVId(x))
   }
 
 and compileSCon = sc =>
   switch (sc) {
   | INTSCon(n) => SML.INT(n)
   };
-
-let testJson = {|
-{
-  "node": "Program",
-  "sourceMap": {
-    "file": "(input 1)",
-    "line1": 1,
-    "col1": 0,
-    "line2": 1,
-    "col2": 10
-  },
-  "args": [
-    {
-      "node": "STRDECTopDec",
-      "sourceMap": {
-        "file": "(input 1)",
-        "line1": 1,
-        "col1": 0,
-        "line2": 1,
-        "col2": 9
-      },
-      "args": [
-        {
-          "node": "DECStrDec",
-          "sourceMap": {
-            "file": "(input 1)",
-            "line1": 1,
-            "col1": 0,
-            "line2": 1,
-            "col2": 9
-          },
-          "args": [
-            {
-              "node": "VALDec",
-              "sourceMap": {
-                "file": "(input 1)",
-                "line1": 1,
-                "col1": 0,
-                "line2": 1,
-                "col2": 9
-              },
-              "args": [
-                {
-                  "node": "Seq",
-                  "sourceMap": {
-                    "file": "(input 1)",
-                    "line1": 1,
-                    "col1": 9,
-                    "line2": 1,
-                    "col2": 9
-                  },
-                  "args": []
-                },
-                {
-                  "node": "PLAINValBind",
-                  "sourceMap": {
-                    "file": "(input 1)",
-                    "line1": 1,
-                    "col1": 4,
-                    "line2": 1,
-                    "col2": 9
-                  },
-                  "args": [
-                    {
-                      "node": "ATPat",
-                      "sourceMap": {
-                        "file": "(input 1)",
-                        "line1": 1,
-                        "col1": 4,
-                        "line2": 1,
-                        "col2": 5
-                      },
-                      "args": [
-                        {
-                          "node": "IDAtPat",
-                          "sourceMap": {
-                            "file": "(input 1)",
-                            "line1": 1,
-                            "col1": 4,
-                            "line2": 1,
-                            "col2": 5
-                          },
-                          "args": [
-                            {
-                              "node": "LongVId",
-                              "args": [
-                                "x"
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "node": "ATExp",
-                      "sourceMap": {
-                        "file": "(input 1)",
-                        "line1": 1,
-                        "col1": 8,
-                        "line2": 1,
-                        "col2": 9
-                      },
-                      "args": [
-                        {
-                          "node": "SCONAtExp",
-                          "sourceMap": {
-                            "file": "(input 1)",
-                            "line1": 1,
-                            "col1": 8,
-                            "line2": 1,
-                            "col2": 9
-                          },
-                          "args": [
-                            {
-                              "node": "INTSCon",
-                              "args": [
-                                1
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    null
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        null
-      ]
-    },
-    null
-  ]
-}
-|};
-
-let testJsonSmall = {|
-
-{
-                  "node": "PLAINValBind",
-                  "sourceMap": {
-                    "file": "(input 1)",
-                    "line1": 1,
-                    "col1": 4,
-                    "line2": 1,
-                    "col2": 9
-                  },
-                  "args": [
-                    {
-                      "node": "ATPat",
-                      "sourceMap": {
-                        "file": "(input 1)",
-                        "line1": 1,
-                        "col1": 4,
-                        "line2": 1,
-                        "col2": 5
-                      },
-                      "args": [
-                        {
-                          "node": "IDAtPat",
-                          "sourceMap": {
-                            "file": "(input 1)",
-                            "line1": 1,
-                            "col1": 4,
-                            "line2": 1,
-                            "col2": 5
-                          },
-                          "args": [
-                            {
-                              "node": "LongVId",
-                              "args": [
-                                "x"
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "node": "ATExp",
-                      "sourceMap": {
-                        "file": "(input 1)",
-                        "line1": 1,
-                        "col1": 8,
-                        "line2": 1,
-                        "col2": 9
-                      },
-                      "args": [
-                        {
-                          "node": "SCONAtExp",
-                          "sourceMap": {
-                            "file": "(input 1)",
-                            "line1": 1,
-                            "col1": 8,
-                            "line2": 1,
-                            "col2": 9
-                          },
-                          "args": [
-                            {
-                              "node": "INTSCon",
-                              "args": [
-                                1
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    null
-                  ]
-                }
-
-|};
