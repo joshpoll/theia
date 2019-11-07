@@ -17,10 +17,7 @@
   "bs-dependencies": [
     "reason-react",
     "bs-fetch",
-    "bs-webapi",
-    "bs-abstract",
-    "relude",
-    "relude-parse"
+    "bs-webapi"
   ],
   "refmt": 3
 }

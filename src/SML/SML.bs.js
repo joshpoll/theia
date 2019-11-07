@@ -2,8 +2,8 @@
 
 var Block = require("bs-platform/lib/js/block.js");
 var Pervasives = require("bs-platform/lib/js/pervasives.js");
-var Util$ReasonReactExamples = require("../Util.bs.js");
-var TheiaUtil$ReasonReactExamples = require("../TheiaUtil.bs.js");
+var Util$ReasonReactExamples = require("../Theia/Util.bs.js");
+var TheiaUtil$ReasonReactExamples = require("../Theia/TheiaUtil.bs.js");
 
 function apply(f, v) {
   if (f === "+") {
