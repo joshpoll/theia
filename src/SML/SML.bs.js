@@ -390,6 +390,19 @@ function step(c) {
           } else {
             return ;
           }
+      case /* Program */9 :
+          var match$19 = match$1[0];
+          if (match$19[1] !== undefined) {
+            return ;
+          } else {
+            return /* record */[
+                    /* rewrite : record */[
+                      /* focus : TopDec */Block.__(6, [match$19[0]]),
+                      /* ctxts */match[/* ctxts */1]
+                    ],
+                    /* env */c[/* env */1]
+                  ];
+          }
       
     }
   }

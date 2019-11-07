@@ -71,6 +71,9 @@ type strDec =
 type topDec =
   | STRDEC(strDec, option(topDec));
 
+type program =
+  | PROGRAM(topDec, option(program));
+
 type focus =
   | AtExp(atExp)
   | Exp(exp)
@@ -81,6 +84,7 @@ type focus =
   | TopDec(topDec)
   | ExpRow(expRow)
   | Record(record)
+  | Program(program)
   | Empty;
 
 type valEnv = list((vid, val_));
@@ -213,6 +217,12 @@ let step = (c: configuration): option(configuration) =>
     // [184ish]
     | { rewrite: { focus: TopDec(STRDEC(sd, None)), ctxts }, env } => Some({ rewrite: { focus: StrDec(sd),
     ctxts }, env })
+
+    /* Programs */
+    // [189ish]
+    | { rewrite: { focus: Program(PROGRAM(td, None)), ctxts }, env } => Some({ rewrite: { focus:
+    TopDec(td), ctxts }, env })
+
     | _ => None
   };
 

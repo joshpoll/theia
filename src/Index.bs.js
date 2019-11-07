@@ -1,11 +1,13 @@
 'use strict';
 
+var Json = require("@glennsl/bs-json/src/Json.bs.js");
 var List = require("bs-platform/lib/js/list.js");
 var React = require("react");
 var ReactDom = require("react-dom");
 var SML$ReasonReactExamples = require("./SML/SML.bs.js");
 var Theia$ReasonReactExamples = require("./Theia/Theia.bs.js");
 var SMLExamples$ReasonReactExamples = require("./SML/SMLExamples.bs.js");
+var HaMLet2SMLAM$ReasonReactExamples = require("./SML/HaMLet2SMLAM.bs.js");
 var SMLToTheiaIR$ReasonReactExamples = require("./SML/SMLToTheiaIR.bs.js");
 var ExampleStyles$ReasonReactExamples = require("./ExampleStyles.bs.js");
 
@@ -92,7 +94,13 @@ var tests_001 = /* :: */[
                       /* name */"ex10",
                       /* example */SMLExamples$ReasonReactExamples.ex10
                     ],
-                    /* [] */0
+                    /* :: */[
+                      /* record */[
+                        /* name */"ex11",
+                        /* example */SMLExamples$ReasonReactExamples.ex11
+                      ],
+                      /* [] */0
+                    ]
                   ]
                 ]
               ]
@@ -120,9 +128,16 @@ ReactDom.render(React.createElement(Theia$ReasonReactExamples.make, {
           theiaIRTraces: List.map(trace, tests)
         }), makeContainer("Theia"));
 
+var line = HaMLet2SMLAM$ReasonReactExamples.Decode.node(Json.parseOrRaise(HaMLet2SMLAM$ReasonReactExamples.testJson));
+
+console.log(line);
+
+console.log(HaMLet2SMLAM$ReasonReactExamples.compileProgram(line));
+
 exports.firaCode = firaCode;
 exports.style = style;
 exports.makeContainer = makeContainer;
 exports.tests = tests;
 exports.trace = trace;
+exports.line = line;
 /* firaCode Not a pure module */

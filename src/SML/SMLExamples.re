@@ -104,3 +104,10 @@ let ex10 = TopDec(
     )
     , None)
 );
+
+let ex11 =
+  HaMLet2SMLAM.testJson
+  |> Json.parseOrRaise
+  |> HaMLet2SMLAM.Decode.node
+  |> HaMLet2SMLAM.compileProgram
+  |> (x => Program(x));

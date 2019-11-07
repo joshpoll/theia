@@ -89,6 +89,11 @@ let compileTopDec = (td) =>
     | STRDEC(sd, None) => compileStrDec(sd)
   };
 
+let compileProgram = (p) =>
+  switch (p) {
+    | PROGRAM(td, None) => compileTopDec(td)
+  };
+
 let compileFocus = (f) =>
   switch (f) {
     | AtExp(a) => compileAtExp(a)
@@ -100,6 +105,7 @@ let compileFocus = (f) =>
     | TopDec(td) => compileTopDec(td)
     | ExpRow(er) => compileExpRow(er)
     | Record(r) => compileRecord(r)
+    | Program(p) => compileProgram(p)
     | Empty => Atom(<> </>)
   };
 

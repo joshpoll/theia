@@ -1,6 +1,10 @@
 'use strict';
 
+var Json = require("@glennsl/bs-json/src/Json.bs.js");
 var Block = require("bs-platform/lib/js/block.js");
+var HaMLet2SMLAM$ReasonReactExamples = require("./HaMLet2SMLAM.bs.js");
+
+var ex11 = /* Program */Block.__(9, [HaMLet2SMLAM$ReasonReactExamples.compileProgram(HaMLet2SMLAM$ReasonReactExamples.Decode.node(Json.parseOrRaise(HaMLet2SMLAM$ReasonReactExamples.testJson)))]);
 
 var ex0 = /* AtExp */Block.__(0, [/* SCON */Block.__(0, [/* INT */[5]])]);
 
@@ -254,4 +258,5 @@ exports.ex7 = ex7;
 exports.ex8 = ex8;
 exports.ex9 = ex9;
 exports.ex10 = ex10;
-/* No side effect */
+exports.ex11 = ex11;
+/* ex11 Not a pure module */

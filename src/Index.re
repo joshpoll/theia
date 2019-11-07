@@ -71,6 +71,7 @@ let tests =
     {name: "ex8", example: ex8},
     {name: "ex9", example: ex9},
     {name: "ex10", example: ex10},
+    {name: "ex11", example: ex11},
   ]
 
 let trace = ({name, example}) => Theia.{name, states: example |> SML.interpretTrace |> List.map(SMLToTheiaIR.smlToTheiaIR)};
@@ -79,3 +80,8 @@ ReactDOMRe.render(
   <Theia theiaIRTraces={List.map(trace, tests)} />,
   makeContainer("Theia"),
 );
+
+let line = HaMLet2SMLAM.testJson |> Json.parseOrRaise
+                |> HaMLet2SMLAM.Decode.node;
+Js.Console.log(line);
+Js.Console.log(line |> HaMLet2SMLAM.compileProgram);

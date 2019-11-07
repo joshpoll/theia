@@ -381,6 +381,20 @@ function compileTopDec(td) {
   return compileStrDec(td[0]);
 }
 
+function compileProgram(p) {
+  if (p[1] !== undefined) {
+    throw [
+          Caml_builtin_exceptions.match_failure,
+          /* tuple */[
+            "SMLToTheiaIR.re",
+            93,
+            2
+          ]
+        ];
+  }
+  return compileTopDec(p[0]);
+}
+
 function compileFocus(f) {
   if (typeof f === "number") {
     return /* Atom */Block.__(0, [React.createElement(React.Fragment, undefined)]);
@@ -404,6 +418,8 @@ function compileFocus(f) {
           return compileExpRow(f[0]);
       case /* Record */8 :
           return compileRecord(f[0]);
+      case /* Program */9 :
+          return compileProgram(f[0]);
       
     }
   }
@@ -683,6 +699,7 @@ exports.compileVal_ = compileVal_;
 exports.compileRecord = compileRecord;
 exports.compileStrDec = compileStrDec;
 exports.compileTopDec = compileTopDec;
+exports.compileProgram = compileProgram;
 exports.compileFocus = compileFocus;
 exports.compileCtxt = compileCtxt;
 exports.compileKVs = compileKVs;
