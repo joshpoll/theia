@@ -37,6 +37,23 @@ and compileExp = e =>
   | ATEXP(a) => compileAtExp(a)
   | APP(f, x) =>
     Apply2([<> </>, React.string(" "), <> </>], [compileExp(f), compileAtExp(x)])
+  | FN(m) => Apply2([React.string("fn "), <> </>], [compileMatch(m)])
+  }
+
+and compileMatch = m =>
+  switch (m) {
+  | MATCH(mr, None) => compileMRule(mr)
+  | MATCH(mr, Some(m)) =>
+    Apply2(
+      [<> </>, <> <br /> {React.string("| ")} </>, <> </>],
+      [compileMRule(mr), compileMatch(m)],
+    )
+  }
+
+and compileMRule = mr =>
+  switch (mr) {
+  | MRULE(p, e) =>
+    Apply2([<> </>, React.string(" => "), <> </>], [compilePat(p), compileExp(e)])
   }
 
 and compileDec = d =>

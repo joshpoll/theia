@@ -73,6 +73,38 @@ function compileAtExp(a) {
   }
 }
 
+function compileValBind(vb) {
+  if (vb[2] !== undefined) {
+    throw [
+          Caml_builtin_exceptions.match_failure,
+          /* tuple */[
+            "SMLToTheiaIR.re",
+            65,
+            2
+          ]
+        ];
+  }
+  return /* Apply2 */Block.__(1, [
+            /* :: */[
+              React.createElement(React.Fragment, undefined),
+              /* :: */[
+                " = ",
+                /* :: */[
+                  React.createElement(React.Fragment, undefined),
+                  /* [] */0
+                ]
+              ]
+            ],
+            /* :: */[
+              compileAtPat(vb[0][0]),
+              /* :: */[
+                compileExp(vb[1]),
+                /* [] */0
+              ]
+            ]
+          ]);
+}
+
 function compileExp(e) {
   switch (e.tag | 0) {
     case /* ATEXP */0 :
@@ -98,14 +130,19 @@ function compileExp(e) {
                   ]
                 ]);
     case /* FN */2 :
-        throw [
-              Caml_builtin_exceptions.match_failure,
-              /* tuple */[
-                "SMLToTheiaIR.re",
-                36,
-                2
-              ]
-            ];
+        return /* Apply2 */Block.__(1, [
+                  /* :: */[
+                    "fn ",
+                    /* :: */[
+                      React.createElement(React.Fragment, undefined),
+                      /* [] */0
+                    ]
+                  ],
+                  /* :: */[
+                    compileMatch(e[0]),
+                    /* [] */0
+                  ]
+                ]);
     
   }
 }
@@ -163,6 +200,10 @@ function compileExpRow(param) {
   }
 }
 
+function compileAtPat(a) {
+  return /* Atom */Block.__(0, [a[0]]);
+}
+
 function compileDec(d) {
   return /* Apply2 */Block.__(1, [
             /* :: */[
@@ -179,22 +220,40 @@ function compileDec(d) {
           ]);
 }
 
-function compileValBind(vb) {
-  if (vb[2] !== undefined) {
-    throw [
-          Caml_builtin_exceptions.match_failure,
-          /* tuple */[
-            "SMLToTheiaIR.re",
-            48,
-            2
-          ]
-        ];
+function compileMatch(m) {
+  var match = m[1];
+  var mr = m[0];
+  if (match !== undefined) {
+    return /* Apply2 */Block.__(1, [
+              /* :: */[
+                React.createElement(React.Fragment, undefined),
+                /* :: */[
+                  React.createElement(React.Fragment, undefined, React.createElement("br", undefined), "| "),
+                  /* :: */[
+                    React.createElement(React.Fragment, undefined),
+                    /* [] */0
+                  ]
+                ]
+              ],
+              /* :: */[
+                compileMRule(mr),
+                /* :: */[
+                  compileMatch(match),
+                  /* [] */0
+                ]
+              ]
+            ]);
+  } else {
+    return compileMRule(mr);
   }
+}
+
+function compileMRule(mr) {
   return /* Apply2 */Block.__(1, [
             /* :: */[
               React.createElement(React.Fragment, undefined),
               /* :: */[
-                " = ",
+                " => ",
                 /* :: */[
                   React.createElement(React.Fragment, undefined),
                   /* [] */0
@@ -202,17 +261,13 @@ function compileValBind(vb) {
               ]
             ],
             /* :: */[
-              compileAtPat(vb[0][0]),
+              compileAtPat(mr[0][0]),
               /* :: */[
-                compileExp(vb[1]),
+                compileExp(mr[1]),
                 /* [] */0
               ]
             ]
           ]);
-}
-
-function compileAtPat(a) {
-  return /* Atom */Block.__(0, [a[0]]);
 }
 
 function compilePat(p) {
@@ -378,7 +433,7 @@ function compileTopDec(td) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "SMLToTheiaIR.re",
-            101,
+            118,
             2
           ]
         ];
@@ -392,7 +447,7 @@ function compileProgram(param) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "SMLToTheiaIR.re",
-            105,
+            122,
             21
           ]
         ];
@@ -693,6 +748,8 @@ exports.compileSCon = compileSCon;
 exports.compileAtExp = compileAtExp;
 exports.compileExpRow = compileExpRow;
 exports.compileExp = compileExp;
+exports.compileMatch = compileMatch;
+exports.compileMRule = compileMRule;
 exports.compileDec = compileDec;
 exports.compileValBind = compileValBind;
 exports.compileAtPat = compileAtPat;

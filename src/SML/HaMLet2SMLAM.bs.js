@@ -69,7 +69,7 @@ function plainvalbind(json) {
             Json_decode.field("sourceMap", sourceMap, json),
             Json_decode.field("args", (function (param) {
                     return Json_decode.tuple3(node, node, (function (param) {
-                                  return Json_decode.nullAs(undefined, param);
+                                  return Json_decode.optional(node, param);
                                 }), param);
                   }), json)
           ]);
@@ -83,7 +83,7 @@ function valdec(json) {
   return /* VALDec */Block.__(8, [
             Json_decode.field("sourceMap", sourceMap, json),
             Json_decode.field("args", (function (param) {
-                    return Json_decode.tuple2(node, node, param);
+                    return Json_decode.pair(node, node, param);
                   }), json)
           ]);
 }
@@ -102,7 +102,7 @@ function strdectopdec(json) {
             Json_decode.field("sourceMap", sourceMap, json),
             Json_decode.field("args", (function (param) {
                     return Json_decode.pair(node, (function (param) {
-                                  return Json_decode.nullAs(undefined, param);
+                                  return Json_decode.optional(node, param);
                                 }), param);
                   }), json)
           ]);
@@ -113,7 +113,7 @@ function program(json) {
             Json_decode.field("sourceMap", sourceMap, json),
             Json_decode.field("args", (function (param) {
                     return Json_decode.pair(node, (function (param) {
-                                  return Json_decode.nullAs(undefined, param);
+                                  return Json_decode.optional(node, param);
                                 }), param);
                   }), json)
           ]);
@@ -141,7 +141,7 @@ function appexp(json) {
   return /* APPExp */Block.__(14, [
             Json_decode.field("sourceMap", sourceMap, json),
             Json_decode.field("args", (function (param) {
-                    return Json_decode.tuple2(node, node, param);
+                    return Json_decode.pair(node, node, param);
                   }), json)
           ]);
 }
@@ -152,6 +152,35 @@ function paratexp(json) {
             List.hd(Json_decode.field("args", (function (param) {
                         return Json_decode.list(node, param);
                       }), json))
+          ]);
+}
+
+function fnexp(json) {
+  return /* FNExp */Block.__(16, [
+            Json_decode.field("sourceMap", sourceMap, json),
+            List.hd(Json_decode.field("args", (function (param) {
+                        return Json_decode.list(node, param);
+                      }), json))
+          ]);
+}
+
+function match_(json) {
+  return /* Match */Block.__(17, [
+            Json_decode.field("sourceMap", sourceMap, json),
+            Json_decode.field("args", (function (param) {
+                    return Json_decode.pair(node, (function (param) {
+                                  return Json_decode.optional(node, param);
+                                }), param);
+                  }), json)
+          ]);
+}
+
+function mrule(json) {
+  return /* Mrule */Block.__(18, [
+            Json_decode.field("sourceMap", sourceMap, json),
+            Json_decode.field("args", (function (param) {
+                    return Json_decode.pair(node, node, param);
+                  }), json)
           ]);
 }
 
@@ -166,6 +195,8 @@ function node(json) {
                       return atpat;
                   case "DECStrDec" :
                       return decstrdec;
+                  case "FNExp" :
+                      return fnexp;
                   case "IDAtExp" :
                       return idatexp;
                   case "IDAtPat" :
@@ -176,6 +207,10 @@ function node(json) {
                       return letatexp;
                   case "LongVId" :
                       return longvid;
+                  case "Match" :
+                      return match_;
+                  case "Mrule" :
+                      return mrule;
                   case "PARAtExp" :
                       return paratexp;
                   case "PLAINValBind" :
@@ -216,6 +251,9 @@ var Decode = {
   idatexp: idatexp,
   appexp: appexp,
   paratexp: paratexp,
+  fnexp: fnexp,
+  match_: match_,
+  mrule: mrule,
   node: node
 };
 
@@ -240,7 +278,7 @@ function compileProgram(p) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            142,
+            160,
             2
           ]
         ];
@@ -268,7 +306,7 @@ function compileTopDec(td) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            149,
+            167,
             2
           ]
         ];
@@ -283,7 +321,7 @@ function compileStrDec(sd) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            155,
+            173,
             2
           ]
         ];
@@ -298,7 +336,7 @@ function compileDec(d) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            160,
+            178,
             2
           ]
         ];
@@ -329,7 +367,7 @@ function compileValBind(vb) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            165,
+            183,
             2
           ]
         ];
@@ -344,7 +382,7 @@ function compilePat(p) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            172,
+            190,
             2
           ]
         ];
@@ -359,7 +397,7 @@ function compileAtPat(ap) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            177,
+            195,
             2
           ]
         ];
@@ -374,7 +412,54 @@ function compileLongVId(x) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            182,
+            200,
+            2
+          ]
+        ];
+  }
+}
+
+function compileMatch(m) {
+  if (m.tag === /* Match */17) {
+    var match = m[1];
+    var match$1 = match[1];
+    var mr = match[0];
+    if (match$1 !== undefined) {
+      return /* MATCH */[
+              compileMRule(mr),
+              compileMatch(match$1)
+            ];
+    } else {
+      return /* MATCH */[
+              compileMRule(mr),
+              undefined
+            ];
+    }
+  } else {
+    throw [
+          Caml_builtin_exceptions.match_failure,
+          /* tuple */[
+            "HaMLet2SMLAM.re",
+            205,
+            2
+          ]
+        ];
+  }
+}
+
+function compileMRule(mr) {
+  if (mr.tag === /* Mrule */18) {
+    var match = mr[1];
+    return /* MRULE */[
+            compilePat(match[0]),
+            compileExp(match[1])
+          ];
+  } else {
+    throw [
+          Caml_builtin_exceptions.match_failure,
+          /* tuple */[
+            "HaMLet2SMLAM.re",
+            211,
             2
           ]
         ];
@@ -391,12 +476,14 @@ function compileExp(e) {
                   compileExp(match[0]),
                   compileAtExp(match[1])
                 ]);
+    case /* FNExp */16 :
+        return /* FN */Block.__(2, [compileMatch(e[1])]);
     default:
       throw [
             Caml_builtin_exceptions.match_failure,
             /* tuple */[
               "HaMLet2SMLAM.re",
-              187,
+              216,
               2
             ]
           ];
@@ -422,7 +509,7 @@ function compileAtExp(a) {
             Caml_builtin_exceptions.match_failure,
             /* tuple */[
               "HaMLet2SMLAM.re",
-              193,
+              223,
               2
             ]
           ];
@@ -435,7 +522,7 @@ function compileSCon(sc) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            201,
+            231,
             2
           ]
         ];
@@ -453,6 +540,8 @@ exports.compileValBind = compileValBind;
 exports.compilePat = compilePat;
 exports.compileAtPat = compileAtPat;
 exports.compileLongVId = compileLongVId;
+exports.compileMatch = compileMatch;
+exports.compileMRule = compileMRule;
 exports.compileExp = compileExp;
 exports.compileAtExp = compileAtExp;
 exports.compileSCon = compileSCon;

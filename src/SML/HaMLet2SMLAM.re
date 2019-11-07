@@ -23,7 +23,10 @@ type ast =
   | LETAtExp(sourceMap, (ast, ast))
   | IDAtExp(sourceMap, ast)
   | APPExp(sourceMap, (ast, ast))
-  | PARAtExp(sourceMap, ast);
+  | PARAtExp(sourceMap, ast)
+  | FNExp(sourceMap, ast)
+  | Match(sourceMap, (ast, option(ast)))
+  | Mrule(sourceMap, (ast, ast));
 
 module Decode = {
   open Json.Decode;
@@ -64,13 +67,13 @@ module Decode = {
     PLAINValBind(
       json |> field("sourceMap", sourceMap),
       /* TOOD: assumes last argument is null always */
-      json |> field("args", tuple3(node, node, nullAs(None))),
+      json |> field("args", tuple3(node, node, optional(node))),
     )
 
   and seq = json => Seq(json |> field("sourceMap", sourceMap))
 
   and valdec = json =>
-    VALDec(json |> field("sourceMap", sourceMap), json |> field("args", tuple2(node, node)))
+    VALDec(json |> field("sourceMap", sourceMap), json |> field("args", pair(node, node)))
 
   and decstrdec = json =>
     DECStrDec(
@@ -81,13 +84,13 @@ module Decode = {
   and strdectopdec = json =>
     STRDECTopDec(
       json |> field("sourceMap", sourceMap),
-      json |> field("args", pair(node, nullAs(None))),
+      json |> field("args", pair(node, optional(node))),
     )
 
   and program = json =>
     Program(
       json |> field("sourceMap", sourceMap),
-      json |> field("args", pair(node, nullAs(None))),
+      json |> field("args", pair(node, optional(node))),
     )
 
   and letatexp = json =>
@@ -100,13 +103,25 @@ module Decode = {
     )
 
   and appexp = json =>
-    APPExp(json |> field("sourceMap", sourceMap), json |> field("args", tuple2(node, node)))
+    APPExp(json |> field("sourceMap", sourceMap), json |> field("args", pair(node, node)))
 
   and paratexp = json =>
     PARAtExp(
       json |> field("sourceMap", sourceMap),
       json |> field("args", list(node)) |> List.hd,
     )
+
+  and fnexp = json =>
+    FNExp(json |> field("sourceMap", sourceMap), json |> field("args", list(node)) |> List.hd)
+
+  and match = json =>
+    Match(
+      json |> field("sourceMap", sourceMap),
+      json |> field("args", pair(node, optional(node))),
+    )
+
+  and mrule = json =>
+    Mrule(json |> field("sourceMap", sourceMap), json |> field("args", pair(node, node)))
 
   and node = json => {
     (
@@ -129,6 +144,9 @@ module Decode = {
            | "IDAtExp" => idatexp
            | "APPExp" => appexp
            | "PARAtExp" => paratexp
+           | "FNExp" => fnexp
+           | "Match" => match
+           | "Mrule" => mrule
            | _ => failwith("Unknown node type: " ++ s)
            }
          )
@@ -183,10 +201,22 @@ and compileLongVId = x =>
   | LongVId(x) => x
   }
 
+and compileMatch = m =>
+  switch (m) {
+  | Match(_, (mr, None)) => SML.MATCH(compileMRule(mr), None)
+  | Match(_, (mr, Some(m))) => SML.MATCH(compileMRule(mr), Some(compileMatch(m)))
+  }
+
+and compileMRule = mr =>
+  switch (mr) {
+  | Mrule(_, (p, e)) => SML.MRULE(compilePat(p), compileExp(e))
+  }
+
 and compileExp = e =>
   switch (e) {
   | ATExp(_, a) => SML.ATEXP(compileAtExp(a))
   | APPExp(_, (e, a)) => SML.APP(compileExp(e), compileAtExp(a))
+  | FNExp(_, m) => SML.FN(compileMatch(m))
   }
 
 and compileAtExp = a =>
