@@ -6,12 +6,6 @@ var React = require("react");
 var Pervasives = require("bs-platform/lib/js/pervasives.js");
 var Caml_builtin_exceptions = require("bs-platform/lib/js/caml_builtin_exceptions.js");
 
-var sorry = /* Atom */Block.__(0, ["sorry"]);
-
-function sorryFn(param) {
-  return sorry;
-}
-
 function compileSCon(sc) {
   return /* Atom */Block.__(0, [String(sc[0])]);
 }
@@ -61,7 +55,7 @@ function compileAtExp(a) {
                     ]
                   ]
                 ]);
-    case /* PARA */4 :
+    case /* PAR */4 :
         return /* Apply2 */Block.__(1, [
                   /* :: */[
                     "(",
@@ -79,72 +73,47 @@ function compileAtExp(a) {
   }
 }
 
-function compileValBind(vb) {
-  if (vb[2] !== undefined) {
-    throw [
-          Caml_builtin_exceptions.match_failure,
-          /* tuple */[
-            "SMLToTheiaIR.re",
-            53,
-            2
-          ]
-        ];
-  }
-  return /* Apply2 */Block.__(1, [
-            /* :: */[
-              React.createElement(React.Fragment, undefined),
-              /* :: */[
-                " = ",
-                /* :: */[
-                  React.createElement(React.Fragment, undefined),
-                  /* [] */0
-                ]
-              ]
-            ],
-            /* :: */[
-              compileAtPat(vb[0][0]),
-              /* :: */[
-                compileExp(vb[1]),
-                /* [] */0
-              ]
-            ]
-          ]);
-}
-
-function compileAtPat(a) {
-  return /* Atom */Block.__(0, [a[0]]);
-}
-
 function compileExp(e) {
-  if (e.tag) {
-    return /* Apply2 */Block.__(1, [
-              /* :: */[
-                React.createElement(React.Fragment, undefined),
-                /* :: */[
-                  " ",
+  switch (e.tag | 0) {
+    case /* ATEXP */0 :
+        return compileAtExp(e[0]);
+    case /* APP */1 :
+        return /* Apply2 */Block.__(1, [
                   /* :: */[
                     React.createElement(React.Fragment, undefined),
-                    /* [] */0
+                    /* :: */[
+                      " ",
+                      /* :: */[
+                        React.createElement(React.Fragment, undefined),
+                        /* [] */0
+                      ]
+                    ]
+                  ],
+                  /* :: */[
+                    compileExp(e[0]),
+                    /* :: */[
+                      compileAtExp(e[1]),
+                      /* [] */0
+                    ]
                   ]
-                ]
-              ],
-              /* :: */[
-                compileExp(e[0]),
-                /* :: */[
-                  compileAtExp(e[1]),
-                  /* [] */0
-                ]
+                ]);
+    case /* FN */2 :
+        throw [
+              Caml_builtin_exceptions.match_failure,
+              /* tuple */[
+                "SMLToTheiaIR.re",
+                36,
+                2
               ]
-            ]);
-  } else {
-    return compileAtExp(e[0]);
+            ];
+    
   }
 }
 
 function compileExpRow(param) {
-  var rest = param[/* rest */2];
-  var exp = param[/* exp */1];
-  var lab = param[/* lab */0];
+  var rest = param[2];
+  var exp = param[1];
+  var lab = param[0];
   if (rest !== undefined) {
     return /* Apply2 */Block.__(1, [
               /* :: */[
@@ -208,6 +177,42 @@ function compileDec(d) {
               /* [] */0
             ]
           ]);
+}
+
+function compileValBind(vb) {
+  if (vb[2] !== undefined) {
+    throw [
+          Caml_builtin_exceptions.match_failure,
+          /* tuple */[
+            "SMLToTheiaIR.re",
+            48,
+            2
+          ]
+        ];
+  }
+  return /* Apply2 */Block.__(1, [
+            /* :: */[
+              React.createElement(React.Fragment, undefined),
+              /* :: */[
+                " = ",
+                /* :: */[
+                  React.createElement(React.Fragment, undefined),
+                  /* [] */0
+                ]
+              ]
+            ],
+            /* :: */[
+              compileAtPat(vb[0][0]),
+              /* :: */[
+                compileExp(vb[1]),
+                /* [] */0
+              ]
+            ]
+          ]);
+}
+
+function compileAtPat(a) {
+  return /* Atom */Block.__(0, [a[0]]);
 }
 
 function compilePat(p) {
@@ -373,7 +378,7 @@ function compileTopDec(td) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "SMLToTheiaIR.re",
-            106,
+            101,
             2
           ]
         ];
@@ -381,18 +386,18 @@ function compileTopDec(td) {
   return compileStrDec(td[0]);
 }
 
-function compileProgram(p) {
-  if (p[1] !== undefined) {
+function compileProgram(param) {
+  if (param[/* rest */1] !== undefined) {
     throw [
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "SMLToTheiaIR.re",
-            111,
-            2
+            105,
+            21
           ]
         ];
   }
-  return compileTopDec(p[0]);
+  return compileTopDec(param[/* topDec */0]);
 }
 
 function compileFocus(f) {
@@ -684,8 +689,6 @@ function smlToTheiaIR(param) {
             ]]);
 }
 
-exports.sorry = sorry;
-exports.sorryFn = sorryFn;
 exports.compileSCon = compileSCon;
 exports.compileAtExp = compileAtExp;
 exports.compileExpRow = compileExpRow;

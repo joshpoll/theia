@@ -31,17 +31,21 @@ type atExp =
   | ID(vid)
   | RECORD(option(expRow))
   | LET(dec, exp)
-  | PARA(exp)
+  | PAR(exp)
 
-and expRow = {
-  lab,
-  exp,
-  rest: option(expRow),
-}
+and expRow =
+  | EXPROW(lab, exp, option(expRow))
 
 and exp =
   | ATEXP(atExp)
   | APP(exp, atExp)
+  | FN(match)
+
+and match =
+  | MATCH(mrule, option(match))
+
+and mrule =
+  | MRULE(pat, exp)
 
 and dec =
   /* no tyvar seq */
@@ -74,8 +78,10 @@ type strDec =
 type topDec =
   | STRDEC(strDec, option(topDec));
 
-type program =
-  | PROGRAM(topDec, option(program));
+type program = {
+  topDec,
+  rest: option(program),
+};
 
 type focus =
   | AtExp(atExp)
@@ -194,7 +200,7 @@ let step = (c: configuration): option(configuration) =>
     })
 
   // [94]
-  | {rewrite: {focus: AtExp(PARA(e)), ctxts}, env} =>
+  | {rewrite: {focus: AtExp(PAR(e)), ctxts}, env} =>
     Some({
       rewrite: {
         focus: Exp(e),
@@ -206,23 +212,26 @@ let step = (c: configuration): option(configuration) =>
   /* Expression Rows */
   // [95]
   // start visiting
-  | {rewrite: {focus: ExpRow({lab, exp, rest}), ctxts}, env} =>
+  | {rewrite: {focus: ExpRow(EXPROW(l, e, r)), ctxts}, env} =>
     Some({
       rewrite: {
-        focus: Exp(exp),
-        ctxts: [EXPROWE([], lab, (), rest), ...ctxts],
+        focus: Exp(e),
+        ctxts: [EXPROWE([], l, (), r), ...ctxts],
       },
       env,
     })
   // mid visiting
   | {
-      rewrite: {focus: Val(v), ctxts: [EXPROWE(r, l, (), Some({lab, exp, rest})), ...ctxts]},
+      rewrite: {
+        focus: Val(v),
+        ctxts: [EXPROWE(r, l1, (), Some(EXPROW(l2, e, rest))), ...ctxts],
+      },
       env,
     } =>
     Some({
       rewrite: {
-        focus: Exp(exp),
-        ctxts: [EXPROWE(r @ [(l, v)], lab, (), rest), ...ctxts],
+        focus: Exp(e),
+        ctxts: [EXPROWE(r @ [(l1, v)], l2, (), rest), ...ctxts],
       },
       env,
     })
@@ -364,10 +373,10 @@ let step = (c: configuration): option(configuration) =>
 
   /* Programs */
   // [189ish]
-  | {rewrite: {focus: Program(PROGRAM(td, None)), ctxts}, env} =>
+  | {rewrite: {focus: Program({topDec, rest: None}), ctxts}, env} =>
     Some({
       rewrite: {
-        focus: TopDec(td),
+        focus: TopDec(topDec),
         ctxts,
       },
       env,
@@ -406,8 +415,4 @@ let interpretTraceBounded = (~maxDepth=100, p) =>
     TheiaUtil.iterateMaybeMaxDepth(maxDepth, step, inject(p)),
   );
 let interpretTrace = p =>
-  TheiaUtil.takeWhileInclusive(c => !isFinal(c), TheiaUtil.iterateMaybe(step, inject(p))) /*   }*/;
-
-// let extract = (c) =>
-//   switch (c) {
-//     | {frames: [{rewrite: {rewrite: Some(Value(VInt(n)))}}]} => string_of_int(n)
+  TheiaUtil.takeWhileInclusive(c => !isFinal(c), TheiaUtil.iterateMaybe(step, inject(p))) /*   }*/ /*   switch (c) */ /*     | {frames: [{rewrite: {rewrite: Some(Value(VInt(n)))}}]} => string_of_int(n*/ /* let extract = (c) =*/;

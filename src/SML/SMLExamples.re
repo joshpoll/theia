@@ -92,16 +92,14 @@ let ex3 =
 /* {} () */
 let ex4 = AtExp(RECORD(None));
 /* { 1=5 } (5,) */
-let ex5 = AtExp(RECORD(Some({lab: "1", exp: ATEXP(SCON(INT(5))), rest: None})));
+let ex5 = AtExp(RECORD(Some(EXPROW("1", ATEXP(SCON(INT(5))), None))));
 /* { 1=5, 2=78 } (5, 78) */
 let ex6 =
   AtExp(
     RECORD(
-      Some({
-        lab: "1",
-        exp: ATEXP(SCON(INT(5))),
-        rest: Some({lab: "2", exp: ATEXP(SCON(INT(78))), rest: None}),
-      }),
+      Some(
+        EXPROW("1", ATEXP(SCON(INT(5))), Some(EXPROW("2", ATEXP(SCON(INT(78))), None))),
+      ),
     ),
   );
 
@@ -124,11 +122,13 @@ let ex7 =
                 APP(
                   ATEXP(ID("+")),
                   RECORD(
-                    Some({
-                      lab: "1",
-                      exp: ATEXP(SCON(INT(5))),
-                      rest: Some({lab: "2", exp: ATEXP(SCON(INT(78))), rest: None}),
-                    }),
+                    Some(
+                      EXPROW(
+                        "1",
+                        ATEXP(SCON(INT(5))),
+                        Some(EXPROW("2", ATEXP(SCON(INT(78))), None)),
+                      ),
+                    ),
                   ),
                 ),
                 None,
@@ -160,45 +160,49 @@ let ex8 =
                 APP(
                   ATEXP(ID("+")),
                   RECORD(
-                    Some({
-                      lab: "1",
-                      exp:
+                    Some(
+                      EXPROW(
+                        "1",
                         ATEXP(
-                          PARA(
+                          PAR(
                             APP(
                               ATEXP(ID("+")),
                               RECORD(
-                                Some({
-                                  lab: "1",
-                                  exp: ATEXP(ID("x")),
-                                  rest: Some({lab: "2", exp: ATEXP(ID("y")), rest: None}),
-                                }),
-                              ),
-                            ),
-                          ),
-                        ),
-                      rest:
-                        Some({
-                          lab: "2",
-                          exp:
-                            ATEXP(
-                              PARA(
-                                APP(
-                                  ATEXP(ID("+")),
-                                  RECORD(
-                                    Some({
-                                      lab: "1",
-                                      exp: ATEXP(ID("y")),
-                                      rest:
-                                        Some({lab: "2", exp: ATEXP(SCON(INT(2))), rest: None}),
-                                    }),
+                                Some(
+                                  EXPROW(
+                                    "1",
+                                    ATEXP(ID("x")),
+                                    Some(EXPROW("2", ATEXP(ID("y")), None)),
                                   ),
                                 ),
                               ),
                             ),
-                          rest: None,
-                        }),
-                    }),
+                          ),
+                        ),
+                        Some(
+                          EXPROW(
+                            "2",
+                            ATEXP(
+                              PAR(
+                                APP(
+                                  ATEXP(ID("+")),
+                                  RECORD(
+                                    Some(
+                                      EXPROW(
+                                        "1",
+                                        ATEXP(ID("y")),
+                                        Some(EXPROW("2", ATEXP(SCON(INT(2))), None)),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            None,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 None,
@@ -232,49 +236,49 @@ let ex9 =
                   APP(
                     ATEXP(ID("+")),
                     RECORD(
-                      Some({
-                        lab: "1",
-                        exp:
+                      Some(
+                        EXPROW(
+                          "1",
                           ATEXP(
-                            PARA(
+                            PAR(
                               APP(
                                 ATEXP(ID("+")),
                                 RECORD(
-                                  Some({
-                                    lab: "1",
-                                    exp: ATEXP(ID("x")),
-                                    rest: Some({lab: "2", exp: ATEXP(ID("y")), rest: None}),
-                                  }),
-                                ),
-                              ),
-                            ),
-                          ),
-                        rest:
-                          Some({
-                            lab: "2",
-                            exp:
-                              ATEXP(
-                                PARA(
-                                  APP(
-                                    ATEXP(ID("+")),
-                                    RECORD(
-                                      Some({
-                                        lab: "1",
-                                        exp: ATEXP(ID("y")),
-                                        rest:
-                                          Some({
-                                            lab: "2",
-                                            exp: ATEXP(SCON(INT(2))),
-                                            rest: None,
-                                          }),
-                                      }),
+                                  Some(
+                                    EXPROW(
+                                      "1",
+                                      ATEXP(ID("x")),
+                                      Some(EXPROW("2", ATEXP(ID("y")), None)),
                                     ),
                                   ),
                                 ),
                               ),
-                            rest: None,
-                          }),
-                      }),
+                            ),
+                          ),
+                          Some(
+                            EXPROW(
+                              "2",
+                              ATEXP(
+                                PAR(
+                                  APP(
+                                    ATEXP(ID("+")),
+                                    RECORD(
+                                      Some(
+                                        EXPROW(
+                                          "1",
+                                          ATEXP(ID("y")),
+                                          Some(EXPROW("2", ATEXP(SCON(INT(2))), None)),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              None,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   None,
@@ -288,11 +292,13 @@ let ex9 =
                   APP(
                     ATEXP(ID("+")),
                     RECORD(
-                      Some({
-                        lab: "1",
-                        exp: ATEXP(ID("z")),
-                        rest: Some({lab: "2", exp: ATEXP(SCON(INT(1))), rest: None}),
-                      }),
+                      Some(
+                        EXPROW(
+                          "1",
+                          ATEXP(ID("z")),
+                          Some(EXPROW("2", ATEXP(SCON(INT(1))), None)),
+                        ),
+                      ),
                     ),
                   ),
                   None,
@@ -319,3 +325,136 @@ let ex10 =
       None,
     ),
   );
+
+let exITE = {|
+{"node": "Program", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 22 }, "args": [
+  {"node": "STRDECTopDec", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 21 }, "args": [
+    {"node": "DECStrDec", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 21 }, "args": [
+      {"node": "VALDec", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 21 }, "args": [
+        {"node": "Seq", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
+        ]}
+,        {"node": "PLAINValBind", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 21 }, "args": [
+          {"node": "ATPat", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
+            {"node": "IDAtPat", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
+              {"node": "LongVId", "args": ["it"]}
+            ]}
+          ]}
+,          {"node": "APPExp", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 21 }, "args": [
+            {"node": "ATExp", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 13, "line2": 1, "col2": 21 }, "args": [
+              {"node": "PARAtExp", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 13, "line2": 1, "col2": 21 }, "args": [
+                {"node": "FNExp", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 13, "line2": 1, "col2": 21 }, "args": [
+                  {"node": "Match", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 13, "line2": 1, "col2": 21 }, "args": [
+                    {"node": "Mrule", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 13, "line2": 1, "col2": 14 }, "args": [
+                      {"node": "ATPat", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 13, "line2": 1, "col2": 14 }, "args": [
+                        {"node": "IDAtPat", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 13, "line2": 1, "col2": 14 }, "args": [
+                          {"node": "LongVId", "args": ["true"]}
+                        ]}
+                      ]}
+,                      {"node": "ATExp", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 13, "line2": 1, "col2": 14 }, "args": [
+                        {"node": "SCONAtExp", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 13, "line2": 1, "col2": 14 }, "args": [
+                          {"node": "INTSCon", "args": [1]}
+                        ]}
+                      ]}
+                    ]}
+,                    {"node": "Match", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 20, "line2": 1, "col2": 21 }, "args": [
+                      {"node": "Mrule", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 20, "line2": 1, "col2": 21 }, "args": [
+                        {"node": "ATPat", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 20, "line2": 1, "col2": 21 }, "args": [
+                          {"node": "IDAtPat", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 20, "line2": 1, "col2": 21 }, "args": [
+                            {"node": "LongVId", "args": ["false"]}
+                          ]}
+                        ]}
+,                        {"node": "ATExp", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 20, "line2": 1, "col2": 21 }, "args": [
+                          {"node": "SCONAtExp", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 20, "line2": 1, "col2": 21 }, "args": [
+                            {"node": "INTSCon", "args": [2]}
+                          ]}
+                        ]}
+                      ]}
+,null                    ]}
+                  ]}
+                ]}
+              ]}
+            ]}
+,            {"node": "PARAtExp", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 3, "line2": 1, "col2": 7 }, "args": [
+              {"node": "ATExp", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 3, "line2": 1, "col2": 7 }, "args": [
+                {"node": "IDAtExp", "sourceMap": { "file": "../theia/src/SML/examples/ite.sml", "line1": 1, "col1": 3, "line2": 1, "col2": 7 }, "args": [
+                  {"node": "LongVId", "args": ["true"]}
+                ]}
+              ]}
+            ]}
+          ]}
+,null        ]}
+      ]}
+    ]}
+,null  ]}
+,null]}
+|};
+
+let exId = {|
+{"node": "Program", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 13 }, "args": [
+  {"node": "STRDECTopDec", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 12 }, "args": [
+    {"node": "DECStrDec", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 12 }, "args": [
+      {"node": "VALDec", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 12 }, "args": [
+        {"node": "Seq", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 12, "line2": 1, "col2": 12 }, "args": [
+        ]}
+,        {"node": "RECValBind", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 4, "line2": 1, "col2": 12 }, "args": [
+          {"node": "PLAINValBind", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 4, "line2": 1, "col2": 12 }, "args": [
+            {"node": "ATPat", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 4, "line2": 1, "col2": 6 }, "args": [
+              {"node": "IDAtPat", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 4, "line2": 1, "col2": 6 }, "args": [
+                {"node": "LongVId", "args": ["id"]}
+              ]}
+            ]}
+,            {"node": "FNExp", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 8 }, "args": [
+              {"node": "Match", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 8 }, "args": [
+                {"node": "Mrule", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 8 }, "args": [
+                  {"node": "ATPat", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 8 }, "args": [
+                    {"node": "IDAtPat", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 8 }, "args": [
+                      {"node": "LongVId", "args": ["_id10576"]}
+                    ]}
+                  ]}
+,                  {"node": "APPExp", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 12 }, "args": [
+                    {"node": "ATExp", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 12 }, "args": [
+                      {"node": "PARAtExp", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 12 }, "args": [
+                        {"node": "FNExp", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 12 }, "args": [
+                          {"node": "Match", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 12 }, "args": [
+                            {"node": "Mrule", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 12 }, "args": [
+                              {"node": "ATPat", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 8 }, "args": [
+                                {"node": "PARAtPat", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 8 }, "args": [
+                                  {"node": "ATPat", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 8 }, "args": [
+                                    {"node": "IDAtPat", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 8 }, "args": [
+                                      {"node": "LongVId", "args": ["x"]}
+                                    ]}
+                                  ]}
+                                ]}
+                              ]}
+,                              {"node": "ATExp", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 11, "line2": 1, "col2": 12 }, "args": [
+                                {"node": "IDAtExp", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 11, "line2": 1, "col2": 12 }, "args": [
+                                  {"node": "LongVId", "args": ["x"]}
+                                ]}
+                              ]}
+                            ]}
+,null                          ]}
+                        ]}
+                      ]}
+                    ]}
+,                    {"node": "PARAtExp", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 8 }, "args": [
+                      {"node": "ATExp", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 8 }, "args": [
+                        {"node": "PARAtExp", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 8 }, "args": [
+                          {"node": "ATExp", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 8 }, "args": [
+                            {"node": "IDAtExp", "sourceMap": { "file": "../theia/src/SML/examples/id.sml", "line1": 1, "col1": 7, "line2": 1, "col2": 8 }, "args": [
+                              {"node": "LongVId", "args": ["_id10576"]}
+                            ]}
+                          ]}
+                        ]}
+                      ]}
+                    ]}
+                  ]}
+                ]}
+,null              ]}
+            ]}
+,null          ]}
+        ]}
+      ]}
+    ]}
+,null  ]}
+,null]}
+|};

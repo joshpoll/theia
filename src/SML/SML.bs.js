@@ -153,7 +153,7 @@ function step(c) {
                         ],
                         /* env */c[/* env */1]
                       ];
-            case /* PARA */4 :
+            case /* PAR */4 :
                 return /* record */[
                         /* rewrite : record */[
                           /* focus : Exp */Block.__(1, [match$4[0]]),
@@ -165,28 +165,32 @@ function step(c) {
           }
       case /* Exp */1 :
           var match$7 = match$1[0];
-          if (match$7.tag) {
-            return /* record */[
-                    /* rewrite : record */[
-                      /* focus : Exp */Block.__(1, [match$7[0]]),
-                      /* ctxts : :: */[
-                        /* APPL */Block.__(3, [
-                            /* () */0,
-                            match$7[1]
-                          ]),
-                        match[/* ctxts */1]
-                      ]
-                    ],
-                    /* env */c[/* env */1]
-                  ];
-          } else {
-            return /* record */[
-                    /* rewrite : record */[
-                      /* focus : AtExp */Block.__(0, [match$7[0]]),
-                      /* ctxts */match[/* ctxts */1]
-                    ],
-                    /* env */c[/* env */1]
-                  ];
+          switch (match$7.tag | 0) {
+            case /* ATEXP */0 :
+                return /* record */[
+                        /* rewrite : record */[
+                          /* focus : AtExp */Block.__(0, [match$7[0]]),
+                          /* ctxts */match[/* ctxts */1]
+                        ],
+                        /* env */c[/* env */1]
+                      ];
+            case /* APP */1 :
+                return /* record */[
+                        /* rewrite : record */[
+                          /* focus : Exp */Block.__(1, [match$7[0]]),
+                          /* ctxts : :: */[
+                            /* APPL */Block.__(3, [
+                                /* () */0,
+                                match$7[1]
+                              ]),
+                            match[/* ctxts */1]
+                          ]
+                        ],
+                        /* env */c[/* env */1]
+                      ];
+            case /* FN */2 :
+                return ;
+            
           }
       case /* Val */2 :
           var v = match$1[0];
@@ -252,25 +256,25 @@ function step(c) {
                   }
               case /* EXPROWE */6 :
                   var match$12 = match$9[3];
-                  var l = match$9[1];
+                  var l1 = match$9[1];
                   var r = match$9[0];
                   if (match$12 !== undefined) {
                     var match$13 = match$12;
                     return /* record */[
                             /* rewrite : record */[
-                              /* focus : Exp */Block.__(1, [match$13[/* exp */1]]),
+                              /* focus : Exp */Block.__(1, [match$13[1]]),
                               /* ctxts : :: */[
                                 /* EXPROWE */Block.__(6, [
                                     Pervasives.$at(r, /* :: */[
                                           /* tuple */[
-                                            l,
+                                            l1,
                                             v
                                           ],
                                           /* [] */0
                                         ]),
-                                    match$13[/* lab */0],
+                                    match$13[0],
                                     /* () */0,
-                                    match$13[/* rest */2]
+                                    match$13[2]
                                   ]),
                                 match$8[1]
                               ]
@@ -282,7 +286,7 @@ function step(c) {
                             /* rewrite : record */[
                               /* focus : Record */Block.__(8, [Pervasives.$at(r, /* :: */[
                                         /* tuple */[
-                                          l,
+                                          l1,
                                           v
                                         ],
                                         /* [] */0
@@ -364,13 +368,13 @@ function step(c) {
           var match$17 = match$1[0];
           return /* record */[
                   /* rewrite : record */[
-                    /* focus : Exp */Block.__(1, [match$17[/* exp */1]]),
+                    /* focus : Exp */Block.__(1, [match$17[1]]),
                     /* ctxts : :: */[
                       /* EXPROWE */Block.__(6, [
                           /* [] */0,
-                          match$17[/* lab */0],
+                          match$17[0],
                           /* () */0,
-                          match$17[/* rest */2]
+                          match$17[2]
                         ]),
                       match[/* ctxts */1]
                     ]
@@ -392,12 +396,12 @@ function step(c) {
           }
       case /* Program */9 :
           var match$19 = match$1[0];
-          if (match$19[1] !== undefined) {
+          if (match$19[/* rest */1] !== undefined) {
             return ;
           } else {
             return /* record */[
                     /* rewrite : record */[
-                      /* focus : TopDec */Block.__(6, [match$19[0]]),
+                      /* focus : TopDec */Block.__(6, [match$19[/* topDec */0]]),
                       /* ctxts */match[/* ctxts */1]
                     ],
                     /* env */c[/* env */1]

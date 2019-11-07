@@ -21,7 +21,9 @@ type ast =
   | STRDECTopDec(sourceMap, (ast, option(ast)))
   | Program(sourceMap, (ast, option(ast)))
   | LETAtExp(sourceMap, (ast, ast))
-  | IDAtExp(sourceMap, ast);
+  | IDAtExp(sourceMap, ast)
+  | APPExp(sourceMap, (ast, ast))
+  | PARAtExp(sourceMap, ast);
 
 module Decode = {
   open Json.Decode;
@@ -97,6 +99,15 @@ module Decode = {
       json |> field("args", list(node)) |> List.hd,
     )
 
+  and appexp = json =>
+    APPExp(json |> field("sourceMap", sourceMap), json |> field("args", tuple2(node, node)))
+
+  and paratexp = json =>
+    PARAtExp(
+      json |> field("sourceMap", sourceMap),
+      json |> field("args", list(node)) |> List.hd,
+    )
+
   and node = json => {
     (
       field("node", string)
@@ -116,6 +127,8 @@ module Decode = {
            | "Program" => program
            | "LETAtExp" => letatexp
            | "IDAtExp" => idatexp
+           | "APPExp" => appexp
+           | "PARAtExp" => paratexp
            | _ => failwith("Unknown node type: " ++ s)
            }
          )
@@ -127,8 +140,9 @@ module Decode = {
 
 let rec compileProgram = p =>
   switch (p) {
-  | Program(_, (td, None)) => SML.PROGRAM(compileTopDec(td), None)
-  | Program(_, (td, Some(p))) => SML.PROGRAM(compileTopDec(td), Some(compileProgram(p)))
+  | Program(_, (td, None)) => SML.{topDec: compileTopDec(td), rest: None}
+  | Program(_, (td, Some(p))) =>
+    SML.{topDec: compileTopDec(td), rest: Some(compileProgram(p))}
   }
 
 and compileTopDec = td =>
@@ -172,6 +186,7 @@ and compileLongVId = x =>
 and compileExp = e =>
   switch (e) {
   | ATExp(_, a) => SML.ATEXP(compileAtExp(a))
+  | APPExp(_, (e, a)) => SML.APP(compileExp(e), compileAtExp(a))
   }
 
 and compileAtExp = a =>
@@ -179,6 +194,7 @@ and compileAtExp = a =>
   | SCONAtExp(_, sc) => SML.SCON(compileSCon(sc))
   | LETAtExp(_, (d, e)) => SML.LET(compileDec(d), compileExp(e))
   | IDAtExp(_, x) => SML.ID(compileLongVId(x))
+  | PARAtExp(_, e) => SML.PAR(compileExp(e))
   }
 
 and compileSCon = sc =>

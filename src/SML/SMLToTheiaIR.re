@@ -1,11 +1,6 @@
 /* Compiler from SML configuration to TheiaIR */
 open SML;
 open Theia;
-open Util;
-
-/* I really wish there was a way to write sorry in OCaml/Reason! */
-let sorry = Atom(React.string("sorry"));
-let sorryFn = _ => sorry;
 
 let compileSCon = (sc: sCon) =>
   switch (sc) {
@@ -23,10 +18,10 @@ let rec compileAtExp = a =>
       [React.string("let "), React.string(" in "), React.string(" end")],
       [compileDec(d), compileExp(e)],
     )
-  | PARA(e) => Apply2([React.string("("), React.string(")")], [compileExp(e)])
+  | PAR(e) => Apply2([React.string("("), React.string(")")], [compileExp(e)])
   }
 
-and compileExpRow = ({lab, exp, rest}) =>
+and compileExpRow = (EXPROW(lab, exp, rest)) =>
   switch (rest) {
   | None =>
     Apply2([<> </>, React.string("="), <> </>], [Atom(React.string(lab)), compileExp(exp)])
@@ -107,10 +102,7 @@ let compileTopDec = td =>
   | STRDEC(sd, None) => compileStrDec(sd)
   };
 
-let compileProgram = p =>
-  switch (p) {
-  | PROGRAM(td, None) => compileTopDec(td)
-  };
+let compileProgram = ({topDec, rest: None}) => compileTopDec(topDec);
 
 let compileFocus = f =>
   switch (f) {

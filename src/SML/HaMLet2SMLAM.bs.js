@@ -137,9 +137,29 @@ function idatexp(json) {
           ]);
 }
 
+function appexp(json) {
+  return /* APPExp */Block.__(14, [
+            Json_decode.field("sourceMap", sourceMap, json),
+            Json_decode.field("args", (function (param) {
+                    return Json_decode.tuple2(node, node, param);
+                  }), json)
+          ]);
+}
+
+function paratexp(json) {
+  return /* PARAtExp */Block.__(15, [
+            Json_decode.field("sourceMap", sourceMap, json),
+            List.hd(Json_decode.field("args", (function (param) {
+                        return Json_decode.list(node, param);
+                      }), json))
+          ]);
+}
+
 function node(json) {
   return Json_decode.andThen((function (s) {
                 switch (s) {
+                  case "APPExp" :
+                      return appexp;
                   case "ATExp" :
                       return atexp;
                   case "ATPat" :
@@ -156,6 +176,8 @@ function node(json) {
                       return letatexp;
                   case "LongVId" :
                       return longvid;
+                  case "PARAtExp" :
+                      return paratexp;
                   case "PLAINValBind" :
                       return plainvalbind;
                   case "Program" :
@@ -192,6 +214,8 @@ var Decode = {
   program: program,
   letatexp: letatexp,
   idatexp: idatexp,
+  appexp: appexp,
+  paratexp: paratexp,
   node: node
 };
 
@@ -201,14 +225,14 @@ function compileProgram(p) {
     var match$1 = match[1];
     var td = match[0];
     if (match$1 !== undefined) {
-      return /* PROGRAM */[
-              compileTopDec(td),
-              compileProgram(match$1)
+      return /* record */[
+              /* topDec */compileTopDec(td),
+              /* rest */compileProgram(match$1)
             ];
     } else {
-      return /* PROGRAM */[
-              compileTopDec(td),
-              undefined
+      return /* record */[
+              /* topDec */compileTopDec(td),
+              /* rest */undefined
             ];
     }
   } else {
@@ -216,7 +240,7 @@ function compileProgram(p) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            129,
+            142,
             2
           ]
         ];
@@ -244,7 +268,7 @@ function compileTopDec(td) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            135,
+            149,
             2
           ]
         ];
@@ -259,7 +283,7 @@ function compileStrDec(sd) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            141,
+            155,
             2
           ]
         ];
@@ -274,7 +298,7 @@ function compileDec(d) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            146,
+            160,
             2
           ]
         ];
@@ -305,7 +329,7 @@ function compileValBind(vb) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            151,
+            165,
             2
           ]
         ];
@@ -320,7 +344,7 @@ function compilePat(p) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            158,
+            172,
             2
           ]
         ];
@@ -335,7 +359,7 @@ function compileAtPat(ap) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            163,
+            177,
             2
           ]
         ];
@@ -350,7 +374,7 @@ function compileLongVId(x) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            168,
+            182,
             2
           ]
         ];
@@ -358,17 +382,24 @@ function compileLongVId(x) {
 }
 
 function compileExp(e) {
-  if (e.tag === /* ATExp */2) {
-    return /* ATEXP */Block.__(0, [compileAtExp(e[1])]);
-  } else {
-    throw [
-          Caml_builtin_exceptions.match_failure,
-          /* tuple */[
-            "HaMLet2SMLAM.re",
-            173,
-            2
-          ]
-        ];
+  switch (e.tag | 0) {
+    case /* ATExp */2 :
+        return /* ATEXP */Block.__(0, [compileAtExp(e[1])]);
+    case /* APPExp */14 :
+        var match = e[1];
+        return /* APP */Block.__(1, [
+                  compileExp(match[0]),
+                  compileAtExp(match[1])
+                ]);
+    default:
+      throw [
+            Caml_builtin_exceptions.match_failure,
+            /* tuple */[
+              "HaMLet2SMLAM.re",
+              187,
+              2
+            ]
+          ];
   }
 }
 
@@ -384,12 +415,14 @@ function compileAtExp(a) {
                 ]);
     case /* IDAtExp */13 :
         return /* ID */Block.__(1, [compileLongVId(a[1])]);
+    case /* PARAtExp */15 :
+        return /* PAR */Block.__(4, [compileExp(a[1])]);
     default:
       throw [
             Caml_builtin_exceptions.match_failure,
             /* tuple */[
               "HaMLet2SMLAM.re",
-              178,
+              193,
               2
             ]
           ];
@@ -402,7 +435,7 @@ function compileSCon(sc) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            185,
+            201,
             2
           ]
         ];

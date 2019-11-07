@@ -95,7 +95,13 @@ var tests_001 = /* :: */[
                       /* name */"ex1",
                       /* example : Program */Block.__(9, [HaMLet2SMLAM$ReasonReactExamples.compileProgram(HaMLet2SMLAM$ReasonReactExamples.Decode.node(Json.parseOrRaise(SMLExamples$ReasonReactExamples.ex1)))])
                     ],
-                    /* [] */0
+                    /* :: */[
+                      /* record */[
+                        /* name */"ite",
+                        /* example : Program */Block.__(9, [HaMLet2SMLAM$ReasonReactExamples.compileProgram(HaMLet2SMLAM$ReasonReactExamples.Decode.node(Json.parseOrRaise(SMLExamples$ReasonReactExamples.exITE)))])
+                      ],
+                      /* [] */0
+                    ]
                   ]
                 ]
               ]

@@ -86,6 +86,13 @@ let tests =
           ex1 |> Json.parseOrRaise |> HaMLet2SMLAM.Decode.node |> HaMLet2SMLAM.compileProgram,
         ),
     },
+    {
+      name: "ite",
+      example:
+        Program(
+          exITE |> Json.parseOrRaise |> HaMLet2SMLAM.Decode.node |> HaMLet2SMLAM.compileProgram,
+        ),
+    },
   ];
 
 let trace = ({name, example}) =>
