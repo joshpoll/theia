@@ -82,10 +82,8 @@ type strDec =
 type topDec =
   | STRDEC(strDec, option(topDec));
 
-type program = {
-  topDec,
-  rest: option(program),
-};
+type program =
+  | PROGRAM(topDec, option(program));
 
 type focus =
   | AtExp(atExp)
@@ -108,7 +106,8 @@ type ctxt =
   | APPR(val_, hole)
   /* is that a... */
   | RECORDER(hole)
-  | EXPROWE(record, lab, hole, option(expRow));
+  | EXPROWE(record, lab, hole, option(expRow))
+  | PROGRAML(hole, program);
 
 type ctxts = list(ctxt);
 
@@ -383,15 +382,30 @@ let step = (c: configuration): option(configuration) =>
 
   /* Programs */
   // [189ish]
-  | {rewrite: {focus: Program({topDec, rest: None}), ctxts}, env} =>
+  | {rewrite: {focus: Program(PROGRAM(td, None)), ctxts}, env} =>
     Some({
       rewrite: {
-        focus: TopDec(topDec),
+        focus: TopDec(td),
         ctxts,
       },
       env,
     })
-
+  | {rewrite: {focus: Program(PROGRAM(td, Some(p))), ctxts}, env} =>
+    Some({
+      rewrite: {
+        focus: TopDec(td),
+        ctxts: [PROGRAML((), p), ...ctxts],
+      },
+      env,
+    })
+  | {rewrite: {focus: Empty, ctxts: [PROGRAML((), p), ...ctxts]}, env} =>
+    Some({
+      rewrite: {
+        focus: Program(p),
+        ctxts,
+      },
+      env,
+    })
   | _ => None
   };
 

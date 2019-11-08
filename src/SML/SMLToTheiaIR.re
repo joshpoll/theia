@@ -125,7 +125,15 @@ let compileTopDec = td =>
   | STRDEC(sd, None) => compileStrDec(sd)
   };
 
-let compileProgram = ({topDec, rest: None}) => compileTopDec(topDec);
+let rec compileProgram = p =>
+  switch (p) {
+  | PROGRAM(td, None) => compileTopDec(td)
+  | PROGRAM(td, Some(p)) =>
+    Apply2(
+      [<> </>, <> {React.string(";")} <br /> </>, <> </>],
+      [compileTopDec(td), compileProgram(p)],
+    )
+  };
 
 let compileFocus = f =>
   switch (f) {
@@ -190,6 +198,15 @@ let compileCtxt = c =>
       ops: [<> </>, React.string(", "), React.string("="), React.string(", "), <> </>],
       args: [compileRecord(r), Atom(React.string(l)), compileExpRow(er)],
       holePos: 2,
+    }
+  /* Apply2(
+       [<> </>, <> {React.string(";")} <br /> </>, <> </>],
+       [compileTopDec(td), compileProgram(p)],
+     ) */
+  | PROGRAML((), p) => {
+      ops: [<> </>, <> {React.string(";")} <br /> </>, <> </>],
+      args: [compileProgram(p)],
+      holePos: 0,
     }
   };
 

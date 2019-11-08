@@ -437,7 +437,7 @@ type traceOutput = {
 };
 
 [@react.component]
-let make = (~theiaIRTraces: list(trace)) => {
+let make = (~theiaIRTraces: array(trace)) => {
   let (state, dispatch) =
     React.useReducer(
       (state, action) =>
@@ -471,12 +471,12 @@ let make = (~theiaIRTraces: list(trace)) => {
     <button onClick={_ => dispatch(StepBack)}> {React.string("<-")} </button>
     <button onClick={_ => dispatch(StepForward)}> {React.string("->")} </button>
     {theiaIRTraces
-     |> List.map(({states, name}) =>
+     |> Array.map(({states, name}) =>
           <button onClick={handleClick(~path="", ~log="", ~theiaIRTrace=states, dispatch)}>
             {React.string(name)}
           </button>
         )
-     |> rlist}
+     |> React.array}
     {
       let renderConfig = my_option =>
         switch (my_option) {

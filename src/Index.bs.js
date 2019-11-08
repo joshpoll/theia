@@ -1,9 +1,8 @@
 'use strict';
 
-var Json = require("@glennsl/bs-json/src/Json.bs.js");
 var List = require("bs-platform/lib/js/list.js");
+var $$Array = require("bs-platform/lib/js/array.js");
 var Block = require("bs-platform/lib/js/block.js");
-var Curry = require("bs-platform/lib/js/curry.js");
 var Fetch = require("bs-fetch/src/Fetch.js");
 var React = require("react");
 var ReactDom = require("react-dom");
@@ -43,84 +42,6 @@ function makeContainer(text) {
   return content;
 }
 
-var tests_000 = /* record */[
-  /* name */"ex2",
-  /* example */SMLExamples$ReasonReactExamples.ex2
-];
-
-var tests_001 = /* :: */[
-  /* record */[
-    /* name */"ex3",
-    /* example */SMLExamples$ReasonReactExamples.ex3
-  ],
-  /* :: */[
-    /* record */[
-      /* name */"ex4",
-      /* example */SMLExamples$ReasonReactExamples.ex4
-    ],
-    /* :: */[
-      /* record */[
-        /* name */"ex5",
-        /* example */SMLExamples$ReasonReactExamples.ex5
-      ],
-      /* :: */[
-        /* record */[
-          /* name */"ex6",
-          /* example */SMLExamples$ReasonReactExamples.ex6
-        ],
-        /* :: */[
-          /* record */[
-            /* name */"ex7",
-            /* example */SMLExamples$ReasonReactExamples.ex7
-          ],
-          /* :: */[
-            /* record */[
-              /* name */"ex8",
-              /* example */SMLExamples$ReasonReactExamples.ex8
-            ],
-            /* :: */[
-              /* record */[
-                /* name */"ex9",
-                /* example */SMLExamples$ReasonReactExamples.ex9
-              ],
-              /* :: */[
-                /* record */[
-                  /* name */"ex10",
-                  /* example */SMLExamples$ReasonReactExamples.ex10
-                ],
-                /* :: */[
-                  /* record */[
-                    /* name */"ex0",
-                    /* example : Program */Block.__(9, [HaMLet2SMLAM$ReasonReactExamples.compileProgram(HaMLet2SMLAM$ReasonReactExamples.Decode.node(Json.parseOrRaise(SMLExamples$ReasonReactExamples.ex0)))])
-                  ],
-                  /* :: */[
-                    /* record */[
-                      /* name */"ex1",
-                      /* example : Program */Block.__(9, [HaMLet2SMLAM$ReasonReactExamples.compileProgram(HaMLet2SMLAM$ReasonReactExamples.Decode.node(Json.parseOrRaise(SMLExamples$ReasonReactExamples.ex1)))])
-                    ],
-                    /* :: */[
-                      /* record */[
-                        /* name */"ite",
-                        /* example : Program */Block.__(9, [HaMLet2SMLAM$ReasonReactExamples.compileProgram(HaMLet2SMLAM$ReasonReactExamples.Decode.node(Json.parseOrRaise(SMLExamples$ReasonReactExamples.exITE)))])
-                      ],
-                      /* [] */0
-                    ]
-                  ]
-                ]
-              ]
-            ]
-          ]
-        ]
-      ]
-    ]
-  ]
-];
-
-var tests = /* :: */[
-  tests_000,
-  tests_001
-];
-
 function trace(param) {
   return /* record */[
           /* name */param[/* name */0],
@@ -128,29 +49,54 @@ function trace(param) {
         ];
 }
 
-ReactDom.render(React.createElement(Theia$ReasonReactExamples.make, {
-          theiaIRTraces: List.map(trace, tests)
-        }), makeContainer("Theia"));
+function jsonToProgram(json) {
+  return HaMLet2SMLAM$ReasonReactExamples.compileProgram(HaMLet2SMLAM$ReasonReactExamples.Decode.node(json));
+}
 
-function parseProgam(file_name, program, callback) {
+function traceProgram(param) {
+  var name = param[/* name */0];
   return fetch("http://localhost:5000", Fetch.RequestInit.make(/* Post */2, {
                         "Content-Type": "application/x-www-form-urlencoded"
-                      }, Caml_option.some("file_name=" + (file_name + ("&program=" + program))), undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined)(/* () */0)).then((function (prim) {
+                      }, Caml_option.some("file_name=" + (name + ("&program=" + param[/* text */1]))), undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined)(/* () */0)).then((function (prim) {
                   return prim.json();
                 })).then((function (json) {
-                return Promise.resolve(Curry._1(callback, json));
+                return Promise.resolve(trace(/* record */[
+                                /* name */name,
+                                /* example : Program */Block.__(9, [HaMLet2SMLAM$ReasonReactExamples.compileProgram(HaMLet2SMLAM$ReasonReactExamples.Decode.node(json))])
+                              ]));
               }));
 }
 
-parseProgam("ex0", "5", (function (json) {
-        console.log(Json.stringify(json));
-        return /* () */0;
+var traces = $$Array.map(traceProgram, /* array */[
+      /* record */[
+        /* name */"ex0",
+        /* text */SMLExamples$ReasonReactExamples.ex0
+      ],
+      /* record */[
+        /* name */"ex1",
+        /* text */SMLExamples$ReasonReactExamples.ex1
+      ],
+      /* record */[
+        /* name */"ex2",
+        /* text */SMLExamples$ReasonReactExamples.ex2
+      ],
+      /* record */[
+        /* name */"ex3",
+        /* text */SMLExamples$ReasonReactExamples.ex3
+      ]
+    ]);
+
+Promise.all(traces).then((function (theiaIRTraces) {
+        return Promise.resolve((ReactDom.render(React.createElement(Theia$ReasonReactExamples.make, {
+                              theiaIRTraces: theiaIRTraces
+                            }), makeContainer("Theia")), /* () */0));
       }));
 
 exports.firaCode = firaCode;
 exports.style = style;
 exports.makeContainer = makeContainer;
-exports.tests = tests;
 exports.trace = trace;
-exports.parseProgam = parseProgam;
+exports.jsonToProgram = jsonToProgram;
+exports.traceProgram = traceProgram;
+exports.traces = traces;
 /* firaCode Not a pure module */

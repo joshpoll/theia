@@ -469,18 +469,32 @@ function compileTopDec(td) {
   return compileStrDec(td[0]);
 }
 
-function compileProgram(param) {
-  if (param[/* rest */1] !== undefined) {
-    throw [
-          Caml_builtin_exceptions.match_failure,
-          /* tuple */[
-            "SMLToTheiaIR.re",
-            128,
-            21
-          ]
-        ];
+function compileProgram(p) {
+  var match = p[1];
+  var td = p[0];
+  if (match !== undefined) {
+    return /* Apply2 */Block.__(1, [
+              /* :: */[
+                React.createElement(React.Fragment, undefined),
+                /* :: */[
+                  React.createElement(React.Fragment, undefined, ";", React.createElement("br", undefined)),
+                  /* :: */[
+                    React.createElement(React.Fragment, undefined),
+                    /* [] */0
+                  ]
+                ]
+              ],
+              /* :: */[
+                compileTopDec(td),
+                /* :: */[
+                  compileProgram(match),
+                  /* [] */0
+                ]
+              ]
+            ]);
+  } else {
+    return compileTopDec(td);
   }
-  return compileTopDec(param[/* topDec */0]);
 }
 
 function compileFocus(f) {
@@ -728,6 +742,24 @@ function compileCtxt(c) {
                   ];
           }
         }
+    case /* PROGRAML */7 :
+        return /* record */[
+                /* ops : :: */[
+                  React.createElement(React.Fragment, undefined),
+                  /* :: */[
+                    React.createElement(React.Fragment, undefined, ";", React.createElement("br", undefined)),
+                    /* :: */[
+                      React.createElement(React.Fragment, undefined),
+                      /* [] */0
+                    ]
+                  ]
+                ],
+                /* args : :: */[
+                  compileProgram(c[1]),
+                  /* [] */0
+                ],
+                /* holePos */0
+              ];
     
   }
 }

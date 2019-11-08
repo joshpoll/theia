@@ -522,14 +522,14 @@ function Theia(Props) {
                   onClick: (function (param) {
                       return Curry._1(dispatch, /* StepForward */1);
                     })
-                }, "->"), $$Array.of_list(List.map((function (param) {
-                        var states = param[/* states */1];
-                        return React.createElement("button", {
-                                    onClick: (function (param) {
-                                        return handleClick("", "", undefined, states, dispatch, param);
-                                      })
-                                  }, param[/* name */0]);
-                      }), theiaIRTraces)), tmp);
+                }, "->"), $$Array.map((function (param) {
+                    var states = param[/* states */1];
+                    return React.createElement("button", {
+                                onClick: (function (param) {
+                                    return handleClick("", "", undefined, states, dispatch, param);
+                                  })
+                              }, param[/* name */0]);
+                  }), theiaIRTraces), tmp);
 }
 
 var values = /* :: */[

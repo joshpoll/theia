@@ -158,9 +158,8 @@ module Decode = {
 
 let rec compileProgram = p =>
   switch (p) {
-  | Program(_, (td, None)) => SML.{topDec: compileTopDec(td), rest: None}
-  | Program(_, (td, Some(p))) =>
-    SML.{topDec: compileTopDec(td), rest: Some(compileProgram(p))}
+  | Program(_, (td, None)) => SML.PROGRAM(compileTopDec(td), None)
+  | Program(_, (td, Some(p))) => SML.PROGRAM(compileTopDec(td), Some(compileProgram(p)))
   }
 
 and compileTopDec = td =>

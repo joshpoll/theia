@@ -33,86 +33,51 @@ let makeContainer = text => {
   content;
 };
 
-// All 4 examples.
-/* ReactDOMRe.render(
-     <BlinkingGreeting>
-       {React.string("Hello!")}
-     </BlinkingGreeting>,
-     makeContainer("Blinking Greeting"),
-   ); */
-
-/* ReactDOMRe.render(
-     <ReducerFromReactJSDocs />,
-     makeContainer("Reducer From ReactJS Docs"),
-   ); */
-
-/* ReactDOMRe.render(
-     <FetchedDogPictures />,
-     makeContainer("Fetched Dog Pictures"),
-   ); */
-
-/* ReactDOMRe.render(
-     <ReasonUsingJSUsingReason />,
-     makeContainer("Reason Using JS Using Reason"),
-   ); */
-
 type test = {
   name: string,
   example: SML.focus,
 };
 
-let tests =
-  SMLExamples.[
-    {name: "ex2", example: ex2},
-    {name: "ex3", example: ex3},
-    {name: "ex4", example: ex4},
-    {name: "ex5", example: ex5},
-    {name: "ex6", example: ex6},
-    {name: "ex7", example: ex7},
-    {name: "ex8", example: ex8},
-    {name: "ex9", example: ex9},
-    {name: "ex10", example: ex10},
-    {
-      name: "ex0",
-      example:
-        Program(
-          ex0 |> Json.parseOrRaise |> HaMLet2SMLAM.Decode.node |> HaMLet2SMLAM.compileProgram,
-        ),
-    },
-    {
-      name: "ex1",
-      example:
-        Program(
-          ex1 |> Json.parseOrRaise |> HaMLet2SMLAM.Decode.node |> HaMLet2SMLAM.compileProgram,
-        ),
-    },
-    {
-      name: "ite",
-      example:
-        Program(
-          exITE |> Json.parseOrRaise |> HaMLet2SMLAM.Decode.node |> HaMLet2SMLAM.compileProgram,
-        ),
-    },
-  ];
-
 let trace = ({name, example}) =>
   Theia.{name, states: example |> SML.interpretTrace |> List.map(SMLToTheiaIR.smlToTheiaIR)};
 
-ReactDOMRe.render(<Theia theiaIRTraces={List.map(trace, tests)} />, makeContainer("Theia"));
+let jsonToProgram = json => json |> HaMLet2SMLAM.Decode.node |> HaMLet2SMLAM.compileProgram;
 
-let parseProgam = (file_name, program, callback) =>
+type program = {
+  name: string,
+  text: string,
+};
+
+let traceProgram = ({name, text}) =>
   Js.Promise.(
     Fetch.fetchWithInit(
       "http://localhost:5000",
       Fetch.RequestInit.make(
         ~method_=Post,
-        ~body=Fetch.BodyInit.make("file_name=" ++ file_name ++ "&program=" ++ program),
+        ~body=Fetch.BodyInit.make("file_name=" ++ name ++ "&program=" ++ text),
         ~headers=Fetch.HeadersInit.make({"Content-Type": "application/x-www-form-urlencoded"}),
         (),
       ),
     )
     |> then_(Fetch.Response.json)
-    |> then_(json => resolve(callback(json)))
+    |> then_(json => Js.Promise.resolve(trace({name, example: Program(jsonToProgram(json))})))
   );
 
-parseProgam("ex0", "5", json => Js.log(Json.stringify(json)));
+let traces =
+  SMLExamples.(
+    [|
+      {name: "ex0", text: ex0},
+      {name: "ex1", text: ex1},
+      {name: "ex2", text: ex2},
+      {name: "ex3", text: ex3},
+      // {name: "ex4", text: ex4},
+      // {name: "ex5", text: ex5},
+      // {name: "ex6", text: ex6},
+    |]
+  )
+  |> Array.map(traceProgram);
+
+Js.Promise.all(traces)
+|> Js.Promise.then_(theiaIRTraces =>
+     Js.Promise.resolve(ReactDOMRe.render(<Theia theiaIRTraces />, makeContainer("Theia")))
+   );

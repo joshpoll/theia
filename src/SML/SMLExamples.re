@@ -1,107 +1,21 @@
 open SML;
 
-/* example "programs" */
-/* 5 */
-// let ex0 = AtExp(SCON(INT(5)));
-let ex0 = {|
-{"node": "Program", "sourceMap": { "file": "ex0.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 2 }, "args": [
-  {"node": "STRDECTopDec", "sourceMap": { "file": "ex0.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
-    {"node": "DECStrDec", "sourceMap": { "file": "ex0.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
-      {"node": "VALDec", "sourceMap": { "file": "ex0.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
-        {"node": "Seq", "sourceMap": { "file": "ex0.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
-        ]}
-,        {"node": "PLAINValBind", "sourceMap": { "file": "ex0.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
-          {"node": "ATPat", "sourceMap": { "file": "ex0.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
-            {"node": "IDAtPat", "sourceMap": { "file": "ex0.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
-              {"node": "LongVId", "args": ["it"]}
-            ]}
-          ]}
-,          {"node": "ATExp", "sourceMap": { "file": "ex0.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
-            {"node": "SCONAtExp", "sourceMap": { "file": "ex0.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
-              {"node": "INTSCon", "args": [5]}
-            ]}
-          ]}
-,null        ]}
-      ]}
-    ]}
-,null  ]}
-,null]}
-|};
-/* let val x = 5 in x end */
-// let ex1 =
-//   AtExp(LET(VAL(PLAIN(ATPAT(ID("x")), ATEXP(SCON(INT(5))), None)), ATEXP(ID("x"))));
-let ex1 = {|
-{"node": "Program", "sourceMap": { "file": "ex1.sml", "line1": 1, "col1": 0, "line2": 5, "col2": 4 }, "args": [
-  {"node": "STRDECTopDec", "sourceMap": { "file": "ex1.sml", "line1": 1, "col1": 0, "line2": 5, "col2": 3 }, "args": [
-    {"node": "DECStrDec", "sourceMap": { "file": "ex1.sml", "line1": 1, "col1": 0, "line2": 5, "col2": 3 }, "args": [
-      {"node": "VALDec", "sourceMap": { "file": "ex1.sml", "line1": 1, "col1": 0, "line2": 5, "col2": 3 }, "args": [
-        {"node": "Seq", "sourceMap": { "file": "ex1.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
-        ]}
-,        {"node": "PLAINValBind", "sourceMap": { "file": "ex1.sml", "line1": 1, "col1": 0, "line2": 5, "col2": 3 }, "args": [
-          {"node": "ATPat", "sourceMap": { "file": "ex1.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
-            {"node": "IDAtPat", "sourceMap": { "file": "ex1.sml", "line1": 1, "col1": 0, "line2": 1, "col2": 1 }, "args": [
-              {"node": "LongVId", "args": ["it"]}
-            ]}
-          ]}
-,          {"node": "ATExp", "sourceMap": { "file": "ex1.sml", "line1": 1, "col1": 0, "line2": 5, "col2": 3 }, "args": [
-            {"node": "LETAtExp", "sourceMap": { "file": "ex1.sml", "line1": 1, "col1": 0, "line2": 5, "col2": 3 }, "args": [
-              {"node": "VALDec", "sourceMap": { "file": "ex1.sml", "line1": 2, "col1": 2, "line2": 3, "col2": 0 }, "args": [
-                {"node": "Seq", "sourceMap": { "file": "ex1.sml", "line1": 3, "col1": 0, "line2": 3, "col2": 0 }, "args": [
-                ]}
-,                {"node": "PLAINValBind", "sourceMap": { "file": "ex1.sml", "line1": 2, "col1": 6, "line2": 3, "col2": 0 }, "args": [
-                  {"node": "ATPat", "sourceMap": { "file": "ex1.sml", "line1": 2, "col1": 6, "line2": 2, "col2": 7 }, "args": [
-                    {"node": "IDAtPat", "sourceMap": { "file": "ex1.sml", "line1": 2, "col1": 6, "line2": 2, "col2": 7 }, "args": [
-                      {"node": "LongVId", "args": ["x"]}
-                    ]}
-                  ]}
-,                  {"node": "ATExp", "sourceMap": { "file": "ex1.sml", "line1": 2, "col1": 10, "line2": 2, "col2": 11 }, "args": [
-                    {"node": "SCONAtExp", "sourceMap": { "file": "ex1.sml", "line1": 2, "col1": 10, "line2": 2, "col2": 11 }, "args": [
-                      {"node": "INTSCon", "args": [5]}
-                    ]}
-                  ]}
-,null                ]}
-              ]}
-,              {"node": "ATExp", "sourceMap": { "file": "ex1.sml", "line1": 4, "col1": 2, "line2": 4, "col2": 3 }, "args": [
-                {"node": "IDAtExp", "sourceMap": { "file": "ex1.sml", "line1": 4, "col1": 2, "line2": 4, "col2": 3 }, "args": [
-                  {"node": "LongVId", "args": ["x"]}
-                ]}
-              ]}
-            ]}
-          ]}
-,null        ]}
-      ]}
-    ]}
-,null  ]}
-,null]}
-|};
-/* val x = 34 */
-let ex2 =
-  TopDec(STRDEC(DEC(VAL(PLAIN(ATPAT(ID("x")), ATEXP(SCON(INT(34))), None))), None));
-/* val x = 34; val y = 17 */
-let ex3 =
-  TopDec(
-    STRDEC(
-      SEQ(
-        DEC(VAL(PLAIN(ATPAT(ID("x")), ATEXP(SCON(INT(34))), None))),
-        DEC(VAL(PLAIN(ATPAT(ID("y")), ATEXP(SCON(INT(17))), None))),
-      ),
-      None,
-    ),
-  );
+let ex0 = "5";
 
-/* {} () */
-let ex4 = AtExp(RECORD(None));
-/* { 1=5 } (5,) */
-let ex5 = AtExp(RECORD(Some(EXPROW("1", ATEXP(SCON(INT(5))), None))));
-/* { 1=5, 2=78 } (5, 78) */
-let ex6 =
-  AtExp(
-    RECORD(
-      Some(
-        EXPROW("1", ATEXP(SCON(INT(5))), Some(EXPROW("2", ATEXP(SCON(INT(78))), None))),
-      ),
-    ),
-  );
+let ex1 = "let val x = 5 in x end";
+
+let ex2 = "val x = 34";
+
+let ex3 = "val x = 34;
+val y = 17";
+
+let ex4 = "()";
+
+let ex5 = "(5, 78)";
+
+let ex6 = "val x = 34;
+val y = 17;
+val z = 5 + 78";
 
 /* TODO: no syntax sugar for records -> tuples or infix ops
      val x = 34;

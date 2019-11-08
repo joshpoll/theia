@@ -73,6 +73,14 @@ function step(c) {
                     ],
                     /* env */c[/* env */1]
                   ];
+        case /* PROGRAML */7 :
+            return /* record */[
+                    /* rewrite : record */[
+                      /* focus : Program */Block.__(9, [match$3[1]]),
+                      /* ctxts */match$2[1]
+                    ],
+                    /* env */c[/* env */1]
+                  ];
         default:
           return ;
       }
@@ -390,12 +398,26 @@ function step(c) {
           }
       case /* Program */9 :
           var match$19 = match$1[0];
-          if (match$19[/* rest */1] !== undefined) {
-            return ;
+          var match$20 = match$19[1];
+          var td = match$19[0];
+          if (match$20 !== undefined) {
+            return /* record */[
+                    /* rewrite : record */[
+                      /* focus : TopDec */Block.__(6, [td]),
+                      /* ctxts : :: */[
+                        /* PROGRAML */Block.__(7, [
+                            /* () */0,
+                            match$20
+                          ]),
+                        match[/* ctxts */1]
+                      ]
+                    ],
+                    /* env */c[/* env */1]
+                  ];
           } else {
             return /* record */[
                     /* rewrite : record */[
-                      /* focus : TopDec */Block.__(6, [match$19[/* topDec */0]]),
+                      /* focus : TopDec */Block.__(6, [td]),
                       /* ctxts */match[/* ctxts */1]
                     ],
                     /* env */c[/* env */1]

@@ -2,52 +2,19 @@
 
 var Block = require("bs-platform/lib/js/block.js");
 
-var ex0 = "\n{\"node\": \"Program\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 2 }, \"args\": [\n  {\"node\": \"STRDECTopDec\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n    {\"node\": \"DECStrDec\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n      {\"node\": \"VALDec\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n        {\"node\": \"Seq\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n        ]}\n,        {\"node\": \"PLAINValBind\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n          {\"node\": \"ATPat\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n            {\"node\": \"IDAtPat\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n              {\"node\": \"LongVId\", \"args\": [\"it\"]}\n            ]}\n          ]}\n,          {\"node\": \"ATExp\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n            {\"node\": \"SCONAtExp\", \"sourceMap\": { \"file\": \"ex0.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n              {\"node\": \"INTSCon\", \"args\": [5]}\n            ]}\n          ]}\n,null        ]}\n      ]}\n    ]}\n,null  ]}\n,null]}\n";
+var ex0 = "5";
 
-var ex1 = "\n{\"node\": \"Program\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 5, \"col2\": 4 }, \"args\": [\n  {\"node\": \"STRDECTopDec\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 5, \"col2\": 3 }, \"args\": [\n    {\"node\": \"DECStrDec\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 5, \"col2\": 3 }, \"args\": [\n      {\"node\": \"VALDec\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 5, \"col2\": 3 }, \"args\": [\n        {\"node\": \"Seq\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n        ]}\n,        {\"node\": \"PLAINValBind\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 5, \"col2\": 3 }, \"args\": [\n          {\"node\": \"ATPat\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n            {\"node\": \"IDAtPat\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 1, \"col2\": 1 }, \"args\": [\n              {\"node\": \"LongVId\", \"args\": [\"it\"]}\n            ]}\n          ]}\n,          {\"node\": \"ATExp\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 5, \"col2\": 3 }, \"args\": [\n            {\"node\": \"LETAtExp\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 1, \"col1\": 0, \"line2\": 5, \"col2\": 3 }, \"args\": [\n              {\"node\": \"VALDec\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 2, \"col1\": 2, \"line2\": 3, \"col2\": 0 }, \"args\": [\n                {\"node\": \"Seq\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 3, \"col1\": 0, \"line2\": 3, \"col2\": 0 }, \"args\": [\n                ]}\n,                {\"node\": \"PLAINValBind\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 2, \"col1\": 6, \"line2\": 3, \"col2\": 0 }, \"args\": [\n                  {\"node\": \"ATPat\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 2, \"col1\": 6, \"line2\": 2, \"col2\": 7 }, \"args\": [\n                    {\"node\": \"IDAtPat\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 2, \"col1\": 6, \"line2\": 2, \"col2\": 7 }, \"args\": [\n                      {\"node\": \"LongVId\", \"args\": [\"x\"]}\n                    ]}\n                  ]}\n,                  {\"node\": \"ATExp\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 2, \"col1\": 10, \"line2\": 2, \"col2\": 11 }, \"args\": [\n                    {\"node\": \"SCONAtExp\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 2, \"col1\": 10, \"line2\": 2, \"col2\": 11 }, \"args\": [\n                      {\"node\": \"INTSCon\", \"args\": [5]}\n                    ]}\n                  ]}\n,null                ]}\n              ]}\n,              {\"node\": \"ATExp\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 4, \"col1\": 2, \"line2\": 4, \"col2\": 3 }, \"args\": [\n                {\"node\": \"IDAtExp\", \"sourceMap\": { \"file\": \"ex1.sml\", \"line1\": 4, \"col1\": 2, \"line2\": 4, \"col2\": 3 }, \"args\": [\n                  {\"node\": \"LongVId\", \"args\": [\"x\"]}\n                ]}\n              ]}\n            ]}\n          ]}\n,null        ]}\n      ]}\n    ]}\n,null  ]}\n,null]}\n";
+var ex1 = "let val x = 5 in x end";
 
-var ex2 = /* TopDec */Block.__(6, [/* STRDEC */[
-      /* DEC */Block.__(0, [/* VAL */[/* PLAIN */[
-              /* ATPAT */[/* ID */["x"]],
-              /* ATEXP */Block.__(0, [/* SCON */Block.__(0, [/* INT */[34]])]),
-              undefined
-            ]]]),
-      undefined
-    ]]);
+var ex2 = "val x = 34";
 
-var ex3 = /* TopDec */Block.__(6, [/* STRDEC */[
-      /* SEQ */Block.__(1, [
-          /* DEC */Block.__(0, [/* VAL */[/* PLAIN */[
-                  /* ATPAT */[/* ID */["x"]],
-                  /* ATEXP */Block.__(0, [/* SCON */Block.__(0, [/* INT */[34]])]),
-                  undefined
-                ]]]),
-          /* DEC */Block.__(0, [/* VAL */[/* PLAIN */[
-                  /* ATPAT */[/* ID */["y"]],
-                  /* ATEXP */Block.__(0, [/* SCON */Block.__(0, [/* INT */[17]])]),
-                  undefined
-                ]]])
-        ]),
-      undefined
-    ]]);
+var ex3 = "val x = 34;\nval y = 17";
 
-var ex4 = /* AtExp */Block.__(0, [/* RECORD */Block.__(2, [undefined])]);
+var ex4 = "()";
 
-var ex5 = /* AtExp */Block.__(0, [/* RECORD */Block.__(2, [/* EXPROW */[
-          "1",
-          /* ATEXP */Block.__(0, [/* SCON */Block.__(0, [/* INT */[5]])]),
-          undefined
-        ]])]);
+var ex5 = "(5, 78)";
 
-var ex6 = /* AtExp */Block.__(0, [/* RECORD */Block.__(2, [/* EXPROW */[
-          "1",
-          /* ATEXP */Block.__(0, [/* SCON */Block.__(0, [/* INT */[5]])]),
-          /* EXPROW */[
-            "2",
-            /* ATEXP */Block.__(0, [/* SCON */Block.__(0, [/* INT */[78]])]),
-            undefined
-          ]
-        ]])]);
+var ex6 = "val x = 34;\nval y = 17;\nval z = 5 + 78";
 
 var ex7 = /* TopDec */Block.__(6, [/* STRDEC */[
       /* SEQ */Block.__(1, [
