@@ -27,7 +27,9 @@ type ast =
   | FNExp(sourceMap, ast)
   | Match(sourceMap, (ast, option(ast)))
   | Mrule(sourceMap, (ast, ast))
-  | RECORDAtExp(sourceMap, option(ast));
+  | RECORDAtExp(sourceMap, option(ast))
+  | ExpRow(sourceMap, (ast, ast, option(ast)))
+  | Lab(string);
 
 module Decode = {
   open Json.Decode;
@@ -130,6 +132,16 @@ module Decode = {
       json |> field("args", list(optional(node))) |> List.hd,
     )
 
+  and exprow = json =>
+    ExpRow(
+      json |> field("sourceMap", sourceMap),
+      json |> field("args", tuple3(lab, node, optional(node))),
+    )
+
+  and lab = json => {
+    Lab(json |> field("args", list(string)) |> List.hd);
+  }
+
   and node = json => {
     (
       field("node", string)
@@ -155,6 +167,8 @@ module Decode = {
            | "Match" => match
            | "Mrule" => mrule
            | "RECORDAtExp" => recordatexp
+           | "ExpRow" => exprow
+           | "Lab" => lab
            | _ => failwith("Unknown node type: " ++ s)
            }
          )
@@ -233,6 +247,19 @@ and compileAtExp = a =>
   | IDAtExp(_, x) => SML.ID(compileLongVId(x))
   | PARAtExp(_, e) => SML.PAR(compileExp(e))
   | RECORDAtExp(_, None) => SML.RECORD(None)
+  | RECORDAtExp(_, Some(er)) => SML.RECORD(Some(compileExpRow(er)))
+  }
+
+and compileExpRow = er =>
+  switch (er) {
+  | ExpRow(_, (l, e, None)) => SML.EXPROW(compileLab(l), compileExp(e), None)
+  | ExpRow(_, (l, e, Some(er))) =>
+    SML.EXPROW(compileLab(l), compileExp(e), Some(compileExpRow(er)))
+  }
+
+and compileLab = l =>
+  switch (l) {
+  | Lab(l) => l
   }
 
 and compileSCon = sc =>

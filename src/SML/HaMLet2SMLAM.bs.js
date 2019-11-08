@@ -195,6 +195,23 @@ function recordatexp(json) {
           ]);
 }
 
+function exprow(json) {
+  return /* ExpRow */Block.__(20, [
+            Json_decode.field("sourceMap", sourceMap, json),
+            Json_decode.field("args", (function (param) {
+                    return Json_decode.tuple3(lab, node, (function (param) {
+                                  return Json_decode.optional(node, param);
+                                }), param);
+                  }), json)
+          ]);
+}
+
+function lab(json) {
+  return /* Lab */Block.__(21, [List.hd(Json_decode.field("args", (function (param) {
+                        return Json_decode.list(Json_decode.string, param);
+                      }), json))]);
+}
+
 function node(json) {
   return Json_decode.andThen((function (s) {
                 switch (s) {
@@ -206,6 +223,8 @@ function node(json) {
                       return atpat;
                   case "DECStrDec" :
                       return decstrdec;
+                  case "ExpRow" :
+                      return exprow;
                   case "FNExp" :
                       return fnexp;
                   case "IDAtExp" :
@@ -216,6 +235,8 @@ function node(json) {
                       return intscon;
                   case "LETAtExp" :
                       return letatexp;
+                  case "Lab" :
+                      return lab;
                   case "LongVId" :
                       return longvid;
                   case "Match" :
@@ -268,6 +289,8 @@ var Decode = {
   match_: match_,
   mrule: mrule,
   recordatexp: recordatexp,
+  exprow: exprow,
+  lab: lab,
   node: node
 };
 
@@ -292,7 +315,7 @@ function compileProgram(p) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            168,
+            182,
             2
           ]
         ];
@@ -320,7 +343,7 @@ function compileTopDec(td) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            174,
+            188,
             2
           ]
         ];
@@ -335,7 +358,7 @@ function compileStrDec(sd) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            180,
+            194,
             2
           ]
         ];
@@ -350,7 +373,7 @@ function compileDec(d) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            185,
+            199,
             2
           ]
         ];
@@ -381,7 +404,7 @@ function compileValBind(vb) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            190,
+            204,
             2
           ]
         ];
@@ -396,7 +419,7 @@ function compilePat(p) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            197,
+            211,
             2
           ]
         ];
@@ -411,7 +434,7 @@ function compileAtPat(ap) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            202,
+            216,
             2
           ]
         ];
@@ -426,7 +449,7 @@ function compileLongVId(x) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            207,
+            221,
             2
           ]
         ];
@@ -454,7 +477,7 @@ function compileMatch(m) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            212,
+            226,
             2
           ]
         ];
@@ -473,7 +496,7 @@ function compileMRule(mr) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            218,
+            232,
             2
           ]
         ];
@@ -497,7 +520,7 @@ function compileExp(e) {
             Caml_builtin_exceptions.match_failure,
             /* tuple */[
               "HaMLet2SMLAM.re",
-              223,
+              237,
               2
             ]
           ];
@@ -519,15 +542,9 @@ function compileAtExp(a) {
     case /* PARAtExp */15 :
         return /* PAR */Block.__(4, [compileExp(a[1])]);
     case /* RECORDAtExp */19 :
-        if (a[1] !== undefined) {
-          throw [
-                Caml_builtin_exceptions.match_failure,
-                /* tuple */[
-                  "HaMLet2SMLAM.re",
-                  230,
-                  2
-                ]
-              ];
+        var match$1 = a[1];
+        if (match$1 !== undefined) {
+          return /* RECORD */Block.__(2, [compileExpRow(match$1)]);
         } else {
           return /* RECORD */Block.__(2, [undefined]);
         }
@@ -536,10 +553,56 @@ function compileAtExp(a) {
             Caml_builtin_exceptions.match_failure,
             /* tuple */[
               "HaMLet2SMLAM.re",
-              230,
+              244,
               2
             ]
           ];
+  }
+}
+
+function compileExpRow(er) {
+  if (er.tag === /* ExpRow */20) {
+    var match = er[1];
+    var match$1 = match[2];
+    var e = match[1];
+    var l = match[0];
+    if (match$1 !== undefined) {
+      return /* EXPROW */[
+              compileLab(l),
+              compileExp(e),
+              compileExpRow(match$1)
+            ];
+    } else {
+      return /* EXPROW */[
+              compileLab(l),
+              compileExp(e),
+              undefined
+            ];
+    }
+  } else {
+    throw [
+          Caml_builtin_exceptions.match_failure,
+          /* tuple */[
+            "HaMLet2SMLAM.re",
+            254,
+            2
+          ]
+        ];
+  }
+}
+
+function compileLab(l) {
+  if (l.tag === /* Lab */21) {
+    return l[0];
+  } else {
+    throw [
+          Caml_builtin_exceptions.match_failure,
+          /* tuple */[
+            "HaMLet2SMLAM.re",
+            261,
+            2
+          ]
+        ];
   }
 }
 
@@ -549,7 +612,7 @@ function compileSCon(sc) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            239,
+            266,
             2
           ]
         ];
@@ -571,5 +634,7 @@ exports.compileMatch = compileMatch;
 exports.compileMRule = compileMRule;
 exports.compileExp = compileExp;
 exports.compileAtExp = compileAtExp;
+exports.compileExpRow = compileExpRow;
+exports.compileLab = compileLab;
 exports.compileSCon = compileSCon;
 /* No side effect */
