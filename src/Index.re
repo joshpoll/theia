@@ -42,7 +42,7 @@ let trace = ({name, example}) =>
   Theia.{name, states: example |> SML.interpretTrace |> List.map(SMLToTheiaIR.smlToTheiaIR)};
 
 let jsonToProgram = json => {
-  // Js.Console.log(json);
+  Js.Console.log(json);
   json |> HaMLet2SMLAM.Decode.node |> HaMLet2SMLAM.compileProgram;
 };
 
@@ -75,7 +75,12 @@ let traces =
       {name: "ex3", text: ex3},
       {name: "ex4", text: ex4},
       {name: "ex5", text: ex5},
+      /* broken */
       // {name: "ex6", text: ex6},
+      // {name: "ex7", text: ex7},
+      // {name: "ex8", text: ex8},
+      // {name: "ex9", text: ex9},
+      {name: "ex10", text: ex10},
     |]
   )
   |> Array.map(traceProgram);

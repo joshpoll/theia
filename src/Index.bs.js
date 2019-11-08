@@ -50,6 +50,7 @@ function trace(param) {
 }
 
 function jsonToProgram(json) {
+  console.log(json);
   return HaMLet2SMLAM$ReasonReactExamples.compileProgram(HaMLet2SMLAM$ReasonReactExamples.Decode.node(json));
 }
 
@@ -62,7 +63,7 @@ function traceProgram(param) {
                 })).then((function (json) {
                 return Promise.resolve(trace(/* record */[
                                 /* name */name,
-                                /* example : Program */Block.__(9, [HaMLet2SMLAM$ReasonReactExamples.compileProgram(HaMLet2SMLAM$ReasonReactExamples.Decode.node(json))])
+                                /* example : Program */Block.__(9, [jsonToProgram(json)])
                               ]));
               }));
 }
@@ -91,6 +92,10 @@ var traces = $$Array.map(traceProgram, /* array */[
       /* record */[
         /* name */"ex5",
         /* text */SMLExamples$ReasonReactExamples.ex5
+      ],
+      /* record */[
+        /* name */"ex10",
+        /* text */SMLExamples$ReasonReactExamples.ex10
       ]
     ]);
 
