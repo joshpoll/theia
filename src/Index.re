@@ -99,3 +99,20 @@ let trace = ({name, example}) =>
   Theia.{name, states: example |> SML.interpretTrace |> List.map(SMLToTheiaIR.smlToTheiaIR)};
 
 ReactDOMRe.render(<Theia theiaIRTraces={List.map(trace, tests)} />, makeContainer("Theia"));
+
+let parseProgam = (file_name, program, callback) =>
+  Js.Promise.(
+    Fetch.fetchWithInit(
+      "http://localhost:5000",
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~body=Fetch.BodyInit.make("file_name=" ++ file_name ++ "&program=" ++ program),
+        ~headers=Fetch.HeadersInit.make({"Content-Type": "application/x-www-form-urlencoded"}),
+        (),
+      ),
+    )
+    |> then_(Fetch.Response.json)
+    |> then_(json => resolve(callback(json)))
+  );
+
+parseProgam("ex0", "5", json => Js.log(Json.stringify(json)));

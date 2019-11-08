@@ -3,8 +3,11 @@
 var Json = require("@glennsl/bs-json/src/Json.bs.js");
 var List = require("bs-platform/lib/js/list.js");
 var Block = require("bs-platform/lib/js/block.js");
+var Curry = require("bs-platform/lib/js/curry.js");
+var Fetch = require("bs-fetch/src/Fetch.js");
 var React = require("react");
 var ReactDom = require("react-dom");
+var Caml_option = require("bs-platform/lib/js/caml_option.js");
 var SML$ReasonReactExamples = require("./SML/SML.bs.js");
 var Theia$ReasonReactExamples = require("./Theia/Theia.bs.js");
 var SMLExamples$ReasonReactExamples = require("./SML/SMLExamples.bs.js");
@@ -129,9 +132,25 @@ ReactDom.render(React.createElement(Theia$ReasonReactExamples.make, {
           theiaIRTraces: List.map(trace, tests)
         }), makeContainer("Theia"));
 
+function parseProgam(file_name, program, callback) {
+  return fetch("http://localhost:5000", Fetch.RequestInit.make(/* Post */2, {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                      }, Caml_option.some("file_name=" + (file_name + ("&program=" + program))), undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined)(/* () */0)).then((function (prim) {
+                  return prim.json();
+                })).then((function (json) {
+                return Promise.resolve(Curry._1(callback, json));
+              }));
+}
+
+parseProgam("ex0", "5", (function (json) {
+        console.log(Json.stringify(json));
+        return /* () */0;
+      }));
+
 exports.firaCode = firaCode;
 exports.style = style;
 exports.makeContainer = makeContainer;
 exports.tests = tests;
 exports.trace = trace;
+exports.parseProgam = parseProgam;
 /* firaCode Not a pure module */
