@@ -184,6 +184,17 @@ function mrule(json) {
           ]);
 }
 
+function recordatexp(json) {
+  return /* RECORDAtExp */Block.__(19, [
+            Json_decode.field("sourceMap", sourceMap, json),
+            List.hd(Json_decode.field("args", (function (param) {
+                        return Json_decode.list((function (param) {
+                                      return Json_decode.optional(node, param);
+                                    }), param);
+                      }), json))
+          ]);
+}
+
 function node(json) {
   return Json_decode.andThen((function (s) {
                 switch (s) {
@@ -217,6 +228,8 @@ function node(json) {
                       return plainvalbind;
                   case "Program" :
                       return program;
+                  case "RECORDAtExp" :
+                      return recordatexp;
                   case "SCONAtExp" :
                       return scontatexp;
                   case "STRDECTopDec" :
@@ -254,6 +267,7 @@ var Decode = {
   fnexp: fnexp,
   match_: match_,
   mrule: mrule,
+  recordatexp: recordatexp,
   node: node
 };
 
@@ -278,7 +292,7 @@ function compileProgram(p) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            160,
+            168,
             2
           ]
         ];
@@ -306,7 +320,7 @@ function compileTopDec(td) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            166,
+            174,
             2
           ]
         ];
@@ -321,7 +335,7 @@ function compileStrDec(sd) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            172,
+            180,
             2
           ]
         ];
@@ -336,7 +350,7 @@ function compileDec(d) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            177,
+            185,
             2
           ]
         ];
@@ -367,7 +381,7 @@ function compileValBind(vb) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            182,
+            190,
             2
           ]
         ];
@@ -382,7 +396,7 @@ function compilePat(p) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            189,
+            197,
             2
           ]
         ];
@@ -397,7 +411,7 @@ function compileAtPat(ap) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            194,
+            202,
             2
           ]
         ];
@@ -412,7 +426,7 @@ function compileLongVId(x) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            199,
+            207,
             2
           ]
         ];
@@ -440,7 +454,7 @@ function compileMatch(m) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            204,
+            212,
             2
           ]
         ];
@@ -459,7 +473,7 @@ function compileMRule(mr) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            210,
+            218,
             2
           ]
         ];
@@ -483,7 +497,7 @@ function compileExp(e) {
             Caml_builtin_exceptions.match_failure,
             /* tuple */[
               "HaMLet2SMLAM.re",
-              215,
+              223,
               2
             ]
           ];
@@ -504,12 +518,25 @@ function compileAtExp(a) {
         return /* ID */Block.__(1, [compileLongVId(a[1])]);
     case /* PARAtExp */15 :
         return /* PAR */Block.__(4, [compileExp(a[1])]);
+    case /* RECORDAtExp */19 :
+        if (a[1] !== undefined) {
+          throw [
+                Caml_builtin_exceptions.match_failure,
+                /* tuple */[
+                  "HaMLet2SMLAM.re",
+                  230,
+                  2
+                ]
+              ];
+        } else {
+          return /* RECORD */Block.__(2, [undefined]);
+        }
     default:
       throw [
             Caml_builtin_exceptions.match_failure,
             /* tuple */[
               "HaMLet2SMLAM.re",
-              222,
+              230,
               2
             ]
           ];
@@ -522,7 +549,7 @@ function compileSCon(sc) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "HaMLet2SMLAM.re",
-            230,
+            239,
             2
           ]
         ];

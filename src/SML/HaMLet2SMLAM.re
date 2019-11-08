@@ -26,7 +26,8 @@ type ast =
   | PARAtExp(sourceMap, ast)
   | FNExp(sourceMap, ast)
   | Match(sourceMap, (ast, option(ast)))
-  | Mrule(sourceMap, (ast, ast));
+  | Mrule(sourceMap, (ast, ast))
+  | RECORDAtExp(sourceMap, option(ast));
 
 module Decode = {
   open Json.Decode;
@@ -123,6 +124,12 @@ module Decode = {
   and mrule = json =>
     Mrule(json |> field("sourceMap", sourceMap), json |> field("args", pair(node, node)))
 
+  and recordatexp = json =>
+    RECORDAtExp(
+      json |> field("sourceMap", sourceMap),
+      json |> field("args", list(optional(node))) |> List.hd,
+    )
+
   and node = json => {
     (
       field("node", string)
@@ -147,6 +154,7 @@ module Decode = {
            | "FNExp" => fnexp
            | "Match" => match
            | "Mrule" => mrule
+           | "RECORDAtExp" => recordatexp
            | _ => failwith("Unknown node type: " ++ s)
            }
          )
@@ -224,6 +232,7 @@ and compileAtExp = a =>
   | LETAtExp(_, (d, e)) => SML.LET(compileDec(d), compileExp(e))
   | IDAtExp(_, x) => SML.ID(compileLongVId(x))
   | PARAtExp(_, e) => SML.PAR(compileExp(e))
+  | RECORDAtExp(_, None) => SML.RECORD(None)
   }
 
 and compileSCon = sc =>

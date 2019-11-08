@@ -70,7 +70,7 @@ let traces =
       {name: "ex1", text: ex1},
       {name: "ex2", text: ex2},
       {name: "ex3", text: ex3},
-      // {name: "ex4", text: ex4},
+      {name: "ex4", text: ex4},
       // {name: "ex5", text: ex5},
       // {name: "ex6", text: ex6},
     |]
