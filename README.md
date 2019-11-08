@@ -12,32 +12,21 @@ The point of this template and examples is to let you understand and personally 
 ## Run
 
 ```sh
+cd src/server/hamlet
+make # using your favorite SML implementation
+cd -
 npm install
 npm run server
 # in a new tab
 npm start
+# in a new tab
+cd src/server
+python3 server.py # requires Python 3.7. TODO: This is probably missing some dependencies right now.
 ```
 
 Open a new web page to `http://localhost:8000/`. Change any `.re` file in `src` to see the page auto-reload. **You don't need any bundler when you're developing**!
 
 **How come we don't need any bundler during development**? We highly encourage you to open up `index.html` to check for yourself!
-
-# Features Used
-
-|                           | Blinking Greeting | Reducer from ReactJS Docs | Fetch Dog Pictures | Reason Using JS Using Reason |
-|---------------------------|------------------|----------------------------|--------------------|------------------------------|
-| No props                  |                  | ✓                          |                    |                             |
-| Has props                 |                  |                            |                    | ✓                           |
-| Children props            | ✓                |                            |                    |                             |
-| No state                  |                  |                            |                    | ✓                           |
-| Has state                 | ✓                |                            |  ✓                 |                             |
-| Has state with useReducer |                  | ✓                          |                    |                             |
-| ReasonReact using ReactJS |                  |                            |                    | ✓                           |
-| ReactJS using ReasonReact |                  |                            |                    | ✓                           |
-| useEffect                 | ✓                |                            |  ✓                |                             |
-| Dom attribute             | ✓                | ✓                          |                   | ✓                           |
-| Styling                   | ✓                | ✓                          |  ✓                | ✓                           |
-| React.array               |                  |                            |  ✓                 |                             |
 
 # Bundle for Production
 

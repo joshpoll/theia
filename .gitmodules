@@ -1,0 +1,3 @@
+[submodule "src/server/hamlet"]
+	path = src/server/hamlet
+	url = https://github.com/joshpoll/hamlet
