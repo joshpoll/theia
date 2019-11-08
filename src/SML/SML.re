@@ -15,6 +15,7 @@
 /* TODO: how to make variable lookup more granular?? */
 /* TODO: environment handling is currently WRONG b/c never removes things from the environment */
 /* TODO: id status */
+/* TODO: desugaring toggling per sugar type (e.g. buttons for ite, orelse, andalso) */
 
 /* TODO: figure out how to do monads in reason/ocaml. there's some ppx stuff. */
 
