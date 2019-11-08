@@ -51,20 +51,24 @@ type program = {
   text: string,
 };
 
-let traceProgram = ({name, text}) =>
+let traceProgram = ({name, text}) => {
+  let payload = Js.Dict.empty();
+  Js.Dict.set(payload, "file_name", Js.Json.string(name));
+  Js.Dict.set(payload, "program", Js.Json.string(text));
   Js.Promise.(
     Fetch.fetchWithInit(
       "http://localhost:5000",
       Fetch.RequestInit.make(
         ~method_=Post,
-        ~body=Fetch.BodyInit.make("file_name=" ++ name ++ "&program=" ++ text),
-        ~headers=Fetch.HeadersInit.make({"Content-Type": "application/x-www-form-urlencoded"}),
+        ~body=Fetch.BodyInit.make(Js.Json.stringify(Js.Json.object_(payload))),
+        ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
         (),
       ),
     )
     |> then_(Fetch.Response.json)
     |> then_(json => Js.Promise.resolve(trace({name, example: Program(jsonToProgram(json))})))
   );
+};
 
 let traces =
   SMLExamples.(
@@ -75,11 +79,10 @@ let traces =
       {name: "ex3", text: ex3},
       {name: "ex4", text: ex4},
       {name: "ex5", text: ex5},
-      /* broken */
-      // {name: "ex6", text: ex6},
-      // {name: "ex7", text: ex7},
-      // {name: "ex8", text: ex8},
-      // {name: "ex9", text: ex9},
+      {name: "ex6", text: ex6},
+      {name: "ex7", text: ex7},
+      {name: "ex8", text: ex8},
+      {name: "ex9", text: ex9},
       {name: "ex10", text: ex10},
     |]
   )

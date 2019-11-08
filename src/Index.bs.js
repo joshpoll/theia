@@ -56,9 +56,12 @@ function jsonToProgram(json) {
 
 function traceProgram(param) {
   var name = param[/* name */0];
+  var payload = { };
+  payload["file_name"] = name;
+  payload["program"] = param[/* text */1];
   return fetch("http://localhost:5000", Fetch.RequestInit.make(/* Post */2, {
-                        "Content-Type": "application/x-www-form-urlencoded"
-                      }, Caml_option.some("file_name=" + (name + ("&program=" + param[/* text */1]))), undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined)(/* () */0)).then((function (prim) {
+                        "Content-Type": "application/json"
+                      }, Caml_option.some(JSON.stringify(payload)), undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined)(/* () */0)).then((function (prim) {
                   return prim.json();
                 })).then((function (json) {
                 return Promise.resolve(trace(/* record */[
@@ -92,6 +95,22 @@ var traces = $$Array.map(traceProgram, /* array */[
       /* record */[
         /* name */"ex5",
         /* text */SMLExamples$ReasonReactExamples.ex5
+      ],
+      /* record */[
+        /* name */"ex6",
+        /* text */SMLExamples$ReasonReactExamples.ex6
+      ],
+      /* record */[
+        /* name */"ex7",
+        /* text */SMLExamples$ReasonReactExamples.ex7
+      ],
+      /* record */[
+        /* name */"ex8",
+        /* text */SMLExamples$ReasonReactExamples.ex8
+      ],
+      /* record */[
+        /* name */"ex9",
+        /* text */SMLExamples$ReasonReactExamples.ex9
       ],
       /* record */[
         /* name */"ex10",
