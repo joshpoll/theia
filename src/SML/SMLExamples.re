@@ -31,3 +31,5 @@ val q = z + 1";
 let ex10 = "val a = 1;
 val b = 2;
 val a = 3";
+
+let ex11 = "if true then 1 else 2";

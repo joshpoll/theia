@@ -13,6 +13,8 @@
    this!*/
 /* TODO: how to represent derived forms??? */
 /* TODO: how to make variable lookup more granular?? */
+/* TODO: environment handling is currently WRONG b/c never removes things from the environment */
+/* TODO: id status */
 
 /* TODO: figure out how to do monads in reason/ocaml. there's some ppx stuff. */
 
@@ -69,6 +71,7 @@ type record = list((lab, val_))
 and val_ =
   | SVAL(sVal)
   | BASVAL(basVal)
+  | VID(vid)
   | RECORD(record)
   /* TODO: second argument should be an entire env */
   | FCNCLOSURE(match, valEnv, valEnv)
@@ -96,6 +99,10 @@ type focus =
   | ExpRow(expRow)
   | Record(record)
   | Program(program)
+  | Match(match, val_)
+  | MRule(mrule, val_)
+  | Pat(pat, val_)
+  | AtPat(atPat, val_)
   | Empty;
 
 type ctxt =
@@ -107,7 +114,9 @@ type ctxt =
   /* is that a... */
   | RECORDER(hole)
   | EXPROWE(record, lab, hole, option(expRow))
-  | PROGRAML(hole, program);
+  | PROGRAML(hole, program)
+  | MATCHMR(hole, match)
+  | MRULEP(hole, exp);
 
 type ctxts = list(ctxt);
 
@@ -126,6 +135,14 @@ let apply = (f, v) =>
   | ("+", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) => SVAL(INT(a + b))
   | _ => failwith("unknown built-in function: " ++ f)
   };
+
+let recEnv = ve =>
+  List.map(
+    fun
+    | (x, FCNCLOSURE(m, e, _)) => (x, FCNCLOSURE(m, e, ve))
+    | xv => xv,
+    ve,
+  );
 
 let step = (c: configuration): option(configuration) =>
   switch (c) {
@@ -287,6 +304,23 @@ let step = (c: configuration): option(configuration) =>
       env,
     })
 
+  // [102]
+  | {rewrite: {focus: Val(FCNCLOSURE(m, e, ve)), ctxts: [APPL((), a), ...ctxts]}, env} =>
+    Some({
+      rewrite: {
+        focus: AtExp(a),
+        ctxts: [APPR(FCNCLOSURE(m, e, ve), ()), ...ctxts],
+      },
+      env,
+    })
+  | {rewrite: {focus: Val(v), ctxts: [APPR(FCNCLOSURE(m, e, ve), ()), ...ctxts]}, env: _} =>
+    Some({
+      rewrite: {
+        focus: Match(m, v),
+        ctxts,
+      },
+      env: recEnv(ve) @ e /* "backwards" compared to spec b/c 4.2 says lookup happens in RHS first */
+    })
   // [108]
   | {rewrite: {focus: Exp(FN(m)), ctxts}, env} =>
     Some({
@@ -296,8 +330,57 @@ let step = (c: configuration): option(configuration) =>
       },
       env,
     })
+
   /* Matches */
+  /* TODO: not sure if these cases should be separated */
+  /* one mrule */
+  | {rewrite: {focus: Match(MATCH(mr, None), v), ctxts}, env} =>
+    Some({
+      rewrite: {
+        focus: MRule(mr, v),
+        ctxts,
+      },
+      env,
+    })
+  /* multiple mrules */
+  | {rewrite: {focus: Match(MATCH(mr, Some(m)), v), ctxts}, env} =>
+    Some({
+      rewrite: {
+        focus: MRule(mr, v),
+        ctxts: [MATCHMR((), m), ...ctxts],
+      },
+      env,
+    })
+
+  // [109]
+  /* mrule success */
+  | {rewrite: {focus: Val(v), ctxts: [MATCHMR((), _), ...ctxts]}, env} =>
+    Some({
+      rewrite: {
+        focus: Val(v),
+        ctxts,
+      },
+      env,
+    })
   /* Match Rules */
+  // [112]
+  | {rewrite: {focus: MRule(MRULE(p, e), v), ctxts}, env} =>
+    Some({
+      rewrite: {
+        focus: Pat(p, v),
+        ctxts: [MRULEP((), e), ...ctxts],
+      },
+      env,
+    })
+  | {rewrite: {focus: Empty, ctxts: [MRULEP((), e), ...ctxts]}, env} =>
+    Some({
+      rewrite: {
+        focus: Exp(e),
+        ctxts,
+      },
+      env,
+    })
+
   /* Declarations */
   // [114]
   | {rewrite: {focus: Dec(VAL(vb)), ctxts}, env} =>
@@ -333,8 +416,31 @@ let step = (c: configuration): option(configuration) =>
   /* Constructor Bindings */
   /* Exception Bindings */
   /* Atomic Patterns */
+  // [136]:
+  | {rewrite: {focus: AtPat(ID(x), v), ctxts}, env} =>
+    let Some(v') = Util.lookupOne(x, env);
+    if (v == v') {
+      Some({
+        rewrite: {
+          focus: Empty,
+          ctxts,
+        },
+        env,
+      });
+    } else {
+      None; /* [137]: TODO */
+    };
   /* Pattern Rows */
   /* Patterns */
+  // [143]
+  | {rewrite: {focus: Pat(ATPAT(ap), v), ctxts}, env} =>
+    Some({
+      rewrite: {
+        focus: AtPat(ap, v),
+        ctxts,
+      },
+      env,
+    })
 
   /* ... */
 
@@ -430,7 +536,7 @@ let inject = e => {
     focus: e,
     ctxts: [],
   },
-  env: [("+", BASVAL("+"))],
+  env: [("+", BASVAL("+")), ("true", VID("true")), ("false", VID("false"))],
 };
 
 let interpretTraceBounded = (~maxDepth=100, p) =>

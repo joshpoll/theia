@@ -87,6 +87,7 @@ let rec compileVal_ = v =>
   | SVAL(sv) => compileSVal(sv)
   | BASVAL(b) =>
     Value2([], [Apply2([React.string("builtin "), <> </>], [Atom(React.string(b))])])
+  | VID(x) => Value2([], [Atom(React.string(x))])
   | RECORD([]) => Value2([], [Atom(React.string("()"))])
   | RECORD(r) =>
     Value2([], [Apply2([React.string("{"), React.string("}")], [compileRecord(r)])])
@@ -147,6 +148,11 @@ let compileFocus = f =>
   | ExpRow(er) => compileExpRow(er)
   | Record(r) => compileRecord(r)
   | Program(p) => compileProgram(p)
+  /* TODO: should use HSequence but layout is way too buggy */
+  | Match(m, v) => VSequence([compileMatch(m), compileVal_(v)])
+  | MRule(mr, v) => VSequence([compileMRule(mr), compileVal_(v)])
+  | Pat(p, v) => VSequence([compilePat(p), compileVal_(v)])
+  | AtPat(ap, v) => VSequence([compileAtPat(ap), compileVal_(v)])
   | Empty => Atom(<> </>)
   };
 
@@ -206,6 +212,16 @@ let compileCtxt = c =>
   | PROGRAML((), p) => {
       ops: [<> </>, <> {React.string(";")} <br /> </>, <> </>],
       args: [compileProgram(p)],
+      holePos: 0,
+    }
+  | MATCHMR((), m) => {
+      ops: [<> </>, <> <br /> {React.string("| ")} </>, <> </>],
+      args: [compileMatch(m)],
+      holePos: 0,
+    }
+  | MRULEP((), e) => {
+      ops: [<> </>, React.string(" => "), <> </>],
+      args: [compileExp(e)],
       holePos: 0,
     }
   };

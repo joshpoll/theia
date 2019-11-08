@@ -308,7 +308,15 @@ function compileVal_(v) {
                     /* [] */0
                   ]
                 ]);
-    case /* RECORD */2 :
+    case /* VID */2 :
+        return /* Value2 */Block.__(8, [
+                  /* [] */0,
+                  /* :: */[
+                    /* Atom */Block.__(0, [v[0]]),
+                    /* [] */0
+                  ]
+                ]);
+    case /* RECORD */3 :
         var r = v[0];
         if (r) {
           return /* Value2 */Block.__(8, [
@@ -339,7 +347,7 @@ function compileVal_(v) {
                     ]
                   ]);
         }
-    case /* FCNCLOSURE */3 :
+    case /* FCNCLOSURE */4 :
         return /* Value2 */Block.__(8, [
                   /* :: */[
                     "closure",
@@ -461,7 +469,7 @@ function compileTopDec(td) {
           Caml_builtin_exceptions.match_failure,
           /* tuple */[
             "SMLToTheiaIR.re",
-            124,
+            125,
             2
           ]
         ];
@@ -522,6 +530,38 @@ function compileFocus(f) {
           return compileRecord(f[0]);
       case /* Program */9 :
           return compileProgram(f[0]);
+      case /* Match */10 :
+          return /* VSequence */Block.__(4, [/* :: */[
+                      compileMatch(f[0]),
+                      /* :: */[
+                        compileVal_(f[1]),
+                        /* [] */0
+                      ]
+                    ]]);
+      case /* MRule */11 :
+          return /* VSequence */Block.__(4, [/* :: */[
+                      compileMRule(f[0]),
+                      /* :: */[
+                        compileVal_(f[1]),
+                        /* [] */0
+                      ]
+                    ]]);
+      case /* Pat */12 :
+          return /* VSequence */Block.__(4, [/* :: */[
+                      compileAtPat(f[0][0]),
+                      /* :: */[
+                        compileVal_(f[1]),
+                        /* [] */0
+                      ]
+                    ]]);
+      case /* AtPat */13 :
+          return /* VSequence */Block.__(4, [/* :: */[
+                      compileAtPat(f[0]),
+                      /* :: */[
+                        compileVal_(f[1]),
+                        /* [] */0
+                      ]
+                    ]]);
       
     }
   }
@@ -756,6 +796,42 @@ function compileCtxt(c) {
                 ],
                 /* args : :: */[
                   compileProgram(c[1]),
+                  /* [] */0
+                ],
+                /* holePos */0
+              ];
+    case /* MATCHMR */8 :
+        return /* record */[
+                /* ops : :: */[
+                  React.createElement(React.Fragment, undefined),
+                  /* :: */[
+                    React.createElement(React.Fragment, undefined, React.createElement("br", undefined), "| "),
+                    /* :: */[
+                      React.createElement(React.Fragment, undefined),
+                      /* [] */0
+                    ]
+                  ]
+                ],
+                /* args : :: */[
+                  compileMatch(c[1]),
+                  /* [] */0
+                ],
+                /* holePos */0
+              ];
+    case /* MRULEP */9 :
+        return /* record */[
+                /* ops : :: */[
+                  React.createElement(React.Fragment, undefined),
+                  /* :: */[
+                    " => ",
+                    /* :: */[
+                      React.createElement(React.Fragment, undefined),
+                      /* [] */0
+                    ]
+                  ]
+                ],
+                /* args : :: */[
+                  compileExp(c[1]),
                   /* [] */0
                 ],
                 /* holePos */0

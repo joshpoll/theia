@@ -115,6 +115,10 @@ var traces = $$Array.map(traceProgram, /* array */[
       /* record */[
         /* name */"ex10",
         /* text */SMLExamples$ReasonReactExamples.ex10
+      ],
+      /* record */[
+        /* name */"ex11",
+        /* text */SMLExamples$ReasonReactExamples.ex11
       ]
     ]);
 

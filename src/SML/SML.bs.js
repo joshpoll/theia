@@ -1,13 +1,16 @@
 'use strict';
 
+var List = require("bs-platform/lib/js/list.js");
 var Block = require("bs-platform/lib/js/block.js");
+var Caml_obj = require("bs-platform/lib/js/caml_obj.js");
 var Pervasives = require("bs-platform/lib/js/pervasives.js");
+var Caml_builtin_exceptions = require("bs-platform/lib/js/caml_builtin_exceptions.js");
 var Util$ReasonReactExamples = require("../Theia/Util.bs.js");
 var TheiaUtil$ReasonReactExamples = require("../Theia/TheiaUtil.bs.js");
 
 function apply(f, v) {
   if (f === "+") {
-    if (v.tag === /* RECORD */2) {
+    if (v.tag === /* RECORD */3) {
       var match = v[0];
       if (match) {
         var match$1 = match[0];
@@ -49,6 +52,24 @@ function apply(f, v) {
   }
 }
 
+function recEnv(ve) {
+  return List.map((function (xv) {
+                var match = xv[1];
+                if (match.tag === /* FCNCLOSURE */4) {
+                  return /* tuple */[
+                          xv[0],
+                          /* FCNCLOSURE */Block.__(4, [
+                              match[0],
+                              match[1],
+                              ve
+                            ])
+                        ];
+                } else {
+                  return xv;
+                }
+              }), ve);
+}
+
 function step(c) {
   var match = c[/* rewrite */0];
   var match$1 = match[/* focus */0];
@@ -57,14 +78,6 @@ function step(c) {
     if (match$2) {
       var match$3 = match$2[0];
       switch (match$3.tag | 0) {
-        case /* LETD */0 :
-            return /* record */[
-                    /* rewrite : record */[
-                      /* focus : Exp */Block.__(1, [match$3[1]]),
-                      /* ctxts */match$2[1]
-                    ],
-                    /* env */c[/* env */1]
-                  ];
         case /* SEQL */2 :
             return /* record */[
                     /* rewrite : record */[
@@ -81,9 +94,19 @@ function step(c) {
                     ],
                     /* env */c[/* env */1]
                   ];
+        case /* LETD */0 :
+        case /* MRULEP */9 :
+            break;
         default:
           return ;
       }
+      return /* record */[
+              /* rewrite : record */[
+                /* focus : Exp */Block.__(1, [match$3[1]]),
+                /* ctxts */match$2[1]
+              ],
+              /* env */c[/* env */1]
+            ];
     } else {
       return ;
     }
@@ -130,7 +153,7 @@ function step(c) {
                 } else {
                   return /* record */[
                           /* rewrite : record */[
-                            /* focus : Val */Block.__(2, [/* RECORD */Block.__(2, [/* [] */0])]),
+                            /* focus : Val */Block.__(2, [/* RECORD */Block.__(3, [/* [] */0])]),
                             /* ctxts */match[/* ctxts */1]
                           ],
                           /* env */c[/* env */1]
@@ -189,7 +212,7 @@ function step(c) {
                 var env$1 = c[/* env */1];
                 return /* record */[
                         /* rewrite : record */[
-                          /* focus : Val */Block.__(2, [/* FCNCLOSURE */Block.__(3, [
+                          /* focus : Val */Block.__(2, [/* FCNCLOSURE */Block.__(4, [
                                   match$7[0],
                                   env$1,
                                   /* [] */0
@@ -225,46 +248,78 @@ function step(c) {
                           ];
                   }
               case /* APPL */3 :
-                  if (v.tag === /* BASVAL */1) {
-                    var match$10 = match[/* ctxts */1];
-                    return /* record */[
-                            /* rewrite : record */[
-                              /* focus : AtExp */Block.__(0, [match$10[0][1]]),
-                              /* ctxts : :: */[
-                                /* APPR */Block.__(4, [
-                                    /* BASVAL */Block.__(1, [v[0]]),
-                                    /* () */0
-                                  ]),
-                                match$10[1]
-                              ]
-                            ],
-                            /* env */c[/* env */1]
-                          ];
-                  } else {
-                    return ;
+                  switch (v.tag | 0) {
+                    case /* BASVAL */1 :
+                        var match$10 = match[/* ctxts */1];
+                        return /* record */[
+                                /* rewrite : record */[
+                                  /* focus : AtExp */Block.__(0, [match$10[0][1]]),
+                                  /* ctxts : :: */[
+                                    /* APPR */Block.__(4, [
+                                        /* BASVAL */Block.__(1, [v[0]]),
+                                        /* () */0
+                                      ]),
+                                    match$10[1]
+                                  ]
+                                ],
+                                /* env */c[/* env */1]
+                              ];
+                    case /* FCNCLOSURE */4 :
+                        var match$11 = match[/* ctxts */1];
+                        return /* record */[
+                                /* rewrite : record */[
+                                  /* focus : AtExp */Block.__(0, [match$11[0][1]]),
+                                  /* ctxts : :: */[
+                                    /* APPR */Block.__(4, [
+                                        /* FCNCLOSURE */Block.__(4, [
+                                            v[0],
+                                            v[1],
+                                            v[2]
+                                          ]),
+                                        /* () */0
+                                      ]),
+                                    match$11[1]
+                                  ]
+                                ],
+                                /* env */c[/* env */1]
+                              ];
+                    default:
+                      return ;
                   }
               case /* APPR */4 :
-                  var match$11 = match$9[0];
-                  if (match$11.tag === /* BASVAL */1) {
-                    return /* record */[
-                            /* rewrite : record */[
-                              /* focus : Val */Block.__(2, [apply(match$11[0], v)]),
-                              /* ctxts */match$8[1]
-                            ],
-                            /* env */c[/* env */1]
-                          ];
-                  } else {
-                    return ;
+                  var match$12 = match$9[0];
+                  switch (match$12.tag | 0) {
+                    case /* BASVAL */1 :
+                        return /* record */[
+                                /* rewrite : record */[
+                                  /* focus : Val */Block.__(2, [apply(match$12[0], v)]),
+                                  /* ctxts */match$8[1]
+                                ],
+                                /* env */c[/* env */1]
+                              ];
+                    case /* FCNCLOSURE */4 :
+                        return /* record */[
+                                /* rewrite : record */[
+                                  /* focus : Match */Block.__(10, [
+                                      match$12[0],
+                                      v
+                                    ]),
+                                  /* ctxts */match$8[1]
+                                ],
+                                /* env */Pervasives.$at(recEnv(match$12[2]), match$12[1])
+                              ];
+                    default:
+                      return ;
                   }
               case /* EXPROWE */6 :
-                  var match$12 = match$9[3];
+                  var match$13 = match$9[3];
                   var l1 = match$9[1];
                   var r = match$9[0];
-                  if (match$12 !== undefined) {
-                    var match$13 = match$12;
+                  if (match$13 !== undefined) {
+                    var match$14 = match$13;
                     return /* record */[
                             /* rewrite : record */[
-                              /* focus : Exp */Block.__(1, [match$13[1]]),
+                              /* focus : Exp */Block.__(1, [match$14[1]]),
                               /* ctxts : :: */[
                                 /* EXPROWE */Block.__(6, [
                                     Pervasives.$at(r, /* :: */[
@@ -274,9 +329,9 @@ function step(c) {
                                           ],
                                           /* [] */0
                                         ]),
-                                    match$13[0],
+                                    match$14[0],
                                     /* () */0,
-                                    match$13[2]
+                                    match$14[2]
                                   ]),
                                 match$8[1]
                               ]
@@ -298,6 +353,14 @@ function step(c) {
                             /* env */c[/* env */1]
                           ];
                   }
+              case /* MATCHMR */8 :
+                  return /* record */[
+                          /* rewrite : record */[
+                            /* focus : Val */Block.__(2, [v]),
+                            /* ctxts */match$8[1]
+                          ],
+                          /* env */c[/* env */1]
+                        ];
               default:
                 return ;
             }
@@ -313,15 +376,15 @@ function step(c) {
                   /* env */c[/* env */1]
                 ];
       case /* ValBind */4 :
-          var match$14 = match$1[0];
+          var match$15 = match$1[0];
           return /* record */[
                   /* rewrite : record */[
-                    /* focus : Exp */Block.__(1, [match$14[1]]),
+                    /* focus : Exp */Block.__(1, [match$15[1]]),
                     /* ctxts : :: */[
                       /* VALBINDE */Block.__(1, [
-                          match$14[0],
+                          match$15[0],
                           /* () */0,
-                          match$14[2]
+                          match$15[2]
                         ]),
                       match[/* ctxts */1]
                     ]
@@ -329,15 +392,15 @@ function step(c) {
                   /* env */c[/* env */1]
                 ];
       case /* StrDec */5 :
-          var match$15 = match$1[0];
-          if (match$15.tag) {
+          var match$16 = match$1[0];
+          if (match$16.tag) {
             return /* record */[
                     /* rewrite : record */[
-                      /* focus : StrDec */Block.__(5, [match$15[0]]),
+                      /* focus : StrDec */Block.__(5, [match$16[0]]),
                       /* ctxts : :: */[
                         /* SEQL */Block.__(2, [
                             /* () */0,
-                            match$15[1]
+                            match$16[1]
                           ]),
                         match[/* ctxts */1]
                       ]
@@ -347,36 +410,36 @@ function step(c) {
           } else {
             return /* record */[
                     /* rewrite : record */[
-                      /* focus : Dec */Block.__(3, [match$15[0]]),
+                      /* focus : Dec */Block.__(3, [match$16[0]]),
                       /* ctxts */match[/* ctxts */1]
                     ],
                     /* env */c[/* env */1]
                   ];
           }
       case /* TopDec */6 :
-          var match$16 = match$1[0];
-          if (match$16[1] !== undefined) {
+          var match$17 = match$1[0];
+          if (match$17[1] !== undefined) {
             return ;
           } else {
             return /* record */[
                     /* rewrite : record */[
-                      /* focus : StrDec */Block.__(5, [match$16[0]]),
+                      /* focus : StrDec */Block.__(5, [match$17[0]]),
                       /* ctxts */match[/* ctxts */1]
                     ],
                     /* env */c[/* env */1]
                   ];
           }
       case /* ExpRow */7 :
-          var match$17 = match$1[0];
+          var match$18 = match$1[0];
           return /* record */[
                   /* rewrite : record */[
-                    /* focus : Exp */Block.__(1, [match$17[1]]),
+                    /* focus : Exp */Block.__(1, [match$18[1]]),
                     /* ctxts : :: */[
                       /* EXPROWE */Block.__(6, [
                           /* [] */0,
-                          match$17[0],
+                          match$18[0],
                           /* () */0,
-                          match$17[2]
+                          match$18[2]
                         ]),
                       match[/* ctxts */1]
                     ]
@@ -384,12 +447,12 @@ function step(c) {
                   /* env */c[/* env */1]
                 ];
       case /* Record */8 :
-          var match$18 = match[/* ctxts */1];
-          if (match$18 && match$18[0].tag === /* RECORDER */5) {
+          var match$19 = match[/* ctxts */1];
+          if (match$19 && match$19[0].tag === /* RECORDER */5) {
             return /* record */[
                     /* rewrite : record */[
-                      /* focus : Val */Block.__(2, [/* RECORD */Block.__(2, [match$1[0]])]),
-                      /* ctxts */match$18[1]
+                      /* focus : Val */Block.__(2, [/* RECORD */Block.__(3, [match$1[0]])]),
+                      /* ctxts */match$19[1]
                     ],
                     /* env */c[/* env */1]
                   ];
@@ -397,17 +460,17 @@ function step(c) {
             return ;
           }
       case /* Program */9 :
-          var match$19 = match$1[0];
-          var match$20 = match$19[1];
-          var td = match$19[0];
-          if (match$20 !== undefined) {
+          var match$20 = match$1[0];
+          var match$21 = match$20[1];
+          var td = match$20[0];
+          if (match$21 !== undefined) {
             return /* record */[
                     /* rewrite : record */[
                       /* focus : TopDec */Block.__(6, [td]),
                       /* ctxts : :: */[
                         /* PROGRAML */Block.__(7, [
                             /* () */0,
-                            match$20
+                            match$21
                           ]),
                         match[/* ctxts */1]
                       ]
@@ -422,6 +485,93 @@ function step(c) {
                     ],
                     /* env */c[/* env */1]
                   ];
+          }
+      case /* Match */10 :
+          var match$22 = match$1[0];
+          var match$23 = match$22[1];
+          var mr = match$22[0];
+          if (match$23 !== undefined) {
+            return /* record */[
+                    /* rewrite : record */[
+                      /* focus : MRule */Block.__(11, [
+                          mr,
+                          match$1[1]
+                        ]),
+                      /* ctxts : :: */[
+                        /* MATCHMR */Block.__(8, [
+                            /* () */0,
+                            match$23
+                          ]),
+                        match[/* ctxts */1]
+                      ]
+                    ],
+                    /* env */c[/* env */1]
+                  ];
+          } else {
+            return /* record */[
+                    /* rewrite : record */[
+                      /* focus : MRule */Block.__(11, [
+                          mr,
+                          match$1[1]
+                        ]),
+                      /* ctxts */match[/* ctxts */1]
+                    ],
+                    /* env */c[/* env */1]
+                  ];
+          }
+      case /* MRule */11 :
+          var match$24 = match$1[0];
+          return /* record */[
+                  /* rewrite : record */[
+                    /* focus : Pat */Block.__(12, [
+                        match$24[0],
+                        match$1[1]
+                      ]),
+                    /* ctxts : :: */[
+                      /* MRULEP */Block.__(9, [
+                          /* () */0,
+                          match$24[1]
+                        ]),
+                      match[/* ctxts */1]
+                    ]
+                  ],
+                  /* env */c[/* env */1]
+                ];
+      case /* Pat */12 :
+          return /* record */[
+                  /* rewrite : record */[
+                    /* focus : AtPat */Block.__(13, [
+                        match$1[0][0],
+                        match$1[1]
+                      ]),
+                    /* ctxts */match[/* ctxts */1]
+                  ],
+                  /* env */c[/* env */1]
+                ];
+      case /* AtPat */13 :
+          var env$2 = c[/* env */1];
+          var match$25 = Util$ReasonReactExamples.lookupOne(match$1[0][0], env$2);
+          if (match$25 !== undefined) {
+            if (Caml_obj.caml_equal(match$1[1], match$25)) {
+              return /* record */[
+                      /* rewrite : record */[
+                        /* focus : Empty */0,
+                        /* ctxts */match[/* ctxts */1]
+                      ],
+                      /* env */env$2
+                    ];
+            } else {
+              return ;
+            }
+          } else {
+            throw [
+                  Caml_builtin_exceptions.match_failure,
+                  /* tuple */[
+                    "SML.re",
+                    421,
+                    8
+                  ]
+                ];
           }
       
     }
@@ -447,7 +597,19 @@ function inject(e) {
               "+",
               /* BASVAL */Block.__(1, ["+"])
             ],
-            /* [] */0
+            /* :: */[
+              /* tuple */[
+                "true",
+                /* VID */Block.__(2, ["true"])
+              ],
+              /* :: */[
+                /* tuple */[
+                  "false",
+                  /* VID */Block.__(2, ["false"])
+                ],
+                /* [] */0
+              ]
+            ]
           ]
         ];
 }
@@ -466,6 +628,7 @@ function interpretTrace(p) {
 }
 
 exports.apply = apply;
+exports.recEnv = recEnv;
 exports.step = step;
 exports.isNone = isNone;
 exports.isFinal = isFinal;
