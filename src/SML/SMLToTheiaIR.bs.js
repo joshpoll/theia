@@ -562,6 +562,8 @@ function compileFocus(f) {
                         /* [] */0
                       ]
                     ]]);
+      case /* FAIL */14 :
+          return /* Atom */Block.__(0, ["FAIL"]);
       
     }
   }
@@ -801,23 +803,38 @@ function compileCtxt(c) {
                 /* holePos */0
               ];
     case /* MATCHMR */8 :
-        return /* record */[
-                /* ops : :: */[
-                  React.createElement(React.Fragment, undefined),
-                  /* :: */[
-                    React.createElement(React.Fragment, undefined, React.createElement("br", undefined), "| "),
+        var match$2 = c[1];
+        if (match$2 !== undefined) {
+          return /* record */[
+                  /* ops : :: */[
+                    React.createElement(React.Fragment, undefined),
+                    /* :: */[
+                      React.createElement(React.Fragment, undefined, React.createElement("br", undefined), "| "),
+                      /* :: */[
+                        React.createElement(React.Fragment, undefined),
+                        /* [] */0
+                      ]
+                    ]
+                  ],
+                  /* args : :: */[
+                    compileMatch(match$2),
+                    /* [] */0
+                  ],
+                  /* holePos */0
+                ];
+        } else {
+          return /* record */[
+                  /* ops : :: */[
+                    React.createElement(React.Fragment, undefined),
                     /* :: */[
                       React.createElement(React.Fragment, undefined),
                       /* [] */0
                     ]
-                  ]
-                ],
-                /* args : :: */[
-                  compileMatch(c[1]),
-                  /* [] */0
-                ],
-                /* holePos */0
-              ];
+                  ],
+                  /* args : [] */0,
+                  /* holePos */0
+                ];
+        }
     case /* MRULEP */9 :
         return /* record */[
                 /* ops : :: */[

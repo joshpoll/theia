@@ -104,6 +104,7 @@ type focus =
   | MRule(mrule, val_)
   | Pat(pat, val_)
   | AtPat(atPat, val_)
+  | FAIL(val_)
   | Empty;
 
 type ctxt =
@@ -116,7 +117,7 @@ type ctxt =
   | RECORDER(hole)
   | EXPROWE(record, lab, hole, option(expRow))
   | PROGRAML(hole, program)
-  | MATCHMR(hole, match)
+  | MATCHMR(hole, option(match))
   | MRULEP(hole, exp);
 
 type ctxts = list(ctxt);
@@ -134,6 +135,13 @@ type configuration = {
 let apply = (f, v) =>
   switch (f, v) {
   | ("+", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) => SVAL(INT(a + b))
+  | ("-", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) => SVAL(INT(a - b))
+  | ("<", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) =>
+    if (a < b) {
+      VID("true");
+    } else {
+      VID("false");
+    }
   | _ => failwith("unknown built-in function: " ++ f)
   };
 
@@ -276,7 +284,6 @@ let step = (c: configuration): option(configuration) =>
     })
 
   // helper rule for function application
-  /* TODO: should take an APP and visit LHS */
   | {rewrite: {focus: Exp(APP(f, x)), ctxts}, env} =>
     Some({
       rewrite: {
@@ -333,22 +340,11 @@ let step = (c: configuration): option(configuration) =>
     })
 
   /* Matches */
-  /* TODO: not sure if these cases should be separated */
-  /* one mrule */
-  | {rewrite: {focus: Match(MATCH(mr, None), v), ctxts}, env} =>
+  | {rewrite: {focus: Match(MATCH(mr, om), v), ctxts}, env} =>
     Some({
       rewrite: {
         focus: MRule(mr, v),
-        ctxts,
-      },
-      env,
-    })
-  /* multiple mrules */
-  | {rewrite: {focus: Match(MATCH(mr, Some(m)), v), ctxts}, env} =>
-    Some({
-      rewrite: {
-        focus: MRule(mr, v),
-        ctxts: [MATCHMR((), m), ...ctxts],
+        ctxts: [MATCHMR((), om), ...ctxts],
       },
       env,
     })
@@ -363,6 +359,27 @@ let step = (c: configuration): option(configuration) =>
       },
       env,
     })
+
+  // [110]
+  | {rewrite: {focus: FAIL(v), ctxts: [MATCHMR((), None), ...ctxts]}, env} =>
+    Some({
+      rewrite: {
+        focus: FAIL(v),
+        ctxts,
+      },
+      env,
+    })
+
+  // [111]
+  | {rewrite: {focus: FAIL(v), ctxts: [MATCHMR((), Some(m)), ...ctxts]}, env} =>
+    Some({
+      rewrite: {
+        focus: Match(m, v),
+        ctxts,
+      },
+      env,
+    })
+
   /* Match Rules */
   // [112]
   | {rewrite: {focus: MRule(MRULE(p, e), v), ctxts}, env} =>
@@ -377,6 +394,16 @@ let step = (c: configuration): option(configuration) =>
     Some({
       rewrite: {
         focus: Exp(e),
+        ctxts,
+      },
+      env,
+    })
+
+  // [113]
+  | {rewrite: {focus: FAIL(v), ctxts: [MRULEP((), _), ...ctxts]}, env} =>
+    Some({
+      rewrite: {
+        focus: FAIL(v),
         ctxts,
       },
       env,
@@ -417,10 +444,11 @@ let step = (c: configuration): option(configuration) =>
   /* Constructor Bindings */
   /* Exception Bindings */
   /* Atomic Patterns */
-  // [136]:
+  // [135-137ish]
   | {rewrite: {focus: AtPat(ID(x), v), ctxts}, env} =>
     let Some(v') = Util.lookupOne(x, env);
     if (v == v') {
+      // [136]
       Some({
         rewrite: {
           focus: Empty,
@@ -429,7 +457,14 @@ let step = (c: configuration): option(configuration) =>
         env,
       });
     } else {
-      None; /* [137]: TODO */
+      // [137]
+      Some({
+        rewrite: {
+          focus: FAIL(v),
+          ctxts,
+        },
+        env,
+      });
     };
   /* Pattern Rows */
   /* Patterns */
@@ -537,7 +572,13 @@ let inject = e => {
     focus: e,
     ctxts: [],
   },
-  env: [("+", BASVAL("+")), ("true", VID("true")), ("false", VID("false"))],
+  env: [
+    ("+", BASVAL("+")),
+    ("-", BASVAL("-")),
+    ("<", BASVAL("<")),
+    ("true", VID("true")),
+    ("false", VID("false")),
+  ],
 };
 
 let interpretTraceBounded = (~maxDepth=100, p) =>

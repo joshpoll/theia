@@ -9,46 +9,125 @@ var Util$ReasonReactExamples = require("../Theia/Util.bs.js");
 var TheiaUtil$ReasonReactExamples = require("../Theia/TheiaUtil.bs.js");
 
 function apply(f, v) {
-  if (f === "+") {
-    if (v.tag === /* RECORD */3) {
-      var match = v[0];
-      if (match) {
-        var match$1 = match[0];
-        if (match$1[0] === "1") {
-          var match$2 = match$1[1];
-          if (match$2.tag) {
-            return Pervasives.failwith("unknown built-in function: " + f);
-          } else {
-            var match$3 = match[1];
-            if (match$3) {
-              var match$4 = match$3[0];
-              if (match$4[0] === "2") {
-                var match$5 = match$4[1];
-                if (match$5.tag) {
-                  return Pervasives.failwith("unknown built-in function: " + f);
-                } else if (match$3[1]) {
-                  return Pervasives.failwith("unknown built-in function: " + f);
-                } else {
-                  return /* SVAL */Block.__(0, [/* INT */[match$2[0][0] + match$5[0][0] | 0]]);
-                }
-              } else {
+  switch (f) {
+    case "+" :
+        if (v.tag === /* RECORD */3) {
+          var match = v[0];
+          if (match) {
+            var match$1 = match[0];
+            if (match$1[0] === "1") {
+              var match$2 = match$1[1];
+              if (match$2.tag) {
                 return Pervasives.failwith("unknown built-in function: " + f);
+              } else {
+                var match$3 = match[1];
+                if (match$3) {
+                  var match$4 = match$3[0];
+                  if (match$4[0] === "2") {
+                    var match$5 = match$4[1];
+                    if (match$5.tag) {
+                      return Pervasives.failwith("unknown built-in function: " + f);
+                    } else if (match$3[1]) {
+                      return Pervasives.failwith("unknown built-in function: " + f);
+                    } else {
+                      return /* SVAL */Block.__(0, [/* INT */[match$2[0][0] + match$5[0][0] | 0]]);
+                    }
+                  } else {
+                    return Pervasives.failwith("unknown built-in function: " + f);
+                  }
+                } else {
+                  return Pervasives.failwith("unknown built-in function: " + f);
+                }
               }
             } else {
               return Pervasives.failwith("unknown built-in function: " + f);
             }
+          } else {
+            return Pervasives.failwith("unknown built-in function: " + f);
           }
         } else {
           return Pervasives.failwith("unknown built-in function: " + f);
         }
-      } else {
-        return Pervasives.failwith("unknown built-in function: " + f);
-      }
-    } else {
+    case "-" :
+        if (v.tag === /* RECORD */3) {
+          var match$6 = v[0];
+          if (match$6) {
+            var match$7 = match$6[0];
+            if (match$7[0] === "1") {
+              var match$8 = match$7[1];
+              if (match$8.tag) {
+                return Pervasives.failwith("unknown built-in function: " + f);
+              } else {
+                var match$9 = match$6[1];
+                if (match$9) {
+                  var match$10 = match$9[0];
+                  if (match$10[0] === "2") {
+                    var match$11 = match$10[1];
+                    if (match$11.tag) {
+                      return Pervasives.failwith("unknown built-in function: " + f);
+                    } else if (match$9[1]) {
+                      return Pervasives.failwith("unknown built-in function: " + f);
+                    } else {
+                      return /* SVAL */Block.__(0, [/* INT */[match$8[0][0] - match$11[0][0] | 0]]);
+                    }
+                  } else {
+                    return Pervasives.failwith("unknown built-in function: " + f);
+                  }
+                } else {
+                  return Pervasives.failwith("unknown built-in function: " + f);
+                }
+              }
+            } else {
+              return Pervasives.failwith("unknown built-in function: " + f);
+            }
+          } else {
+            return Pervasives.failwith("unknown built-in function: " + f);
+          }
+        } else {
+          return Pervasives.failwith("unknown built-in function: " + f);
+        }
+    case "<" :
+        if (v.tag === /* RECORD */3) {
+          var match$12 = v[0];
+          if (match$12) {
+            var match$13 = match$12[0];
+            if (match$13[0] === "1") {
+              var match$14 = match$13[1];
+              if (match$14.tag) {
+                return Pervasives.failwith("unknown built-in function: " + f);
+              } else {
+                var match$15 = match$12[1];
+                if (match$15) {
+                  var match$16 = match$15[0];
+                  if (match$16[0] === "2") {
+                    var match$17 = match$16[1];
+                    if (match$17.tag) {
+                      return Pervasives.failwith("unknown built-in function: " + f);
+                    } else if (match$15[1]) {
+                      return Pervasives.failwith("unknown built-in function: " + f);
+                    } else if (match$14[0][0] < match$17[0][0]) {
+                      return /* VID */Block.__(2, ["true"]);
+                    } else {
+                      return /* VID */Block.__(2, ["false"]);
+                    }
+                  } else {
+                    return Pervasives.failwith("unknown built-in function: " + f);
+                  }
+                } else {
+                  return Pervasives.failwith("unknown built-in function: " + f);
+                }
+              }
+            } else {
+              return Pervasives.failwith("unknown built-in function: " + f);
+            }
+          } else {
+            return Pervasives.failwith("unknown built-in function: " + f);
+          }
+        } else {
+          return Pervasives.failwith("unknown built-in function: " + f);
+        }
+    default:
       return Pervasives.failwith("unknown built-in function: " + f);
-    }
-  } else {
-    return Pervasives.failwith("unknown built-in function: " + f);
   }
 }
 
@@ -488,49 +567,34 @@ function step(c) {
           }
       case /* Match */10 :
           var match$22 = match$1[0];
-          var match$23 = match$22[1];
-          var mr = match$22[0];
-          if (match$23 !== undefined) {
-            return /* record */[
-                    /* rewrite : record */[
-                      /* focus : MRule */Block.__(11, [
-                          mr,
-                          match$1[1]
+          return /* record */[
+                  /* rewrite : record */[
+                    /* focus : MRule */Block.__(11, [
+                        match$22[0],
+                        match$1[1]
+                      ]),
+                    /* ctxts : :: */[
+                      /* MATCHMR */Block.__(8, [
+                          /* () */0,
+                          match$22[1]
                         ]),
-                      /* ctxts : :: */[
-                        /* MATCHMR */Block.__(8, [
-                            /* () */0,
-                            match$23
-                          ]),
-                        match[/* ctxts */1]
-                      ]
-                    ],
-                    /* env */c[/* env */1]
-                  ];
-          } else {
-            return /* record */[
-                    /* rewrite : record */[
-                      /* focus : MRule */Block.__(11, [
-                          mr,
-                          match$1[1]
-                        ]),
-                      /* ctxts */match[/* ctxts */1]
-                    ],
-                    /* env */c[/* env */1]
-                  ];
-          }
+                      match[/* ctxts */1]
+                    ]
+                  ],
+                  /* env */c[/* env */1]
+                ];
       case /* MRule */11 :
-          var match$24 = match$1[0];
+          var match$23 = match$1[0];
           return /* record */[
                   /* rewrite : record */[
                     /* focus : Pat */Block.__(12, [
-                        match$24[0],
+                        match$23[0],
                         match$1[1]
                       ]),
                     /* ctxts : :: */[
                       /* MRULEP */Block.__(9, [
                           /* () */0,
-                          match$24[1]
+                          match$23[1]
                         ]),
                       match[/* ctxts */1]
                     ]
@@ -550,28 +614,78 @@ function step(c) {
                 ];
       case /* AtPat */13 :
           var env$2 = c[/* env */1];
-          var match$25 = Util$ReasonReactExamples.lookupOne(match$1[0][0], env$2);
-          if (match$25 !== undefined) {
-            if (Caml_obj.caml_equal(match$1[1], match$25)) {
+          var ctxts = match[/* ctxts */1];
+          var v$1 = match$1[1];
+          var match$24 = Util$ReasonReactExamples.lookupOne(match$1[0][0], env$2);
+          if (match$24 !== undefined) {
+            if (Caml_obj.caml_equal(v$1, match$24)) {
               return /* record */[
                       /* rewrite : record */[
                         /* focus : Empty */0,
-                        /* ctxts */match[/* ctxts */1]
+                        /* ctxts */ctxts
                       ],
                       /* env */env$2
                     ];
             } else {
-              return ;
+              return /* record */[
+                      /* rewrite : record */[
+                        /* focus : FAIL */Block.__(14, [v$1]),
+                        /* ctxts */ctxts
+                      ],
+                      /* env */env$2
+                    ];
             }
           } else {
             throw [
                   Caml_builtin_exceptions.match_failure,
                   /* tuple */[
                     "SML.re",
-                    422,
+                    449,
                     8
                   ]
                 ];
+          }
+      case /* FAIL */14 :
+          var match$25 = match[/* ctxts */1];
+          if (match$25) {
+            var match$26 = match$25[0];
+            var v$2 = match$1[0];
+            switch (match$26.tag | 0) {
+              case /* MATCHMR */8 :
+                  var match$27 = match$26[1];
+                  if (match$27 !== undefined) {
+                    return /* record */[
+                            /* rewrite : record */[
+                              /* focus : Match */Block.__(10, [
+                                  match$27,
+                                  v$2
+                                ]),
+                              /* ctxts */match$25[1]
+                            ],
+                            /* env */c[/* env */1]
+                          ];
+                  } else {
+                    return /* record */[
+                            /* rewrite : record */[
+                              /* focus : FAIL */Block.__(14, [v$2]),
+                              /* ctxts */match$25[1]
+                            ],
+                            /* env */c[/* env */1]
+                          ];
+                  }
+              case /* MRULEP */9 :
+                  return /* record */[
+                          /* rewrite : record */[
+                            /* focus : FAIL */Block.__(14, [v$2]),
+                            /* ctxts */match$25[1]
+                          ],
+                          /* env */c[/* env */1]
+                        ];
+              default:
+                return ;
+            }
+          } else {
+            return ;
           }
       
     }
@@ -599,15 +713,27 @@ function inject(e) {
             ],
             /* :: */[
               /* tuple */[
-                "true",
-                /* VID */Block.__(2, ["true"])
+                "-",
+                /* BASVAL */Block.__(1, ["-"])
               ],
               /* :: */[
                 /* tuple */[
-                  "false",
-                  /* VID */Block.__(2, ["false"])
+                  "<",
+                  /* BASVAL */Block.__(1, ["<"])
                 ],
-                /* [] */0
+                /* :: */[
+                  /* tuple */[
+                    "true",
+                    /* VID */Block.__(2, ["true"])
+                  ],
+                  /* :: */[
+                    /* tuple */[
+                      "false",
+                      /* VID */Block.__(2, ["false"])
+                    ],
+                    /* [] */0
+                  ]
+                ]
               ]
             ]
           ]

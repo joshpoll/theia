@@ -153,6 +153,7 @@ let compileFocus = f =>
   | MRule(mr, v) => VSequence([compileMRule(mr), compileVal_(v)])
   | Pat(p, v) => VSequence([compilePat(p), compileVal_(v)])
   | AtPat(ap, v) => VSequence([compileAtPat(ap), compileVal_(v)])
+  | FAIL(_) => Atom(React.string("FAIL"))
   | Empty => Atom(<> </>)
   };
 
@@ -214,7 +215,8 @@ let compileCtxt = c =>
       args: [compileProgram(p)],
       holePos: 0,
     }
-  | MATCHMR((), m) => {
+  | MATCHMR((), None) => {ops: [<> </>, <> </>], args: [], holePos: 0}
+  | MATCHMR((), Some(m)) => {
       ops: [<> </>, <> <br /> {React.string("| ")} </>, <> </>],
       args: [compileMatch(m)],
       holePos: 0,
