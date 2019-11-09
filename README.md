@@ -1,6 +1,6 @@
 # Theia with SML Backend
 
-## Run
+# Run
 
 ```sh
 cd src/server/hamlet
