@@ -488,7 +488,7 @@ let make = (~theiaIRTraces: array(trace)) => {
       | None => <> </>
       | Some(s) =>
         /* https://www.joomlashack.com/blog/tutorials/center-and-align-items-in-css-grid/ */
-        let boxSize = 350;
+        let boxSize = 10000;
         <div
           style={ReactDOMRe.Style.make(
             ~display="grid",

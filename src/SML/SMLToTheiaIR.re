@@ -113,7 +113,7 @@ let rec compileVal_ = v =>
   | BASVAL(b) =>
     Value2([], [Apply2([React.string("builtin "), <> </>], [Atom(React.string(b))])])
   | VID(x) => Value2([], [Atom(React.string(x))])
-  | RECORD([]) => Value2([], [Atom(React.string("()"))])
+  | RECORD([]) => Value2([], [Atom(React.string("{}"))])
   | RECORD(r) =>
     Value2([], [Apply2([React.string("{"), React.string("}")], [compileRecord(r)])])
   | FCNCLOSURE(m, e, ve) =>
@@ -182,6 +182,7 @@ let compileFocus = f =>
   | MRule(mr, v) => VSequence([compileMRule(mr), compileVal_(v)])
   | Pat(p, v) => VSequence([compilePat(p), compileVal_(v)])
   | AtPat(ap, v) => VSequence([compileAtPat(ap), compileVal_(v)])
+  | PatRow(pr, r, ve) => VSequence([compilePatRow(pr), compileRecord(r), compileOneEnv(ve)])
   | FAIL(_) => Atom(React.string("FAIL"))
   | ValEnv(ve) => compileOneEnv(ve)
   /* TODO: visualize this better. should have a highlighting blank space or something */
@@ -261,6 +262,23 @@ let compileCtxt = c =>
     }
   | MRULEE((), ()) => {ops: [React.string(" => "), <> </>], args: [], holePos: 0}
   | RECVB () => {ops: [React.string("rec "), <> </>], args: [], holePos: 0}
+  | RECORDPR () => {ops: [React.string("{"), React.string("}")], args: [], holePos: 0}
+  | STRDECSD((), td) => {
+      ops: [<> </>, <> <br /> <br /> </>, <> </>],
+      args: [compileTopDec(td)],
+      holePos: 0,
+    }
+  /* TODO: this printing is very bad! */
+  | FIELDP((l, (), None), r, ve) => {
+      ops: [<> </>, React.string("="), <> </>, <> </>, <> </>],
+      args: [Atom(React.string(l)), compileRecord(r), compileOneEnv(ve)],
+      holePos: 1,
+    }
+  | FIELDP((l, (), Some(pr)), r, ve) => {
+      ops: [<> </>, React.string("="), React.string(", "), <> </>, <> </>, <> </>],
+      args: [Atom(React.string(l)), compilePatRow(pr), compileRecord(r), compileOneEnv(ve)],
+      holePos: 1,
+    }
   };
 
 let compileRewrite = ({focus, ctxts}) =>

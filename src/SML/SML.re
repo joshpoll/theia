@@ -115,6 +115,7 @@ type focus =
   | MRule(mrule, val_)
   | Pat(pat, val_)
   | AtPat(atPat, val_)
+  | PatRow(patRow, record, valEnv)
   | FAIL(val_)
   | ValEnv(valEnv)
   | Empty;
@@ -134,7 +135,10 @@ type ctxt =
   | MATCHMR(hole, option(match))
   | MRULEP(hole, exp)
   | MRULEE(hole, hole)
-  | RECVB(hole);
+  | RECVB(hole)
+  | RECORDPR(hole)
+  | STRDECSD(hole, topDec)
+  | FIELDP((lab, hole, option(patRow)), record, valEnv);
 
 type ctxts = list(ctxt);
 
@@ -152,8 +156,15 @@ type configuration = list(frame);
 
 let apply = (f, v) =>
   switch (f, v) {
+  | ("=", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) =>
+    if (a == b) {
+      VID("true");
+    } else {
+      VID("false");
+    }
   | ("+", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) => SVAL(INT(a + b))
   | ("-", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) => SVAL(INT(a - b))
+  | ("*", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) => SVAL(INT(a * b))
   | ("<", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) =>
     if (a < b) {
       VID("true");
@@ -502,8 +513,12 @@ let step = (c: configuration): option(configuration) =>
             },
             env,
           }, ...frames])
+
   // [113]
-  | [{rewrite: {focus: FAIL(v), ctxts: [MRULEP((), _), ...ctxts]}, env}, ...frames] =>
+  | [
+      {rewrite: {focus: FAIL(v), ctxts: [MRULEP((), _), ...ctxts]}, env: [_, ...env]},
+      ...frames,
+    ] =>
     Some([{
             rewrite: {
               focus: FAIL(v),
@@ -573,27 +588,152 @@ let step = (c: configuration): option(configuration) =>
   /* Atomic Patterns */
   // [135-137ish]
   | [{rewrite: {focus: AtPat(ID(x), v), ctxts}, env}, ...frames] =>
-    let Some(v') = Util.lookup(x, env);
-    if (v == v') {
-      // [136]
-      Some([{
-              rewrite: {
-                focus: ValEnv([]),
-                ctxts,
-              },
-              env,
-            }, ...frames]);
-    } else {
-      // [137]
-      Some([{
-              rewrite: {
-                focus: FAIL(v),
-                ctxts,
-              },
-              env,
-            }, ...frames]);
-    };
+    switch (Util.lookup(x, env)) {
+    // [135ish]
+    | None => Some([{
+                      rewrite: {
+                        focus: ValEnv([(x, v)]),
+                        ctxts,
+                      },
+                      env,
+                    }, ...frames])
+    | Some(v') =>
+      if (v == v') {
+        // [136]
+        Some([{
+                rewrite: {
+                  focus: ValEnv([]),
+                  ctxts,
+                },
+                env,
+              }, ...frames]);
+      } else {
+        // [137]
+        Some([{
+                rewrite: {
+                  focus: FAIL(v),
+                  ctxts,
+                },
+                env,
+              }, ...frames]);
+      }
+    }
+
+  // [138]
+  /* empty record pat */
+  /* TODO: special-casing RECORD(None) may be overkill. not sure */
+  | [{rewrite: {focus: AtPat(RECORD(None), RECORD([])), ctxts}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: ValEnv([]),
+              ctxts,
+            },
+            env,
+          }, ...frames])
+  | [{rewrite: {focus: AtPat(RECORD(None), v), ctxts}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: FAIL(v),
+              ctxts,
+            },
+            env,
+          }, ...frames])
+  /* start non-empty record pat */
+  | [{rewrite: {focus: AtPat(RECORD(Some(pr)), RECORD(r)), ctxts}, env}, ...frames] =>
+    Some([
+      {
+        rewrite: {
+          focus: PatRow(pr, r, []),
+          ctxts: [RECORDPR(), ...ctxts],
+        },
+        env,
+      },
+      ...frames,
+    ])
+  /* complete non-empty record pat */
+  | [{rewrite: {focus: ValEnv(ve), ctxts: [RECORDPR (), ...ctxts]}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: ValEnv(ve),
+              ctxts,
+            },
+            env,
+          }, ...frames])
+  | [{rewrite: {focus: FAIL(v), ctxts: [RECORDPR (), ...ctxts]}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: FAIL(v),
+              ctxts,
+            },
+            env,
+          }, ...frames])
+
+  // [139]
+  | [{rewrite: {focus: AtPat(PAR(p), v), ctxts}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: Pat(p, v),
+              ctxts,
+            },
+            env,
+          }, ...frames])
+
   /* Pattern Rows */
+  // [141-142]
+  /* start visiting */
+  | [
+      {rewrite: {focus: PatRow(FIELD(l, p, opr), [(l', v), ...r], ve), ctxts}, env},
+      ...frames,
+    ] =>
+    /* l == l' for well-typed programs per comments */
+    Some([
+      {
+        rewrite: {
+          focus: Pat(p, v),
+          ctxts: [FIELDP((l, (), opr), r, ve), ...ctxts],
+        },
+        env,
+      },
+      ...frames,
+    ])
+  // [141]
+  | [
+      {rewrite: {focus: FAIL(v), ctxts: [FIELDP((_, (), _), _, _), ...ctxts]}, env},
+      ...frames,
+    ] =>
+    Some([{
+            rewrite: {
+              focus: FAIL(v),
+              ctxts,
+            },
+            env,
+          }, ...frames])
+  // [142]
+  | [
+      {rewrite: {focus: ValEnv(ve), ctxts: [FIELDP((_, (), None), [], ve'), ...ctxts]}, env},
+      ...frames,
+    ] =>
+    Some([{
+            rewrite: {
+              focus: ValEnv(ve @ ve'),
+              ctxts,
+            },
+            env,
+          }, ...frames])
+  | [
+      {
+        rewrite: {focus: ValEnv(ve), ctxts: [FIELDP((_, (), Some(pr)), r, ve'), ...ctxts]},
+        env,
+      },
+      ...frames,
+    ] =>
+    Some([{
+            rewrite: {
+              focus: PatRow(pr, r, ve @ ve'),
+              ctxts,
+            },
+            env,
+          }, ...frames])
   /* Patterns */
   // [143]
   | [{rewrite: {focus: Pat(ATPAT(ap), v), ctxts}, env}, ...frames] =>
@@ -655,6 +795,25 @@ let step = (c: configuration): option(configuration) =>
             },
             env,
           }, ...frames])
+  | [{rewrite: {focus: TopDec(STRDEC(sd, Some(td))), ctxts}, env}, ...frames] =>
+    Some([
+      {
+        rewrite: {
+          focus: StrDec(sd),
+          ctxts: [STRDECSD((), td), ...ctxts],
+        },
+        env,
+      },
+      ...frames,
+    ])
+  | [{rewrite: {focus: Empty, ctxts: [STRDECSD((), td), ...ctxts]}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: TopDec(td),
+              ctxts,
+            },
+            env,
+          }, ...frames])
 
   /* Programs */
   // [189ish]
@@ -706,8 +865,10 @@ let inject = e => [
     },
     env: [
       [
+        ("=", BASVAL("=")),
         ("+", BASVAL("+")),
         ("-", BASVAL("-")),
+        ("*", BASVAL("*")),
         ("<", BASVAL("<")),
         ("true", VID("true")),
         ("false", VID("false")),
