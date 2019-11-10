@@ -3,6 +3,7 @@ from flask_restful import Resource, Api
 import subprocess
 import json
 from flask_cors import CORS
+from os import mkdir
 
 app = Flask(__name__)
 CORS(app)
@@ -27,4 +28,8 @@ class HelloWorld(Resource):
 api.add_resource(HelloWorld, '/')
 
 if __name__ == '__main__':
+    try:
+        mkdir("../../sml-files/")
+    except FileExistsError:
+        pass
     app.run(debug=True)
