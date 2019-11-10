@@ -240,5 +240,8 @@ let compileCtxt = c =>
 let compileRewrite = ({focus, ctxts}) =>
   Kont2(compileFocus(focus), List.map(compileCtxt, ctxts));
 
-let smlToTheiaIR = ({rewrite, env}) =>
+let compileFrame = ({rewrite, env}) =>
   VSequence([Cell2("env", [compileEnv(env)]), Cell2("rewrite", [compileRewrite(rewrite)])]);
+
+/* TODO: HSequence? */
+let smlToTheiaIR = fs => VSequence(List.map(compileFrame, fs));
