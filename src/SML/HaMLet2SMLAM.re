@@ -30,7 +30,8 @@ type ast =
   | RECORDAtExp(sourceMap, option(ast))
   | ExpRow(sourceMap, (ast, ast, option(ast)))
   | Lab(string)
-  | RECValBind(sourceMap, ast);
+  | RECValBind(sourceMap, ast)
+  | PARAtPat(sourceMap, ast);
 
 module Decode = {
   open Json.Decode;
@@ -149,6 +150,12 @@ module Decode = {
       json |> field("args", list(node)) |> List.hd,
     )
 
+  and paratpat = json =>
+    PARAtPat(
+      json |> field("sourceMap", sourceMap),
+      json |> field("args", list(node)) |> List.hd,
+    )
+
   and node = json => {
     (
       field("node", string)
@@ -177,6 +184,7 @@ module Decode = {
            | "ExpRow" => exprow
            | "Lab" => lab
            | "RECValBind" => recvalbind
+           | "PARAtPat" => paratpat
            | _ => failwith("Unknown node type: " ++ s)
            }
          )
@@ -224,6 +232,7 @@ and compilePat = p =>
 and compileAtPat = ap =>
   switch (ap) {
   | IDAtPat(_, x) => SML.ID(compileLongVId(x))
+  | PARAtPat(_, p) => SML.PAR(compilePat(p))
   }
 
 and compileLongVId = x =>

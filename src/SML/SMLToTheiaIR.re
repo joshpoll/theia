@@ -65,11 +65,13 @@ and compileValBind = vb =>
   switch (vb) {
   | PLAIN(p, e, None) =>
     Apply2([<> </>, React.string(" = "), <> </>], [compilePat(p), compileExp(e)])
+  | REC(vb) => Apply2([React.string("rec "), <> </>], [compileValBind(vb)])
   }
 
 and compileAtPat = a =>
   switch (a) {
   | ID(x) => Atom(React.string(x))
+  | PAR(p) => Apply2([React.string("("), React.string(")")], [compilePat(p)])
   }
 
 and compilePat = p =>
@@ -92,7 +94,7 @@ let rec compileVal_ = v =>
   | RECORD(r) =>
     Value2([], [Apply2([React.string("{"), React.string("}")], [compileRecord(r)])])
   | FCNCLOSURE(m, e, ve) =>
-    Value2(["closure"], [compileMatch(m), compileEnv(e), compileEnv(ve)])
+    Value2(["closure"], [compileMatch(m), compileEnv(e), compileOneEnv(ve)])
   }
 
 and compileRecord = r =>
@@ -109,7 +111,9 @@ and compileRecord = r =>
 
 and compileKVs = ((k, v)) => KV2((Atom(React.string(k)), compileVal_(v)))
 
-and compileEnv = e => Map2(List.map(compileKVs, e) |> List.rev);
+and compileOneEnv = e => e |> List.map(compileKVs) |> List.rev |> (x => Map2(x))
+
+and compileEnv = e => VSequence(List.map(compileOneEnv, e) |> List.rev);
 
 let rec compileStrDec = sd =>
   switch (sd) {
@@ -226,6 +230,7 @@ let compileCtxt = c =>
       args: [compileExp(e)],
       holePos: 0,
     }
+  | RECVB () => {ops: [React.string("rec "), <> </>], args: [], holePos: 0}
   };
 
 let compileRewrite = ({focus, ctxts}) =>

@@ -59,8 +59,9 @@ and valBind =
   | REC(valBind)
 
 and atPat =
-  /* no op */
+  /* TODO: add op */
   | ID(vid)
+  | PAR(pat)
 
 and pat =
   | ATPAT(atPat);
@@ -76,7 +77,8 @@ and val_ =
   | VID(vid)
   | RECORD(record)
   /* TODO: second argument should be an entire env */
-  | FCNCLOSURE(match, valEnv, valEnv)
+  /* TODO: keeping the second one flat is a hack to get rec vb's to work. */
+  | FCNCLOSURE(match, list(valEnv), valEnv)
 
 and valEnv = list((vid, val_));
 
@@ -119,7 +121,8 @@ type ctxt =
   | EXPROWE(record, lab, hole, option(expRow))
   | PROGRAML(hole, program)
   | MATCHMR(hole, option(match))
-  | MRULEP(hole, exp);
+  | MRULEP(hole, exp)
+  | RECVB(hole);
 
 type ctxts = list(ctxt);
 
@@ -130,7 +133,7 @@ type rewrite = {
 
 type configuration = {
   rewrite,
-  env: valEnv,
+  env: list(valEnv),
 };
 
 let apply = (f, v) =>
@@ -169,7 +172,7 @@ let step = (c: configuration): option(configuration) =>
 
   // [91]
   | {rewrite: {focus: AtExp(ID(x)), ctxts}, env} =>
-    switch (Util.lookupOne(x, env)) {
+    switch (Util.lookup(x, env)) {
     | None => None
     | Some(v) => Some({
                    rewrite: {
@@ -328,7 +331,7 @@ let step = (c: configuration): option(configuration) =>
         focus: Match(m, v),
         ctxts,
       },
-      env: recEnv(ve) @ e /* "backwards" compared to spec b/c 4.2 says lookup happens in RHS first */
+      env: [recEnv(ve), ...e] /* "backwards" compared to spec b/c 4.2 says lookup happens in RHS first */
     })
   // [108]
   | {rewrite: {focus: Exp(FN(m)), ctxts}, env} =>
@@ -437,20 +440,26 @@ let step = (c: configuration): option(configuration) =>
         focus: Empty,
         ctxts,
       },
-      env: [(x, v), ...env],
+      env: [[(x, v)], ...env],
     })
 
   // [126]
-  // TODO: I can't do this! No way to intercept the environment after it's created the way this is
-  // written.
-  /* | {rewrite: {focus: ValBind(REC(vb)), ctxts}, env} =>
-     Some({
-       rewrite: {
-         focus: ValBind(vb),
-         ctxts: [RECVB(), ...ctxts],
-       },
-       env,
-     }) */
+  | {rewrite: {focus: ValBind(REC(vb)), ctxts}, env} =>
+    Some({
+      rewrite: {
+        focus: ValBind(vb),
+        ctxts: [RECVB(), ...ctxts],
+      },
+      env,
+    })
+  | {rewrite: {focus: Empty, ctxts: [RECVB (), ...ctxts]}, env: [e, ...env]} =>
+    Some({
+      rewrite: {
+        focus: Empty,
+        ctxts,
+      },
+      env: [recEnv(e), ...env],
+    })
 
   /* Type Bindings */
   /* Datatype Bindings */
@@ -459,7 +468,7 @@ let step = (c: configuration): option(configuration) =>
   /* Atomic Patterns */
   // [135-137ish]
   | {rewrite: {focus: AtPat(ID(x), v), ctxts}, env} =>
-    let Some(v') = Util.lookupOne(x, env);
+    let Some(v') = Util.lookup(x, env);
     if (v == v') {
       // [136]
       Some({
@@ -580,11 +589,13 @@ let inject = e => {
     ctxts: [],
   },
   env: [
-    ("+", BASVAL("+")),
-    ("-", BASVAL("-")),
-    ("<", BASVAL("<")),
-    ("true", VID("true")),
-    ("false", VID("false")),
+    [
+      ("+", BASVAL("+")),
+      ("-", BASVAL("-")),
+      ("<", BASVAL("<")),
+      ("true", VID("true")),
+      ("false", VID("false")),
+    ],
   ],
 };
 

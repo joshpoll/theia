@@ -78,3 +78,13 @@ let rec lookupOne = (key, oneStack) =>
       lookupOne(key, oneStack);
     }
   };
+
+let rec lookup = (key, stack) =>
+  switch (stack) {
+  | [] => None
+  | [os, ...stack] =>
+    switch (lookupOne(key, os)) {
+    | None => lookup(key, stack)
+    | Some(v) => Some(v)
+    }
+  };
