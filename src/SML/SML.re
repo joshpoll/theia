@@ -438,6 +438,7 @@ let step = (c: configuration): option(configuration) =>
           }, ...frames])
 
   /* Matches */
+  /* TODO: there might be some way to combine env adding in pattern matches and val bindings */
   | [{rewrite: {focus: Match(MATCH(mr, om), v), ctxts}, env}, ...frames] =>
     Some([
       {

@@ -42,6 +42,8 @@ val abs_of_z = if z < 0 then 0 - z else z";
 
 let ex13 = "fun id x = x";
 
+/* This example seems to be too big. Need to switch to lazy execution of some things to boost
+   performance. */
 let lec02_1 = "fun pow(x,y) =
   if y=0
   then 1
