@@ -115,7 +115,7 @@ type focus =
   | MRule(mrule, val_)
   | Pat(pat, val_)
   | AtPat(atPat, val_)
-  | PatRow(patRow, record, valEnv)
+  | PatRow(patRow, record)
   | FAIL(val_)
   | ValEnv(valEnv)
   | Empty;
@@ -138,7 +138,7 @@ type ctxt =
   | RECVB(hole)
   | RECORDPR(hole)
   | STRDECSD(hole, topDec)
-  | FIELDP((lab, hole, option(patRow)), record, valEnv);
+  | FIELDP((lab, hole, option(patRow)), record);
 
 type ctxts = list(ctxt);
 
@@ -445,7 +445,7 @@ let step = (c: configuration): option(configuration) =>
           focus: MRule(mr, v),
           ctxts: [MATCHMR((), om), ...ctxts],
         },
-        env,
+        env: [[], ...env],
       },
       ...frames,
     ])
@@ -491,17 +491,14 @@ let step = (c: configuration): option(configuration) =>
             },
             env,
           }, ...frames])
-  | [{rewrite: {focus: ValEnv(ve), ctxts: [MRULEP((), e), ...ctxts]}, env}, ...frames] =>
-    Some([
-      {
-        rewrite: {
-          focus: Exp(e),
-          ctxts: [MRULEE((), ()), ...ctxts],
-        },
-        env: [ve, ...env],
-      },
-      ...frames,
-    ])
+  | [{rewrite: {focus: Empty, ctxts: [MRULEP((), e), ...ctxts]}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: Exp(e),
+              ctxts: [MRULEE((), ()), ...ctxts],
+            },
+            env,
+          }, ...frames])
   | [
       {rewrite: {focus: Val(v), ctxts: [MRULEE((), ()), ...ctxts]}, env: [_, ...env]},
       ...frames,
@@ -539,7 +536,7 @@ let step = (c: configuration): option(configuration) =>
           }, ...frames])
 
   /* Value Bindings */
-  // [124ish]: doesn't support `and`
+  // [124ish]: doesn't support `and`, no pattern matching in valbind
   | [{rewrite: {focus: ValBind(PLAIN(p, e, vbs)), ctxts}, env}, ...frames] =>
     Some([
       {
@@ -587,25 +584,26 @@ let step = (c: configuration): option(configuration) =>
   /* Exception Bindings */
   /* Atomic Patterns */
   // [135-137ish]
-  | [{rewrite: {focus: AtPat(ID(x), v), ctxts}, env}, ...frames] =>
-    switch (Util.lookup(x, env)) {
+  | [{rewrite: {focus: AtPat(ID(x), v), ctxts}, env: [ve, ...env]}, ...frames] =>
+    switch (Util.lookup(x, [ve, ...env])) {
     // [135ish]
-    | None => Some([{
-                      rewrite: {
-                        focus: ValEnv([(x, v)]),
-                        ctxts,
-                      },
-                      env,
-                    }, ...frames])
+    | None =>
+      Some([{
+              rewrite: {
+                focus: Empty,
+                ctxts,
+              },
+              env: [[(x, v), ...ve], ...env],
+            }, ...frames])
     | Some(v') =>
       if (v == v') {
         // [136]
         Some([{
                 rewrite: {
-                  focus: ValEnv([]),
+                  focus: Empty,
                   ctxts,
                 },
-                env,
+                env: [ve, ...env],
               }, ...frames]);
       } else {
         // [137]
@@ -614,7 +612,7 @@ let step = (c: configuration): option(configuration) =>
                   focus: FAIL(v),
                   ctxts,
                 },
-                env,
+                env: [ve, ...env],
               }, ...frames]);
       }
     }
@@ -625,7 +623,7 @@ let step = (c: configuration): option(configuration) =>
   | [{rewrite: {focus: AtPat(RECORD(None), RECORD([])), ctxts}, env}, ...frames] =>
     Some([{
             rewrite: {
-              focus: ValEnv([]),
+              focus: Empty,
               ctxts,
             },
             env,
@@ -640,21 +638,18 @@ let step = (c: configuration): option(configuration) =>
           }, ...frames])
   /* start non-empty record pat */
   | [{rewrite: {focus: AtPat(RECORD(Some(pr)), RECORD(r)), ctxts}, env}, ...frames] =>
-    Some([
-      {
-        rewrite: {
-          focus: PatRow(pr, r, []),
-          ctxts: [RECORDPR(), ...ctxts],
-        },
-        env,
-      },
-      ...frames,
-    ])
-  /* complete non-empty record pat */
-  | [{rewrite: {focus: ValEnv(ve), ctxts: [RECORDPR (), ...ctxts]}, env}, ...frames] =>
     Some([{
             rewrite: {
-              focus: ValEnv(ve),
+              focus: PatRow(pr, r),
+              ctxts: [RECORDPR(), ...ctxts],
+            },
+            env,
+          }, ...frames])
+  /* complete non-empty record pat */
+  | [{rewrite: {focus: Empty, ctxts: [RECORDPR (), ...ctxts]}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: Empty,
               ctxts,
             },
             env,
@@ -680,27 +675,26 @@ let step = (c: configuration): option(configuration) =>
 
   /* Pattern Rows */
   // [141-142]
+  /* NOTE: SML '97 says each field should be evaluated in the original environment, but we extend it
+     after every field. This simplifies our implementation since we don't need to maintain a
+     temporary environment outside of `env`. This still agrees with SML '97 thanks to the
+     left-linear pattern restriction. */
   /* start visiting */
-  | [
-      {rewrite: {focus: PatRow(FIELD(l, p, opr), [(l', v), ...r], ve), ctxts}, env},
-      ...frames,
-    ] =>
-    /* l == l' for well-typed programs per comments */
+  | [{rewrite: {focus: PatRow(FIELD(l, p, opr), r), ctxts}, env}, ...frames] =>
+    /* NOTE: Shouldn't fail for well-typed programs per SML '97 comments. */
+    let Some(v) = Util.lookupOne(l, r);
     Some([
       {
         rewrite: {
           focus: Pat(p, v),
-          ctxts: [FIELDP((l, (), opr), r, ve), ...ctxts],
+          ctxts: [FIELDP((l, (), opr), r), ...ctxts],
         },
         env,
       },
       ...frames,
-    ])
+    ]);
   // [141]
-  | [
-      {rewrite: {focus: FAIL(v), ctxts: [FIELDP((_, (), _), _, _), ...ctxts]}, env},
-      ...frames,
-    ] =>
+  | [{rewrite: {focus: FAIL(v), ctxts: [FIELDP((_, (), _), _), ...ctxts]}, env}, ...frames] =>
     Some([{
             rewrite: {
               focus: FAIL(v),
@@ -709,27 +703,21 @@ let step = (c: configuration): option(configuration) =>
             env,
           }, ...frames])
   // [142]
-  | [
-      {rewrite: {focus: ValEnv(ve), ctxts: [FIELDP((_, (), None), [], ve'), ...ctxts]}, env},
-      ...frames,
-    ] =>
+  | [{rewrite: {focus: Empty, ctxts: [FIELDP((_, (), None), _), ...ctxts]}, env}, ...frames] =>
     Some([{
             rewrite: {
-              focus: ValEnv(ve @ ve'),
+              focus: Empty,
               ctxts,
             },
             env,
           }, ...frames])
   | [
-      {
-        rewrite: {focus: ValEnv(ve), ctxts: [FIELDP((_, (), Some(pr)), r, ve'), ...ctxts]},
-        env,
-      },
+      {rewrite: {focus: Empty, ctxts: [FIELDP((_, (), Some(pr)), r), ...ctxts]}, env},
       ...frames,
     ] =>
     Some([{
             rewrite: {
-              focus: PatRow(pr, r, ve @ ve'),
+              focus: PatRow(pr, r),
               ctxts,
             },
             env,

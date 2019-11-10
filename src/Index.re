@@ -87,7 +87,7 @@ let traces =
       {name: "ex11", text: ex11},
       {name: "ex12", text: ex12},
       {name: "ex13", text: ex13},
-      {name: "lec02-1", text: lec02_1},
+      {name: "lec02-1-simple", text: lec02_1_simpler},
     |]
   )
   |> Array.map(traceProgram);
