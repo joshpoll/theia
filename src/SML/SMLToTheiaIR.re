@@ -217,10 +217,6 @@ let compileCtxt = c =>
       args: [compileRecord(r), Atom(React.string(l)), compileExpRow(er)],
       holePos: 2,
     }
-  /* Apply2(
-       [<> </>, <> {React.string(";")} <br /> </>, <> </>],
-       [compileTopDec(td), compileProgram(p)],
-     ) */
   | PROGRAML((), p) => {
       ops: [<> </>, <> {React.string(";")} <br /> </>, <> </>],
       args: [compileProgram(p)],

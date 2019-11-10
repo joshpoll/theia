@@ -13,7 +13,13 @@
    this!*/
 /* TODO: how to represent derived forms??? */
 /* TODO: how to make variable lookup more granular?? */
-/* TODO: environment handling is currently WRONG b/c never removes things from the environment */
+/* TODO: switch program representation to {frames: list({rewrite: {focus, ctxts}, envs:
+ * list(valEnv)})}
+ *
+ * semantics:
+ *   - every function call creates a new frame. exiting a call pops a frame.
+ *   - every let expression creates a new env. exiting a let pops an env
+ */
 /* TODO: id status */
 /* TODO: desugaring toggling per sugar type (e.g. buttons for ite, orelse, andalso) */
 
@@ -632,4 +638,4 @@ let interpretTraceBounded = (~maxDepth=100, p) =>
     TheiaUtil.iterateMaybeMaxDepth(maxDepth, step, inject(p)),
   );
 let interpretTrace = p =>
-  TheiaUtil.takeWhileInclusive(c => !isFinal(c), TheiaUtil.iterateMaybe(step, inject(p))) /*   }*/ /* let extract = (c) =*/ /*     | {frames: [{rewrite: {rewrite: Some(Value(VInt(n)))}}]} => string_of_int(n*/ /*   switch (c) */;
+  TheiaUtil.takeWhileInclusive(c => !isFinal(c), TheiaUtil.iterateMaybe(step, inject(p))) /*   }*/ /*   switch (c) */ /*     | {frames: [{rewrite: {rewrite: Some(Value(VInt(n)))}}]} => string_of_int(n*/ /* let extract = (c) =*/;
