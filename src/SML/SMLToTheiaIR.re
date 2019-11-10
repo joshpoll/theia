@@ -1,4 +1,5 @@
 /* Compiler from SML configuration to TheiaIR */
+/* TODO: so many List.revs. Maybe I should change the default? */
 open SML;
 open Theia;
 
@@ -159,7 +160,8 @@ let compileFocus = f =>
   | AtPat(ap, v) => VSequence([compileAtPat(ap), compileVal_(v)])
   | FAIL(_) => Atom(React.string("FAIL"))
   | ValEnv(ve) => compileOneEnv(ve)
-  | Empty => Atom(<> </>)
+  /* TODO: visualize this better. should have a highlighting blank space or something */
+  | Empty => Atom(React.string("EMPTY"))
   };
 
 let compileCtxt = c =>
@@ -244,4 +246,4 @@ let compileFrame = ({rewrite, env}) =>
   VSequence([Cell2("env", [compileEnv(env)]), Cell2("rewrite", [compileRewrite(rewrite)])]);
 
 /* TODO: HSequence? */
-let smlToTheiaIR = fs => VSequence(List.map(compileFrame, fs));
+let smlToTheiaIR = fs => VSequence(List.map(compileFrame, fs) |> List.rev);

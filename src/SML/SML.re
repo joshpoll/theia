@@ -370,16 +370,40 @@ let step = (c: configuration): option(configuration) =>
       },
       ...frames,
     ])
-  | [{rewrite: {focus: Val(v), ctxts: [APPR(FCNCLOSURE(m, e, ve), ()), ...ctxts]}, env: _}] =>
+  | [
+      {rewrite: {focus: Val(v), ctxts: [APPR(FCNCLOSURE(m, e, ve), ()), ...ctxts]}, env},
+      ...frames,
+    ] =>
     Some([
       {
         rewrite: {
           focus: Match(m, v),
-          ctxts,
+          ctxts: [],
         },
         env: [recEnv(ve), ...e] /* "backwards" compared to spec b/c 4.2 says lookup happens in RHS first */
       },
+      {
+        rewrite: {
+          focus: Empty,
+          ctxts,
+        },
+        env,
+      },
+      ...frames,
     ])
+  /* return from function call */
+  | [
+      {rewrite: {focus: Val(v), ctxts: []}, env: _},
+      {rewrite: {focus: Empty, ctxts}, env},
+      ...frames,
+    ] =>
+    Some([{
+            rewrite: {
+              focus: Val(v),
+              ctxts,
+            },
+            env,
+          }, ...frames])
   // [108]
   | [{rewrite: {focus: Exp(FN(m)), ctxts}, env}, ...frames] =>
     Some([{
