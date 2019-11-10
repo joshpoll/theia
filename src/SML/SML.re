@@ -83,8 +83,7 @@ and val_ =
   | VID(vid)
   | RECORD(record)
   /* TODO: second argument should be an entire env */
-  /* TODO: keeping the second one flat is a hack to get rec vb's to work. */
-  | FCNCLOSURE(match, list(valEnv), valEnv)
+  | FCNCLOSURE(match, list(valEnv), list(valEnv))
 
 and valEnv = list((vid, val_));
 
@@ -161,11 +160,21 @@ let apply = (f, v) =>
   | _ => failwith("unknown built-in function: " ++ f)
   };
 
-let recEnv = ve =>
+let recOneEnv = ve =>
   List.map(
     fun
-    | (x, FCNCLOSURE(m, e, _)) => (x, FCNCLOSURE(m, e, ve))
+    | (x, FCNCLOSURE(m, e, _)) => (x, FCNCLOSURE(m, e, [ve]))
     | xv => xv,
+    ve,
+  );
+
+let recEnv = ve =>
+  List.map(
+    List.map(
+      fun
+      | (x, FCNCLOSURE(m, e, _)) => (x, FCNCLOSURE(m, e, ve))
+      | xv => xv,
+    ),
     ve,
   );
 
@@ -380,7 +389,7 @@ let step = (c: configuration): option(configuration) =>
           focus: Match(m, v),
           ctxts: [],
         },
-        env: [recEnv(ve), ...e] /* "backwards" compared to spec b/c 4.2 says lookup happens in RHS first */
+        env: recEnv(ve) @ e /* "backwards" compared to spec b/c 4.2 says lookup happens in RHS first */
       },
       {
         rewrite: {
@@ -548,7 +557,7 @@ let step = (c: configuration): option(configuration) =>
   | [{rewrite: {focus: ValEnv(ve), ctxts: [RECVB (), ...ctxts]}, env}, ...frames] =>
     Some([{
             rewrite: {
-              focus: ValEnv(recEnv(ve)),
+              focus: ValEnv(recOneEnv(ve)),
               ctxts,
             },
             env,

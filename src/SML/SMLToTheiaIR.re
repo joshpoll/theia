@@ -95,7 +95,7 @@ let rec compileVal_ = v =>
   | RECORD(r) =>
     Value2([], [Apply2([React.string("{"), React.string("}")], [compileRecord(r)])])
   | FCNCLOSURE(m, e, ve) =>
-    Value2(["closure"], [compileMatch(m), compileEnv(e), compileOneEnv(ve)])
+    Value2(["closure"], [compileMatch(m), compileEnv(e), compileEnv(ve)])
   }
 
 and compileRecord = r =>
