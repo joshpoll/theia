@@ -108,12 +108,15 @@ type focus =
   | Pat(pat, val_)
   | AtPat(atPat, val_)
   | FAIL(val_)
+  | ValEnv(valEnv)
   | Empty;
 
 type ctxt =
   | LETD(hole, exp)
+  | LETE(hole, hole)
   | VALBINDE(pat, hole, option(valBind))
   | SEQL(hole, strDec)
+  | DECD(hole)
   | APPL(hole, atExp)
   | APPR(val_, hole)
   /* is that a... */
@@ -122,6 +125,7 @@ type ctxt =
   | PROGRAML(hole, program)
   | MATCHMR(hole, option(match))
   | MRULEP(hole, exp)
+  | MRULEE(hole, hole)
   | RECVB(hole);
 
 type ctxts = list(ctxt);
@@ -212,7 +216,8 @@ let step = (c: configuration): option(configuration) =>
       env,
     })
 
-  // [93]
+  // [93ish]: The environment pop is probably wrong. Relies on the env to pop always being last,
+  // which means every other rule needs to know where to pop on exiting.
   | {rewrite: {focus: AtExp(LET(d, e)), ctxts}, env} =>
     Some({
       rewrite: {
@@ -221,10 +226,18 @@ let step = (c: configuration): option(configuration) =>
       },
       env,
     })
-  | {rewrite: {focus: Empty, ctxts: [LETD((), e), ...ctxts]}, env} =>
+  | {rewrite: {focus: ValEnv(ve), ctxts: [LETD((), e), ...ctxts]}, env} =>
     Some({
       rewrite: {
         focus: Exp(e),
+        ctxts: [LETE((), ()), ...ctxts],
+      },
+      env: [ve, ...env],
+    })
+  | {rewrite: {focus: Val(v), ctxts: [LETE((), ()), ...ctxts]}, env: [_, ...env]} =>
+    Some({
+      rewrite: {
+        focus: Val(v),
         ctxts,
       },
       env,
@@ -394,15 +407,22 @@ let step = (c: configuration): option(configuration) =>
       },
       env,
     })
-  | {rewrite: {focus: Empty, ctxts: [MRULEP((), e), ...ctxts]}, env} =>
+  | {rewrite: {focus: ValEnv(ve), ctxts: [MRULEP((), e), ...ctxts]}, env} =>
     Some({
       rewrite: {
         focus: Exp(e),
+        ctxts: [MRULEE((), ()), ...ctxts],
+      },
+      env: [ve, ...env],
+    })
+  | {rewrite: {focus: Val(v), ctxts: [MRULEE((), ()), ...ctxts]}, env: [_, ...env]} =>
+    Some({
+      rewrite: {
+        focus: Val(v),
         ctxts,
       },
       env,
     })
-
   // [113]
   | {rewrite: {focus: FAIL(v), ctxts: [MRULEP((), _), ...ctxts]}, env} =>
     Some({
@@ -414,7 +434,7 @@ let step = (c: configuration): option(configuration) =>
     })
 
   /* Declarations */
-  // [114]
+  // [114ish]: should lift valenv into env
   | {rewrite: {focus: Dec(VAL(vb)), ctxts}, env} =>
     Some({
       rewrite: {
@@ -425,7 +445,7 @@ let step = (c: configuration): option(configuration) =>
     })
 
   /* Value Bindings */
-  // [124ish]. too specialized
+  // [124ish]: doesn't support `and`
   | {rewrite: {focus: ValBind(PLAIN(p, e, vbs)), ctxts}, env} =>
     Some({
       rewrite: {
@@ -437,10 +457,10 @@ let step = (c: configuration): option(configuration) =>
   | {rewrite: {focus: Val(v), ctxts: [VALBINDE(ATPAT(ID(x)), (), None), ...ctxts]}, env} =>
     Some({
       rewrite: {
-        focus: Empty,
+        focus: ValEnv([(x, v)]),
         ctxts,
       },
-      env: [[(x, v)], ...env],
+      env,
     })
 
   // [126]
@@ -452,13 +472,13 @@ let step = (c: configuration): option(configuration) =>
       },
       env,
     })
-  | {rewrite: {focus: Empty, ctxts: [RECVB (), ...ctxts]}, env: [e, ...env]} =>
+  | {rewrite: {focus: ValEnv(ve), ctxts: [RECVB (), ...ctxts]}, env} =>
     Some({
       rewrite: {
-        focus: Empty,
+        focus: ValEnv(recEnv(ve)),
         ctxts,
       },
-      env: [recEnv(e), ...env],
+      env,
     })
 
   /* Type Bindings */
@@ -473,7 +493,7 @@ let step = (c: configuration): option(configuration) =>
       // [136]
       Some({
         rewrite: {
-          focus: Empty,
+          focus: ValEnv([]),
           ctxts,
         },
         env,
@@ -508,12 +528,19 @@ let step = (c: configuration): option(configuration) =>
     Some({
       rewrite: {
         focus: Dec(d),
-        ctxts,
+        ctxts: [DECD(), ...ctxts],
       },
       env,
     })
-
-  // [160]
+  | {rewrite: {focus: ValEnv(ve), ctxts: [DECD (), ...ctxts]}, env} =>
+    Some({
+      rewrite: {
+        focus: Empty,
+        ctxts,
+      },
+      env: [ve, ...env],
+    })
+  // [160ish]: Should use env instead of valEnv. should return a valenv, too?
   | {rewrite: {focus: StrDec(SEQ(sd1, sd2)), ctxts}, env} =>
     Some({
       rewrite: {
@@ -605,4 +632,4 @@ let interpretTraceBounded = (~maxDepth=100, p) =>
     TheiaUtil.iterateMaybeMaxDepth(maxDepth, step, inject(p)),
   );
 let interpretTrace = p =>
-  TheiaUtil.takeWhileInclusive(c => !isFinal(c), TheiaUtil.iterateMaybe(step, inject(p))) /*   }*/ /*   switch (c) */ /*     | {frames: [{rewrite: {rewrite: Some(Value(VInt(n)))}}]} => string_of_int(n*/ /* let extract = (c) =*/;
+  TheiaUtil.takeWhileInclusive(c => !isFinal(c), TheiaUtil.iterateMaybe(step, inject(p))) /*   }*/ /* let extract = (c) =*/ /*     | {frames: [{rewrite: {rewrite: Some(Value(VInt(n)))}}]} => string_of_int(n*/ /*   switch (c) */;

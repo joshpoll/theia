@@ -158,6 +158,7 @@ let compileFocus = f =>
   | Pat(p, v) => VSequence([compilePat(p), compileVal_(v)])
   | AtPat(ap, v) => VSequence([compileAtPat(ap), compileVal_(v)])
   | FAIL(_) => Atom(React.string("FAIL"))
+  | ValEnv(ve) => compileOneEnv(ve)
   | Empty => Atom(<> </>)
   };
 
@@ -166,6 +167,11 @@ let compileCtxt = c =>
   | LETD((), e) => {
       ops: [React.string("let "), React.string(" in "), React.string(" end")],
       args: [compileExp(e)],
+      holePos: 0,
+    }
+  | LETE((), ()) => {
+      ops: [React.string("let in "), React.string(" end")],
+      args: [],
       holePos: 0,
     }
   | VALBINDE(p, (), None) => {
@@ -189,6 +195,7 @@ let compileCtxt = c =>
       args: [compileStrDec(sd2)],
       holePos: 0,
     }
+  | DECD () => {ops: [<> </>, <> </>], args: [], holePos: 0}
   | RECORDER () => {ops: [React.string("{"), React.string("}")], args: [], holePos: 0}
   | EXPROWE([], l, (), None) => {
       ops: [<> </>, React.string("="), <> </>],
@@ -230,6 +237,7 @@ let compileCtxt = c =>
       args: [compileExp(e)],
       holePos: 0,
     }
+  | MRULEE((), ()) => {ops: [React.string(" => "), <> </>], args: [], holePos: 0}
   | RECVB () => {ops: [React.string("rec "), <> </>], args: [], holePos: 0}
   };
 
