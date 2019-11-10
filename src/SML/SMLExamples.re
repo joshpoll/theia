@@ -41,3 +41,15 @@ val q = z + 1;
 val abs_of_z = if z < 0 then 0 - z else z";
 
 let ex13 = "fun id x = x";
+
+let lec02_1 = "fun pow(x,y) =
+  if y=0
+  then 1
+  else x * pow(x,y-1)
+
+fun cube x =
+  pow(x,3)
+
+val sixtyfour = cube 4
+
+val fortytwo = pow(2,2+2) + pow(4,2) + cube(2) + 2";

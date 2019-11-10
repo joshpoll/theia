@@ -65,9 +65,12 @@ and valBind =
   | REC(valBind)
 
 and atPat =
-  /* TODO: add op */
-  | ID(vid)
+  | ID(vid) /* TODO: add op */
+  | RECORD(option(patRow))
   | PAR(pat)
+
+and patRow =
+  | FIELD(lab, pat, option(patRow))
 
 and pat =
   | ATPAT(atPat);

@@ -12,7 +12,7 @@ let rec compileAtExp = a =>
   switch (a) {
   | SCON(sc) => compileSCon(sc)
   | ID(x) => Atom(React.string(x))
-  | RECORD(None) => Atom(React.string("()"))
+  | RECORD(None) => Atom(React.string("{}"))
   | RECORD(Some(er)) => Apply2([React.string("{"), React.string("}")], [compileExpRow(er)])
   | LET(d, e) =>
     Apply2(
@@ -72,7 +72,29 @@ and compileValBind = vb =>
 and compileAtPat = a =>
   switch (a) {
   | ID(x) => Atom(React.string(x))
+  | RECORD(None) => Atom(React.string("{}"))
+  | RECORD(Some(pr)) => Apply2([React.string("{"), React.string("}")], [compilePatRow(pr)])
   | PAR(p) => Apply2([React.string("("), React.string(")")], [compilePat(p)])
+  }
+/* and compileExpRow = (EXPROW(lab, exp, rest)) =>
+   switch (rest) {
+   | None =>
+     Apply2([<> </>, React.string("="), <> </>], [Atom(React.string(lab)), compileExp(exp)])
+   | Some(er) =>
+     Apply2(
+       [<> </>, React.string("="), React.string(", "), <> </>],
+       [Atom(React.string(lab)), compileExp(exp), compileExpRow(er)],
+     )
+   } */
+and compilePatRow = pr =>
+  switch (pr) {
+  | FIELD(l, p, None) =>
+    Apply2([<> </>, React.string("="), <> </>], [Atom(React.string(l)), compilePat(p)])
+  | FIELD(l, p, Some(pr)) =>
+    Apply2(
+      [<> </>, React.string("="), React.string(", "), <> </>],
+      [Atom(React.string(l)), compilePat(p), compilePatRow(pr)],
+    )
   }
 
 and compilePat = p =>
@@ -121,14 +143,16 @@ let rec compileStrDec = sd =>
   | DEC(d) => compileDec(d)
   | SEQ(sd1, sd2) =>
     Apply2(
-      [<> </>, <> {React.string(";")} <br /> </>, <> </>],
+      [<> </>, <> {React.string(";")} <br /> <br /> </>, <> </>],
       [compileStrDec(sd1), compileStrDec(sd2)],
     )
   };
 
-let compileTopDec = td =>
+let rec compileTopDec = td =>
   switch (td) {
   | STRDEC(sd, None) => compileStrDec(sd)
+  | STRDEC(sd, Some(td)) =>
+    Apply2([<> </>, <> <br /> <br /> </>, <> </>], [compileStrDec(sd), compileTopDec(td)])
   };
 
 let rec compileProgram = p =>
@@ -136,7 +160,7 @@ let rec compileProgram = p =>
   | PROGRAM(td, None) => compileTopDec(td)
   | PROGRAM(td, Some(p)) =>
     Apply2(
-      [<> </>, <> {React.string(";")} <br /> </>, <> </>],
+      [<> </>, <> {React.string(";")} <br /> <br /> </>, <> </>],
       [compileTopDec(td), compileProgram(p)],
     )
   };
@@ -193,7 +217,7 @@ let compileCtxt = c =>
       holePos: 1,
     }
   | SEQL((), sd2) => {
-      ops: [<> </>, <> {React.string(";")} <br /> </>, <> </>],
+      ops: [<> </>, <> {React.string(";")} <br /> <br /> </>, <> </>],
       args: [compileStrDec(sd2)],
       holePos: 0,
     }
@@ -220,7 +244,7 @@ let compileCtxt = c =>
       holePos: 2,
     }
   | PROGRAML((), p) => {
-      ops: [<> </>, <> {React.string(";")} <br /> </>, <> </>],
+      ops: [<> </>, <> {React.string(";")} <br /> <br /> </>, <> </>],
       args: [compileProgram(p)],
       holePos: 0,
     }

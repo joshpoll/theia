@@ -31,7 +31,9 @@ type ast =
   | ExpRow(sourceMap, (ast, ast, option(ast)))
   | Lab(string)
   | RECValBind(sourceMap, ast)
-  | PARAtPat(sourceMap, ast);
+  | PARAtPat(sourceMap, ast)
+  | RECORDAtPat(sourceMap, option(ast))
+  | FIELDPatRow(sourceMap, (ast, ast, option(ast)));
 
 module Decode = {
   open Json.Decode;
@@ -156,6 +158,18 @@ module Decode = {
       json |> field("args", list(node)) |> List.hd,
     )
 
+  and recordatpat = json =>
+    RECORDAtPat(
+      json |> field("sourceMap", sourceMap),
+      json |> field("args", list(optional(node))) |> List.hd,
+    )
+
+  and fieldpatrow = json =>
+    FIELDPatRow(
+      json |> field("sourceMap", sourceMap),
+      json |> field("args", tuple3(lab, node, optional(node))),
+    )
+
   and node = json => {
     (
       field("node", string)
@@ -185,6 +199,8 @@ module Decode = {
            | "Lab" => lab
            | "RECValBind" => recvalbind
            | "PARAtPat" => paratpat
+           | "RECORDAtPat" => recordatpat
+           | "FIELDPatRow" => fieldpatrow
            | _ => failwith("Unknown node type: " ++ s)
            }
          )
@@ -232,7 +248,16 @@ and compilePat = p =>
 and compileAtPat = ap =>
   switch (ap) {
   | IDAtPat(_, x) => SML.ID(compileLongVId(x))
+  | RECORDAtPat(_, None) => SML.RECORD(None)
+  | RECORDAtPat(_, Some(pr)) => SML.RECORD(Some(compilePatRow(pr)))
   | PARAtPat(_, p) => SML.PAR(compilePat(p))
+  }
+
+and compilePatRow = pr =>
+  switch (pr) {
+  | FIELDPatRow(_, (l, p, None)) => SML.FIELD(compileLab(l), compilePat(p), None)
+  | FIELDPatRow(_, (l, p, Some(pr))) =>
+    SML.FIELD(compileLab(l), compilePat(p), Some(compilePatRow(pr)))
   }
 
 and compileLongVId = x =>
