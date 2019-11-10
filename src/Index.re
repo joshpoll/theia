@@ -96,3 +96,5 @@ Js.Promise.all(traces)
 |> Js.Promise.then_(theiaIRTraces =>
      Js.Promise.resolve(ReactDOMRe.render(<Theia theiaIRTraces />, makeContainer("Theia")))
    );
+
+ReactDOMRe.render(<DagreTest />, makeContainer("DagreTest"));

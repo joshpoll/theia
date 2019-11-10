@@ -23,7 +23,8 @@
     "reason-react",
     "bs-fetch",
     "bs-webapi",
-    "@glennsl/bs-json"
+    "@glennsl/bs-json",
+    "@arnau/bs-dagre"
   ],
   "refmt": 3
 }
