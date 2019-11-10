@@ -29,7 +29,8 @@ type ast =
   | Mrule(sourceMap, (ast, ast))
   | RECORDAtExp(sourceMap, option(ast))
   | ExpRow(sourceMap, (ast, ast, option(ast)))
-  | Lab(string);
+  | Lab(string)
+  | RECValBind(sourceMap, ast);
 
 module Decode = {
   open Json.Decode;
@@ -142,6 +143,12 @@ module Decode = {
     Lab(json |> field("args", list(string)) |> List.hd);
   }
 
+  and recvalbind = json =>
+    RECValBind(
+      json |> field("sourceMap", sourceMap),
+      json |> field("args", list(node)) |> List.hd,
+    )
+
   and node = json => {
     (
       field("node", string)
@@ -169,6 +176,7 @@ module Decode = {
            | "RECORDAtExp" => recordatexp
            | "ExpRow" => exprow
            | "Lab" => lab
+           | "RECValBind" => recvalbind
            | _ => failwith("Unknown node type: " ++ s)
            }
          )
@@ -205,6 +213,7 @@ and compileValBind = vb =>
   | PLAINValBind(_, (p, e, None)) => SML.PLAIN(compilePat(p), compileExp(e), None)
   | PLAINValBind(_, (p, e, Some(vb))) =>
     SML.PLAIN(compilePat(p), compileExp(e), Some(compileValBind(vb)))
+  | RECValBind(_, vb) => SML.REC(compileValBind(vb))
   }
 
 and compilePat = p =>

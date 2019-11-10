@@ -39,3 +39,5 @@ val y = 17;
 val z = (x + y) + (y + 2);
 val q = z + 1;
 val abs_of_z = if z < 0 then 0 - z else z";
+
+let ex13 = "fun id x = x";

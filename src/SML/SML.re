@@ -56,6 +56,7 @@ and dec =
 
 and valBind =
   | PLAIN(pat, exp, option(valBind))
+  | REC(valBind)
 
 and atPat =
   /* no op */
@@ -439,6 +440,18 @@ let step = (c: configuration): option(configuration) =>
       env: [(x, v), ...env],
     })
 
+  // [126]
+  // TODO: I can't do this! No way to intercept the environment after it's created the way this is
+  // written.
+  /* | {rewrite: {focus: ValBind(REC(vb)), ctxts}, env} =>
+     Some({
+       rewrite: {
+         focus: ValBind(vb),
+         ctxts: [RECVB(), ...ctxts],
+       },
+       env,
+     }) */
+
   /* Type Bindings */
   /* Datatype Bindings */
   /* Constructor Bindings */
@@ -549,12 +562,6 @@ let step = (c: configuration): option(configuration) =>
       env,
     })
   | _ => None
-  };
-
-let isNone = o =>
-  switch (o) {
-  | None => true
-  | _ => false
   };
 
 /* TODO: need to detect end using program segment somehow */
