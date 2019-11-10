@@ -5,7 +5,7 @@
 ```sh
 git clone --recurse-submodules git@github.com:joshpoll/theia.git
 cd src/server/hamlet
-make # using your favorite SML implementation
+make # using your favorite SML implementation. We recommend Poly/ML: https://www.polyml.org/index.html
 cd -
 npm install
 npm run server
