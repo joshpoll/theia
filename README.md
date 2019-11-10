@@ -3,6 +3,7 @@
 # Run
 
 ```sh
+git clone --recurse-submodules git@github.com:joshpoll/theia.git
 cd src/server/hamlet
 make # using your favorite SML implementation
 cd -
