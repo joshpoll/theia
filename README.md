@@ -1,15 +1,6 @@
-# ReasonReact Template & Examples
+# Theia with SML Backend
 
-This is:
-- A template for your new ReasonReact project.
-- A collection of thin examples illustrating ReasonReact usage.
-- Extra helper documentation for ReasonReact (full ReasonReact docs [here](https://reasonml.github.io/reason-react/)).
-
-`src` contains 4 sub-folders, each an independent, self-contained ReasonReact example. Feel free to delete any of them and shape this into your project! This template's more malleable than you might be used to =).
-
-The point of this template and examples is to let you understand and personally tweak the entirely of it. We **don't** give you an opaque, elaborate mega build setup just to put some boxes on the screen. It strikes to stay transparent, learnable, and simple. You're encouraged to read every file; it's a great feeling, having the full picture of what you're using and being able to touch any part.
-
-## Run
+# Run
 
 ```sh
 cd src/server/hamlet
@@ -42,3 +33,106 @@ mv UNUSED_webpack.config.js webpack.config.js
 ./node_modules/.bin/webpack
 open indexProduction.html
 ```
+
+# Rule Checklist
+
+- [x] 90
+- [x] 91
+- [x] 92
+- [x] 93
+- [x] 94
+- [x] 95
+- [x] 96
+- [ ] 97
+- [ ] 98
+- [ ] 99
+- [ ] 100
+- [x] 101
+- [x] 102
+- [ ] 103
+- [ ] 104
+- [ ] 105
+- [ ] 106
+- [ ] 107
+- [x] 108
+- [x] 109
+- [x] 110
+- [x] 111
+- [x] 112
+- [x] 113
+- [x] 114
+- [ ] 115
+- [ ] 116
+- [ ] 117
+- [ ] 118
+- [ ] 119
+- [ ] 120
+- [ ] 121
+- [ ] 122
+- [ ] 123
+- [ ] 124
+- [ ] 125
+- [ ] 126
+- [ ] 127
+- [ ] 128
+- [ ] 129
+- [ ] 130
+- [ ] 131
+- [ ] 132
+- [ ] 133
+- [ ] 134
+- [ ] 135
+- [ ] 136
+- [ ] 137
+- [ ] 138
+- [ ] 139
+- [ ] 140
+- [ ] 141
+- [ ] 142
+- [x] 143
+- [ ] 144
+- [ ] 145
+- [ ] 146
+- [ ] 147
+- [ ] 148
+- [ ] 149
+- [ ] 150
+- [ ] 151
+- [ ] 152
+- [ ] 153
+- [ ] 154
+- [ ] 155
+- [x] 156
+- [ ] 157
+- [ ] 158
+- [ ] 159
+- [x] 160
+- [ ] 161
+- [ ] 162
+- [ ] 163
+- [ ] 164
+- [ ] 165
+- [ ] 166
+- [ ] 167
+- [ ] 168
+- [ ] 169
+- [ ] 170
+- [ ] 171
+- [ ] 172
+- [ ] 173
+- [ ] 174
+- [ ] 175
+- [ ] 176
+- [ ] 177
+- [ ] 178
+- [ ] 179
+- [ ] 180
+- [ ] 181
+- [ ] 182
+- [ ] 183
+- [ ] 184
+- [ ] 185
+- [ ] 186
+- [ ] 187
+- [ ] 188
+- [ ] 189
