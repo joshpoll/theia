@@ -88,6 +88,7 @@ and compileAtPat = a =>
    } */
 and compilePatRow = pr =>
   switch (pr) {
+  | DOTS => Atom(React.string("..."))
   | FIELD(l, p, None) =>
     Apply2([<> </>, React.string("="), <> </>], [Atom(React.string(l)), compilePat(p)])
   | FIELD(l, p, Some(pr)) =>

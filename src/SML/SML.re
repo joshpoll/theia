@@ -70,6 +70,7 @@ and atPat =
   | PAR(pat)
 
 and patRow =
+  | DOTS
   | FIELD(lab, pat, option(patRow))
 
 and pat =
@@ -675,6 +676,16 @@ let step = (c: configuration): option(configuration) =>
           }, ...frames])
 
   /* Pattern Rows */
+  // [140]
+  | [{rewrite: {focus: PatRow(DOTS, _), ctxts}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: Empty,
+              ctxts,
+            },
+            env,
+          }, ...frames])
+
   // [141-142]
   /* NOTE: SML '97 says each field should be evaluated in the original environment, but we extend it
      after every field. This simplifies our implementation since we don't need to maintain a

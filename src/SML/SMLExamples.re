@@ -65,3 +65,19 @@ fun cube x =
   pow(x,3)
 
 val sixtyfour = cube 4";
+
+let lec02_2_simple = "fun swap pr =
+  (#2 pr, #1 pr)
+
+fun sum_two_pairs (pr1, pr2) =
+  (#1 pr1) + (#2 pr1) + (#1 pr2) + (#2 pr2)
+
+fun sort_pair pr =
+  if (#1 pr) < (#2 pr)
+  then pr
+  else (#2 pr, #1 pr)";
+
+let lec02_3 = "val x1 = (7, (true, 9))
+val x2 = #1 (#2 x1)
+val x3 = (#2 x1)
+val x4 = ((3, 5), ((4, 8), (0, 0)))";

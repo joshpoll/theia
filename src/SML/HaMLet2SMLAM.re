@@ -33,7 +33,8 @@ type ast =
   | RECValBind(sourceMap, ast)
   | PARAtPat(sourceMap, ast)
   | RECORDAtPat(sourceMap, option(ast))
-  | FIELDPatRow(sourceMap, (ast, ast, option(ast)));
+  | FIELDPatRow(sourceMap, (ast, ast, option(ast)))
+  | DOTSPatRow(sourceMap);
 
 module Decode = {
   open Json.Decode;
@@ -170,6 +171,8 @@ module Decode = {
       json |> field("args", tuple3(lab, node, optional(node))),
     )
 
+  and dotspatrow = json => DOTSPatRow(json |> field("sourceMap", sourceMap))
+
   and node = json => {
     (
       field("node", string)
@@ -201,6 +204,7 @@ module Decode = {
            | "PARAtPat" => paratpat
            | "RECORDAtPat" => recordatpat
            | "FIELDPatRow" => fieldpatrow
+           | "DOTSPatRow" => dotspatrow
            | _ => failwith("Unknown node type: " ++ s)
            }
          )
@@ -255,6 +259,7 @@ and compileAtPat = ap =>
 
 and compilePatRow = pr =>
   switch (pr) {
+  | DOTSPatRow(_) => SML.DOTS
   | FIELDPatRow(_, (l, p, None)) => SML.FIELD(compileLab(l), compilePat(p), None)
   | FIELDPatRow(_, (l, p, Some(pr))) =>
     SML.FIELD(compileLab(l), compilePat(p), Some(compilePatRow(pr)))
