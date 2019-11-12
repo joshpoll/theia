@@ -108,6 +108,13 @@ let compileSVal = (sv: sVal) =>
   | INT(n) => Value2([], [Atom(React.string(string_of_int(n)))])
   };
 
+let compileIdStatus = id =>
+  switch (id) {
+  | Var => Atom(React.string("Var"))
+  | Con => Atom(React.string("Con"))
+  | Exc => Atom(React.string("Exc"))
+  };
+
 let rec compileVal_ = v =>
   switch (v) {
   | SVAL(sv) => compileSVal(sv)
@@ -133,7 +140,11 @@ and compileRecord = r =>
     )
   }
 
-and compileKVs = ((k, v)) => KV2((Atom(React.string(k)), compileVal_(v)))
+and compileKVs = ((k, (v, id))) =>
+  KV2((
+    Atom(React.string(k)),
+    Apply2([<> </>, React.string(" "), <> </>], [compileVal_(v), compileIdStatus(id)]),
+  ))
 
 and compileOneEnv = e => e |> List.map(compileKVs) |> List.rev |> (x => Map2(x))
 
@@ -184,8 +195,7 @@ let compileFocus = f =>
   | Pat(p, v) => VSequence([compilePat(p), compileVal_(v)])
   | AtPat(ap, v) => VSequence([compileAtPat(ap), compileVal_(v)])
   | PatRow(pr, r) => VSequence([compilePatRow(pr), compileRecord(r)])
-  | FAIL(_) => Atom(React.string("FAIL"))
-  | ValEnv(ve) => compileOneEnv(ve)
+  | FAIL(v) => VSequence([Atom(React.string("FAIL")), compileVal_(v)])
   /* TODO: visualize this better. should have a highlighting blank space or something */
   | Empty => Atom(React.string("EMPTY"))
   };
@@ -207,7 +217,7 @@ let compileCtxt = c =>
       args: [compilePat(p)],
       holePos: 1,
     }
-  | VALBINDE(_) => failwith("TODO")
+  | VALBINDP((), (), None) => {ops: [<> </>, React.string(" = ")], args: [], holePos: 0}
   | APPL((), x) => {
       ops: [<> </>, React.string(" "), <> </>],
       args: [compileAtExp(x)],

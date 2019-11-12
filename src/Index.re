@@ -85,12 +85,14 @@ let traces =
       {name: "ex9", text: ex9},
       {name: "ex10", text: ex10},
       {name: "ex11", text: ex11},
+      {name: "ex11.5", text: ex11_5},
       {name: "ex12", text: ex12},
-      {name: "ex13", text: ex13},
+      {name: "id", text: idEx},
       {name: "lec02-1-simple", text: lec02_1_simpler},
       {name: "lec02-2-simple", text: lec02_2_simple},
       {name: "lec02-3", text: lec02_3},
-      {name: "lec02-4-sum_list", text: lec02_4_sum_list},
+      // {name: "lec02-4-sum_list", text: lec02_4_sum_list},
+      {name: "valbind pattern", text: valbind_pattern},
     |]
   )
   |> Array.map(traceProgram);

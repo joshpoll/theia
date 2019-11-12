@@ -34,13 +34,17 @@ val a = 3";
 
 let ex11 = "if true then 1 else 2";
 
+let ex11_5 = "if false then 1 else 2";
+
 let ex12 = "val x = 34;
 val y = 17;
 val z = (x + y) + (y + 2);
 val q = z + 1;
 val abs_of_z = if z < 0 then 0 - z else z";
 
-let ex13 = "fun id x = x";
+let idEx = "fun id x = x
+
+id 5";
 
 /* This example seems to be too big. Need to switch to lazy execution of some things to boost
    performance. */
@@ -95,3 +99,5 @@ fun sum_list xs =
   if null xs
   then 0
   else hd(xs) + sum_list(tl(xs))";
+
+let valbind_pattern = "val (x, y) = (1, 2)";

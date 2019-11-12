@@ -80,6 +80,11 @@ and pat =
 type sVal =
   | INT(int);
 
+type idStatus =
+  | Var
+  | Con
+  | Exc;
+
 type record = list((lab, val_))
 
 and val_ =
@@ -90,7 +95,7 @@ and val_ =
   /* TODO: second argument should be an entire env */
   | FCNCLOSURE(match, list(valEnv), list(valEnv))
 
-and valEnv = list((vid, val_));
+and valEnv = list((vid, (val_, idStatus)));
 
 type strDec =
   | DEC(dec)
@@ -119,13 +124,13 @@ type focus =
   | AtPat(atPat, val_)
   | PatRow(patRow, record)
   | FAIL(val_)
-  | ValEnv(valEnv)
   | Empty;
 
 type ctxt =
   | LETD(hole, exp)
   | LETE(hole, hole)
   | VALBINDE(pat, hole, option(valBind))
+  | VALBINDP(hole, hole, option(valBind))
   | SEQL(hole, strDec)
   | DECD(hole)
   | APPL(hole, atExp)
@@ -179,7 +184,7 @@ let apply = (f, v) =>
 let recOneEnv = ve =>
   List.map(
     fun
-    | (x, FCNCLOSURE(m, e, _)) => (x, FCNCLOSURE(m, e, [ve]))
+    | (x, (FCNCLOSURE(m, e, _), Var)) => (x, (FCNCLOSURE(m, e, [ve]), Var))
     | xv => xv,
     ve,
   );
@@ -188,7 +193,7 @@ let recEnv = ve =>
   List.map(
     List.map(
       fun
-      | (x, FCNCLOSURE(m, e, _)) => (x, FCNCLOSURE(m, e, ve))
+      | (x, (FCNCLOSURE(m, e, _), Var)) => (x, (FCNCLOSURE(m, e, ve), Var))
       | xv => xv,
     ),
     ve,
@@ -211,13 +216,13 @@ let step = (c: configuration): option(configuration) =>
   | [{rewrite: {focus: AtExp(ID(x)), ctxts}, env}, ...frames] =>
     switch (Util.lookup(x, env)) {
     | None => None
-    | Some(v) => Some([{
-                         rewrite: {
-                           focus: Val(v),
-                           ctxts,
-                         },
-                         env,
-                       }, ...frames])
+    | Some((v, _)) => Some([{
+                               rewrite: {
+                                 focus: Val(v),
+                                 ctxts,
+                               },
+                               env,
+                             }, ...frames])
     }
 
   // [92]
@@ -249,27 +254,26 @@ let step = (c: configuration): option(configuration) =>
             env,
           }, ...frames])
 
-  // [93ish]: The environment pop is probably wrong. Relies on the env to pop always being last,
-  // which means every other rule needs to know where to pop on exiting.
+  // [93]
   | [{rewrite: {focus: AtExp(LET(d, e)), ctxts}, env}, ...frames] =>
-    Some([{
-            rewrite: {
-              focus: Dec(d),
-              ctxts: [LETD((), e), ...ctxts],
-            },
-            env,
-          }, ...frames])
-  | [{rewrite: {focus: ValEnv(ve), ctxts: [LETD((), e), ...ctxts]}, env}, ...frames] =>
     Some([
       {
         rewrite: {
-          focus: Exp(e),
-          ctxts: [LETE((), ()), ...ctxts],
+          focus: Dec(d),
+          ctxts: [LETD((), e), ...ctxts],
         },
-        env: [ve, ...env],
+        env: [[], ...env],
       },
       ...frames,
     ])
+  | [{rewrite: {focus: Empty, ctxts: [LETD((), e), ...ctxts]}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: Exp(e),
+              ctxts: [LETE((), ()), ...ctxts],
+            },
+            env,
+          }, ...frames])
   | [
       {rewrite: {focus: Val(v), ctxts: [LETE((), ()), ...ctxts]}, env: [_, ...env]},
       ...frames,
@@ -455,7 +459,10 @@ let step = (c: configuration): option(configuration) =>
 
   // [109]
   /* mrule success */
-  | [{rewrite: {focus: Val(v), ctxts: [MATCHMR((), _), ...ctxts]}, env}, ...frames] =>
+  | [
+      {rewrite: {focus: Val(v), ctxts: [MATCHMR((), _), ...ctxts]}, env: [_, ...env]},
+      ...frames,
+    ] =>
     Some([{
             rewrite: {
               focus: Val(v),
@@ -465,7 +472,10 @@ let step = (c: configuration): option(configuration) =>
           }, ...frames])
 
   // [110]
-  | [{rewrite: {focus: FAIL(v), ctxts: [MATCHMR((), None), ...ctxts]}, env}, ...frames] =>
+  | [
+      {rewrite: {focus: FAIL(v), ctxts: [MATCHMR((), None), ...ctxts]}, env: [_, ...env]},
+      ...frames,
+    ] =>
     Some([{
             rewrite: {
               focus: FAIL(v),
@@ -475,7 +485,10 @@ let step = (c: configuration): option(configuration) =>
           }, ...frames])
 
   // [111]
-  | [{rewrite: {focus: FAIL(v), ctxts: [MATCHMR((), Some(m)), ...ctxts]}, env}, ...frames] =>
+  | [
+      {rewrite: {focus: FAIL(v), ctxts: [MATCHMR((), Some(m)), ...ctxts]}, env: [_, ...env]},
+      ...frames,
+    ] =>
     Some([{
             rewrite: {
               focus: Match(m, v),
@@ -502,10 +515,7 @@ let step = (c: configuration): option(configuration) =>
             },
             env,
           }, ...frames])
-  | [
-      {rewrite: {focus: Val(v), ctxts: [MRULEE((), ()), ...ctxts]}, env: [_, ...env]},
-      ...frames,
-    ] =>
+  | [{rewrite: {focus: Val(v), ctxts: [MRULEE((), ()), ...ctxts]}, env}, ...frames] =>
     Some([{
             rewrite: {
               focus: Val(v),
@@ -515,10 +525,7 @@ let step = (c: configuration): option(configuration) =>
           }, ...frames])
 
   // [113]
-  | [
-      {rewrite: {focus: FAIL(v), ctxts: [MRULEP((), _), ...ctxts]}, env: [_, ...env]},
-      ...frames,
-    ] =>
+  | [{rewrite: {focus: FAIL(v), ctxts: [MRULEP((), _), ...ctxts]}, env}, ...frames] =>
     Some([{
             rewrite: {
               focus: FAIL(v),
@@ -539,7 +546,7 @@ let step = (c: configuration): option(configuration) =>
           }, ...frames])
 
   /* Value Bindings */
-  // [124ish]: doesn't support `and`, no pattern matching in valbind
+  // [124ish]: doesn't support `and`
   | [{rewrite: {focus: ValBind(PLAIN(p, e, vbs)), ctxts}, env}, ...frames] =>
     Some([
       {
@@ -551,13 +558,21 @@ let step = (c: configuration): option(configuration) =>
       },
       ...frames,
     ])
-  | [
-      {rewrite: {focus: Val(v), ctxts: [VALBINDE(ATPAT(ID(x)), (), None), ...ctxts]}, env},
+  | [{rewrite: {focus: Val(v), ctxts: [VALBINDE(p, (), None), ...ctxts]}, env}, ...frames] =>
+    Some([
+      {
+        rewrite: {
+          focus: Pat(p, v),
+          ctxts: [VALBINDP((), (), None), ...ctxts],
+        },
+        env,
+      },
       ...frames,
-    ] =>
+    ])
+  | [{rewrite: {focus: Empty, ctxts: [VALBINDP((), (), None), ...ctxts]}, env}, ...frames] =>
     Some([{
             rewrite: {
-              focus: ValEnv([(x, v)]),
+              focus: Empty,
               ctxts,
             },
             env,
@@ -565,20 +580,23 @@ let step = (c: configuration): option(configuration) =>
 
   // [126]
   | [{rewrite: {focus: ValBind(REC(vb)), ctxts}, env}, ...frames] =>
+    Some([
+      {
+        rewrite: {
+          focus: ValBind(vb),
+          ctxts: [RECVB(), ...ctxts],
+        },
+        env: [[], ...env],
+      },
+      ...frames,
+    ])
+  | [{rewrite: {focus: Empty, ctxts: [RECVB (), ...ctxts]}, env: [ve, ...env]}, ...frames] =>
     Some([{
             rewrite: {
-              focus: ValBind(vb),
-              ctxts: [RECVB(), ...ctxts],
-            },
-            env,
-          }, ...frames])
-  | [{rewrite: {focus: ValEnv(ve), ctxts: [RECVB (), ...ctxts]}, env}, ...frames] =>
-    Some([{
-            rewrite: {
-              focus: ValEnv(recOneEnv(ve)),
+              focus: Empty,
               ctxts,
             },
-            env,
+            env: [recOneEnv(ve), ...env],
           }, ...frames])
 
   /* Type Bindings */
@@ -599,35 +617,37 @@ let step = (c: configuration): option(configuration) =>
   // [135-137ish]
   | [{rewrite: {focus: AtPat(ID(x), v), ctxts}, env: [ve, ...env]}, ...frames] =>
     switch (Util.lookup(x, [ve, ...env])) {
-    // [135ish]
-    | None =>
+    // [135]
+    | None
+    | Some((_, Var)) =>
+      Some([
+        {
+          rewrite: {
+            focus: Empty,
+            ctxts,
+          },
+          env: [[(x, (v, Var)), ...ve], ...env],
+        },
+        ...frames,
+      ])
+    // [136]
+    | Some((v', id)) when v == v' =>
       Some([{
               rewrite: {
                 focus: Empty,
                 ctxts,
               },
-              env: [[(x, v), ...ve], ...env],
+              env: [ve, ...env],
             }, ...frames])
-    | Some(v') =>
-      if (v == v') {
-        // [136]
-        Some([{
-                rewrite: {
-                  focus: Empty,
-                  ctxts,
-                },
-                env: [ve, ...env],
-              }, ...frames]);
-      } else {
-        // [137]
-        Some([{
-                rewrite: {
-                  focus: FAIL(v),
-                  ctxts,
-                },
-                env: [ve, ...env],
-              }, ...frames]);
-      }
+    // [137]
+    | Some((v', id)) =>
+      Some([{
+              rewrite: {
+                focus: FAIL(v),
+                ctxts,
+              },
+              env: [ve, ...env],
+            }, ...frames])
     }
 
   // [138]
@@ -768,15 +788,15 @@ let step = (c: configuration): option(configuration) =>
             },
             env,
           }, ...frames])
-  | [{rewrite: {focus: ValEnv(ve), ctxts: [DECD (), ...ctxts]}, env}, ...frames] =>
+  | [{rewrite: {focus: Empty, ctxts: [DECD (), ...ctxts]}, env}, ...frames] =>
     Some([{
             rewrite: {
               focus: Empty,
               ctxts,
             },
-            env: [ve, ...env],
+            env,
           }, ...frames])
-  // [160ish]: Should use env instead of valEnv. should return a valenv, too?
+  // [160]
   | [{rewrite: {focus: StrDec(SEQ(sd1, sd2)), ctxts}, env}, ...frames] =>
     Some([{
             rewrite: {
@@ -876,13 +896,13 @@ let inject = e => [
     },
     env: [
       [
-        ("=", BASVAL("=")),
-        ("+", BASVAL("+")),
-        ("-", BASVAL("-")),
-        ("*", BASVAL("*")),
-        ("<", BASVAL("<")),
-        ("true", VID("true")),
-        ("false", VID("false")),
+        ("=", (BASVAL("="), Var)),
+        ("+", (BASVAL("+"), Var)),
+        ("-", (BASVAL("-"), Var)),
+        ("*", (BASVAL("*"), Var)),
+        ("<", (BASVAL("<"), Var)),
+        ("true", (VID("true"), Con)),
+        ("false", (VID("false"), Con)),
       ],
     ],
   },
