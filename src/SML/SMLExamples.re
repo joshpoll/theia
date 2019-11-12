@@ -81,3 +81,17 @@ let lec02_3 = "val x1 = (7, (true, 9))
 val x2 = #1 (#2 x1)
 val x3 = (#2 x1)
 val x4 = ((3, 5), ((4, 8), (0, 0)))";
+
+let lec02_4_sum_list = "fun null nil                = true
+  | null _                  = false
+
+fun hd(x::l')               = x
+  | hd  _                   = raise Empty
+
+fun tl(x::l')               = l'
+  | tl  _                   = raise Empty
+
+fun sum_list xs =
+  if null xs
+  then 0
+  else hd(xs) + sum_list(tl(xs))";

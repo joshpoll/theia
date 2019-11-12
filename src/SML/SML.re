@@ -65,6 +65,7 @@ and valBind =
   | REC(valBind)
 
 and atPat =
+  | WILDCARD
   | ID(vid) /* TODO: add op */
   | RECORD(option(patRow))
   | PAR(pat)
@@ -585,6 +586,16 @@ let step = (c: configuration): option(configuration) =>
   /* Constructor Bindings */
   /* Exception Bindings */
   /* Atomic Patterns */
+  // [132]
+  | [{rewrite: {focus: AtPat(WILDCARD, _), ctxts}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: Empty,
+              ctxts,
+            },
+            env,
+          }, ...frames])
+
   // [135-137ish]
   | [{rewrite: {focus: AtPat(ID(x), v), ctxts}, env: [ve, ...env]}, ...frames] =>
     switch (Util.lookup(x, [ve, ...env])) {

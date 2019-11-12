@@ -34,7 +34,8 @@ type ast =
   | PARAtPat(sourceMap, ast)
   | RECORDAtPat(sourceMap, option(ast))
   | FIELDPatRow(sourceMap, (ast, ast, option(ast)))
-  | DOTSPatRow(sourceMap);
+  | DOTSPatRow(sourceMap)
+  | WILDCARDAtPat(sourceMap);
 
 module Decode = {
   open Json.Decode;
@@ -173,6 +174,8 @@ module Decode = {
 
   and dotspatrow = json => DOTSPatRow(json |> field("sourceMap", sourceMap))
 
+  and wildcardatpat = json => WILDCARDAtPat(json |> field("sourceMap", sourceMap))
+
   and node = json => {
     (
       field("node", string)
@@ -205,6 +208,7 @@ module Decode = {
            | "RECORDAtPat" => recordatpat
            | "FIELDPatRow" => fieldpatrow
            | "DOTSPatRow" => dotspatrow
+           | "WILDCARDAtPat" => wildcardatpat
            | _ => failwith("Unknown node type: " ++ s)
            }
          )
@@ -251,6 +255,7 @@ and compilePat = p =>
 
 and compileAtPat = ap =>
   switch (ap) {
+  | WILDCARDAtPat(_) => SML.WILDCARD
   | IDAtPat(_, x) => SML.ID(compileLongVId(x))
   | RECORDAtPat(_, None) => SML.RECORD(None)
   | RECORDAtPat(_, Some(pr)) => SML.RECORD(Some(compilePatRow(pr)))
