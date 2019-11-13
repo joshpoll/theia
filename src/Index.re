@@ -91,7 +91,8 @@ let traces =
       {name: "lec02-1-simple", text: lec02_1_simpler},
       {name: "lec02-2-simple", text: lec02_2_simple},
       {name: "lec02-3", text: lec02_3},
-      {name: "lec02-4-sum_list", text: lec02_4_sum_list},
+      // {name: "lec02-4-sum_list", text: lec02_4_sum_list},
+      {name: "lec02-4-sum_list-good-style", text: lec02_4_sum_list_good_style},
       {name: "valbind pattern", text: valbind_pattern},
     |]
   )

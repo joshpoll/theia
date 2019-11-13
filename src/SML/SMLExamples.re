@@ -86,6 +86,7 @@ val x2 = #1 (#2 x1)
 val x3 = (#2 x1)
 val x4 = ((3, 5), ((4, 8), (0, 0)))";
 
+/* TODO: this appears to cause problems even though the good style version doesn't. Not sure why. */
 let lec02_4_sum_list = "fun null nil                = true
   | null _                  = false
 
@@ -100,6 +101,11 @@ fun sum_list xs =
   then 0
   else hd(xs) + sum_list(tl(xs))
 
-val _ = sum_list [1, 2, 3]";
+val _ = sum_list [1]";
+
+let lec02_4_sum_list_good_style = "fun sum_list [] = 0
+  | sum_list (x::l') = x + sum_list l'
+
+val it = sum_list [1, 2, 3]";
 
 let valbind_pattern = "val (x, y) = (1, 2)";

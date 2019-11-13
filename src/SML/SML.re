@@ -804,29 +804,31 @@ let step = (c: configuration): option(configuration) =>
           }, ...frames])
 
   /* TODO: maybe consolidate 145a and b somehow? */
-  /* | [{rewrite: {focus: Pat(CON(con, ap), VIDVAL(vid, v)), ctxts}, env}, ...frames] =>
-     let Some((VID(vidC), Con)) = Util.lookup(con, env);
-     if (vidC == vid) {
-       // [144]: ignores ref check
-       Js.log("144");
-       Some([{
-               rewrite: {
-                 focus: AtPat(ap, v),
-                 ctxts,
-               },
-               env,
-             }, ...frames]);
-     } else {
-       // [145a]
-       Js.log("145a");
-       Some([{
-               rewrite: {
-                 focus: FAIL(VIDVAL(vid, v)),
-                 ctxts,
-               },
-               env,
-             }, ...frames]);
-     }; */
+  | [{rewrite: {focus: Pat(CON(con, ap), VIDVAL(vid, v)), ctxts}, env}, ...frames] =>
+    let Some((VID(vidC), Con)) = Util.lookup(con, env);
+    if (vidC == vid) {
+      // [144]: ignores ref check
+      Js.log("144");
+      Js.log(con);
+      Js.log(ap);
+      Some([{
+              rewrite: {
+                focus: AtPat(ap, v),
+                ctxts,
+              },
+              env,
+            }, ...frames]);
+    } else {
+      // [145a]
+      Js.log("145a");
+      Some([{
+              rewrite: {
+                focus: FAIL(VIDVAL(vid, v)),
+                ctxts,
+              },
+              env,
+            }, ...frames]);
+    };
 
   // [145b]
   | [{rewrite: {focus: Pat(CON(_, _), v), ctxts}, env}, ...frames] =>
