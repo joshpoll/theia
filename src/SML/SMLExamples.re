@@ -98,6 +98,8 @@ fun tl(x::l')               = l'
 fun sum_list xs =
   if null xs
   then 0
-  else hd(xs) + sum_list(tl(xs))";
+  else hd(xs) + sum_list(tl(xs))
+
+val _ = sum_list [1, 2, 3]";
 
 let valbind_pattern = "val (x, y) = (1, 2)";

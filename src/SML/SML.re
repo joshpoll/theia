@@ -48,6 +48,7 @@ and expRow =
 and exp =
   | ATEXP(atExp)
   | APP(exp, atExp)
+  | RAISE(exp)
   | FN(match)
 
 and match =
@@ -75,7 +76,8 @@ and patRow =
   | FIELD(lab, pat, option(patRow))
 
 and pat =
-  | ATPAT(atPat);
+  | ATPAT(atPat)
+  | CON(vid, atPat);
 
 type sVal =
   | INT(int);
@@ -91,6 +93,7 @@ and val_ =
   | SVAL(sVal)
   | BASVAL(basVal)
   | VID(vid)
+  | VIDVAL(vid, val_) /* constructor value(?) */
   | RECORD(record)
   /* TODO: second argument should be an entire env */
   | FCNCLOSURE(match, list(valEnv), list(valEnv))
@@ -361,6 +364,30 @@ let step = (c: configuration): option(configuration) =>
             },
             env,
           }, ...frames])
+
+  /* TODO: consolidate some of these rules? */
+  // [97]: no ref check
+  | [{rewrite: {focus: Val(VID(vid)), ctxts: [APPL((), a), ...ctxts]}, env}, ...frames] =>
+    Js.log("97a");
+    Some([
+      {
+        rewrite: {
+          focus: AtExp(a),
+          ctxts: [APPR(VID(vid), ()), ...ctxts],
+        },
+        env,
+      },
+      ...frames,
+    ]);
+  | [{rewrite: {focus: Val(v), ctxts: [APPR(VID(vid), ()), ...ctxts]}, env}, ...frames] =>
+    Js.log("97b");
+    Some([{
+            rewrite: {
+              focus: Val(VIDVAL(vid, v)),
+              ctxts,
+            },
+            env,
+          }, ...frames]);
 
   // [101]
   /* TODO: may want a more coarse-grained traversal, not sure */
@@ -776,8 +803,43 @@ let step = (c: configuration): option(configuration) =>
             env,
           }, ...frames])
 
-  /* ... */
+  /* TODO: maybe consolidate 145a and b somehow? */
+  /* | [{rewrite: {focus: Pat(CON(con, ap), VIDVAL(vid, v)), ctxts}, env}, ...frames] =>
+     let Some((VID(vidC), Con)) = Util.lookup(con, env);
+     if (vidC == vid) {
+       // [144]: ignores ref check
+       Js.log("144");
+       Some([{
+               rewrite: {
+                 focus: AtPat(ap, v),
+                 ctxts,
+               },
+               env,
+             }, ...frames]);
+     } else {
+       // [145a]
+       Js.log("145a");
+       Some([{
+               rewrite: {
+                 focus: FAIL(VIDVAL(vid, v)),
+                 ctxts,
+               },
+               env,
+             }, ...frames]);
+     }; */
 
+  // [145b]
+  | [{rewrite: {focus: Pat(CON(_, _), v), ctxts}, env}, ...frames] =>
+    Js.log("145b");
+    Some([{
+            rewrite: {
+              focus: FAIL(v),
+              ctxts,
+            },
+            env,
+          }, ...frames]);
+
+  /* ... */
   /* Structure-level Declarations */
   // [156]
   | [{rewrite: {focus: StrDec(DEC(d)), ctxts}, env}, ...frames] =>
@@ -903,6 +965,8 @@ let inject = e => [
         ("<", (BASVAL("<"), Var)),
         ("true", (VID("true"), Con)),
         ("false", (VID("false"), Con)),
+        ("nil", (VID("nil"), Con)),
+        ("::", (VID("::"), Con)),
       ],
     ],
   },

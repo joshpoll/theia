@@ -35,7 +35,9 @@ type ast =
   | RECORDAtPat(sourceMap, option(ast))
   | FIELDPatRow(sourceMap, (ast, ast, option(ast)))
   | DOTSPatRow(sourceMap)
-  | WILDCARDAtPat(sourceMap);
+  | WILDCARDAtPat(sourceMap)
+  | CONPat(sourceMap, (ast, ast))
+  | RAISEExp(sourceMap, ast);
 
 module Decode = {
   open Json.Decode;
@@ -176,6 +178,15 @@ module Decode = {
 
   and wildcardatpat = json => WILDCARDAtPat(json |> field("sourceMap", sourceMap))
 
+  and conpat = json =>
+    CONPat(json |> field("sourceMap", sourceMap), json |> field("args", pair(node, node)))
+
+  and raiseexp = json =>
+    RAISEExp(
+      json |> field("sourceMap", sourceMap),
+      json |> field("args", list(node)) |> List.hd,
+    )
+
   and node = json => {
     (
       field("node", string)
@@ -209,6 +220,8 @@ module Decode = {
            | "FIELDPatRow" => fieldpatrow
            | "DOTSPatRow" => dotspatrow
            | "WILDCARDAtPat" => wildcardatpat
+           | "CONPat" => conpat
+           | "RAISEExp" => raiseexp
            | _ => failwith("Unknown node type: " ++ s)
            }
          )
@@ -251,6 +264,7 @@ and compileValBind = vb =>
 and compilePat = p =>
   switch (p) {
   | ATPat(_, ap) => SML.ATPAT(compileAtPat(ap))
+  | CONPat(_, (x, ap)) => SML.CON(compileLongVId(x), compileAtPat(ap))
   }
 
 and compileAtPat = ap =>
@@ -290,6 +304,7 @@ and compileExp = e =>
   switch (e) {
   | ATExp(_, a) => SML.ATEXP(compileAtExp(a))
   | APPExp(_, (e, a)) => SML.APP(compileExp(e), compileAtExp(a))
+  | RAISEExp(_, e) => SML.RAISE(compileExp(e))
   | FNExp(_, m) => SML.FN(compileMatch(m))
   }
 

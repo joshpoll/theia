@@ -38,6 +38,7 @@ and compileExp = e =>
   | ATEXP(a) => compileAtExp(a)
   | APP(f, x) =>
     Apply2([<> </>, React.string(" "), <> </>], [compileExp(f), compileAtExp(x)])
+  | RAISE(e) => Apply2([React.string("raise "), <> </>], [compileExp(e)])
   | FN(m) => Apply2([React.string("fn "), <> </>], [compileMatch(m)])
   }
 
@@ -71,6 +72,7 @@ and compileValBind = vb =>
 
 and compileAtPat = a =>
   switch (a) {
+  | WILDCARD => Atom(React.string("_"))
   | ID(x) => Atom(React.string(x))
   | RECORD(None) => Atom(React.string("{}"))
   | RECORD(Some(pr)) => Apply2([React.string("{"), React.string("}")], [compilePatRow(pr)])
@@ -101,6 +103,8 @@ and compilePatRow = pr =>
 and compilePat = p =>
   switch (p) {
   | ATPAT(a) => compileAtPat(a)
+  | CON(x, ap) =>
+    Apply2([<> </>, React.string(" "), <> </>], [Atom(React.string(x)), compileAtPat(ap)])
   };
 
 let compileSVal = (sv: sVal) =>
@@ -121,6 +125,7 @@ let rec compileVal_ = v =>
   | BASVAL(b) =>
     Value2([], [Apply2([React.string("builtin "), <> </>], [Atom(React.string(b))])])
   | VID(x) => Value2([], [Atom(React.string(x))])
+  | VIDVAL(vid, v) => Value2([vid], [compileVal_(v)])
   | RECORD([]) => Value2([], [Atom(React.string("{}"))])
   | RECORD(r) =>
     Value2([], [Apply2([React.string("{"), React.string("}")], [compileRecord(r)])])
