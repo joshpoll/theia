@@ -86,8 +86,8 @@ type theiaIR =
   | Atom(ReasonReact.reactElement)
   | Apply2(list(ReasonReact.reactElement), list(theiaIR))
   | EvalCtx(evalCtx)
-  | HSequence(list(theiaIR)) /* horizontal sequencing */
-  | VSequence(list(theiaIR)) /* vertical sequencing */
+  | HSequence(list(theiaIR), option(ReactDOMRe.Style.t)) /* horizontal sequencing */
+  | VSequence(list(theiaIR), option(ReactDOMRe.Style.t)) /* vertical sequencing */
   | Map2(list(theiaIR))
   | Kont2(theiaIR, list(evalCtx))
   | KV2((theiaIR, theiaIR))
@@ -178,38 +178,52 @@ let rec kn2Pretty = (~parens=true, k) =>
     Util.interleave(ops, List.map(kn2Pretty, args)) |> Util.prettierList(~parens, ~space=false)
   | EvalCtx(_) => raise(CompileError("There shouldn't be a EvalCtx!"))
   /* | Sequence(l) => <> {Util.interleave(List.map(kn2Pretty, l), (1--(List.length(l) - 1)) |> List.map(_ => React.string(" ~> "))) |> Util.prettierList} </> */
-  | VSequence(l) =>
-    <div
-      style={ReactDOMRe.Style.make(
+  | VSequence(l, os) =>
+    let style =
+      ReactDOMRe.Style.make(
         ~display="grid",
         ~gridGap="20px",
         ~gridAutoFlow="row",
         ~gridTemplateColumns="1fr",
         ~alignItems="center",
         (),
-      )}>
+      )
+      |> ReactDOMRe.Style.combine(
+           switch (os) {
+           | None => ReactDOMRe.Style.make()
+           | Some(s) => s
+           },
+         );
+    <div style>
       {List.mapi(
          (i, kn) => <div key={string_of_int(i)}> {kn2Pretty(~parens=false, kn)} </div>,
          l,
        )  /* |> List.rev */
        |> rlist}
-    </div>
-  | HSequence(l) =>
-    <div
-      style={ReactDOMRe.Style.make(
+    </div>;
+  | HSequence(l, os) =>
+    let style =
+      ReactDOMRe.Style.make(
         ~display="grid",
         ~gridGap="20px",
         ~gridAutoFlow="column",
         ~gridTemplateRows="1fr",
         ~alignItems="center",
         (),
-      )}>
+      )
+      |> ReactDOMRe.Style.combine(
+           switch (os) {
+           | None => ReactDOMRe.Style.make()
+           | Some(s) => s
+           },
+         );
+    <div style>
       {List.mapi(
          (i, kn) => <div key={string_of_int(i)}> {kn2Pretty(~parens=false, kn)} </div>,
          l,
        )  /* |> List.rev */
        |> rlist}
-    </div>
+    </div>;
   | Map2([]) => kn2Pretty(Map2([KV2((Atom(Util.nbsp), Atom(Util.nbsp)))]))
   | Map2(l) =>
     /* https://stackoverflow.com/a/3349181 */
@@ -282,32 +296,38 @@ let rec kn2Pretty = (~parens=true, k) =>
       </tbody>
     </table>
   | Value2(ops, args) =>
-    <fieldset style={ReactDOMRe.Style.make(~display="inline", ())}>
-      <legend>
-        {Util.interleave(ops, 1 -- (List.length(ops) - 1) |> List.map(_ => "•"))
-         |> List.fold_left((++), "")
-         |> React.string}
-      </legend>
-      /* {Util.interleave(List.map(kn2Pretty, args), (1--(List.length(args) - 1)) |> List.map(_ => React.string("|"))) |> Util.prettierList(~parens=false)} */
-      /* TODO: add padding */
-      <table style={ReactDOMRe.Style.make(~display="inline-table", ())}>
-        /* TODO: thead? */
-
-          <tbody>
-            <tr>
-              {args
-               |> List.mapi((i, arg) =>
-                    <td
-                      key={string_of_int(i)}
-                      style={ReactDOMRe.Style.make(~border="1px solid gray", ())}>
-                      {kn2Pretty(~parens=false, arg)}
-                    </td>
-                  )
-               |> rlist}
-            </tr>
-          </tbody>
-        </table>
-    </fieldset>
+    <div
+      style={ReactDOMRe.Style.make(
+        ~display="inline-block",
+        ~border="1px solid #000",
+        ~paddingTop="10px",
+        ~paddingRight="10px",
+        ~paddingBottom="10px",
+        ~paddingLeft="10px",
+        (),
+      )}>
+      <h1
+        style={ReactDOMRe.Style.make(
+          ~textAlign="center",
+          ~marginTop="-10px",
+          ~fontSize="15px",
+          (),
+        )}>
+        <span style={ReactDOMRe.Style.make(~backgroundColor="white", ())}>
+          {Util.interleave(ops, 1 -- (List.length(ops) - 1) |> List.map(_ => "•"))
+           |> List.fold_left((++), "")
+           |> React.string}
+        </span>
+      </h1>
+      /* TODO: should probably have a more principled way of doing this. */
+      {kn2Pretty(
+         ~parens=false,
+         HSequence(
+           args |> List.map(arg => Value2([], [arg])),
+           Some(ReactDOMRe.Style.make(~display="inline-grid", ())),
+         ),
+       )}
+    </div>
   | Cell2(label, children) =>
     <div
       style={ReactDOMRe.Style.make(

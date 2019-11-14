@@ -204,14 +204,14 @@ let compileFocus = f =>
   | ExpRow(er) => compileExpRow(er)
   | Record(r) => compileRecord(r)
   | Program(p) => compileProgram(p)
-  | Match(m, v) => HSequence([compileVal_(v), compileMatch(m)])
-  | MRule(mr, v) => HSequence([compileVal_(v), compileMRule(mr)])
-  | Pat(p, v) => HSequence([compileVal_(v), compilePat(p)])
-  | AtPat(ap, v) => HSequence([compileVal_(v), compileAtPat(ap)])
+  | Match(m, v) => HSequence([compileVal_(v), compileMatch(m)], None)
+  | MRule(mr, v) => HSequence([compileVal_(v), compileMRule(mr)], None)
+  | Pat(p, v) => HSequence([compileVal_(v), compilePat(p)], None)
+  | AtPat(ap, v) => HSequence([compileVal_(v), compileAtPat(ap)], None)
   /* TODO: improve this */
   | PatRow(pr, r, rve) =>
-    VSequence([compileRecordEnv(rve), compilePatRow(pr), compileRecord(r)])
-  | FAIL(v) => VSequence([Atom(React.string("FAIL")), compileVal_(v)])
+    VSequence([compileRecordEnv(rve), compilePatRow(pr), compileRecord(r)], None)
+  | FAIL(v) => VSequence([Atom(React.string("FAIL")), compileVal_(v)], None)
   /* TODO: visualize this better. should have a highlighting blank space or something */
   | ValEnv(ve) => compileEnv(ve)
   | Empty => Atom(React.string("EMPTY"))
@@ -318,4 +318,4 @@ let compileFrame = ({rewrite, env}) =>
   );
 
 /* TODO: HSequence? */
-let smlToTheiaIR = fs => VSequence(List.map(compileFrame, fs) |> List.rev);
+let smlToTheiaIR = fs => VSequence(List.map(compileFrame, fs) |> List.rev, None);
