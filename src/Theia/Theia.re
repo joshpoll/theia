@@ -313,7 +313,7 @@ let rec kn2Pretty = (~parens=true, k) =>
           ~fontSize="15px",
           (),
         )}>
-        <span style={ReactDOMRe.Style.make(~backgroundColor="white", ())}>
+        <span>
           {Util.interleave(ops, 1 -- (List.length(ops) - 1) |> List.map(_ => "•"))
            |> List.fold_left((++), "")
            |> React.string}
@@ -370,7 +370,7 @@ and prettyFreeze = (~nestNum=0, {ops, args, holePos}, arg) => {
     Util.insert(
       <div
         style={ReactDOMRe.Style.make(
-          ~display="inline",
+          ~display="inline-block",
           ~backgroundColor="hsla(240, 100%, " ++ string_of_int(80 - nestNum * 5) ++ "%, 0.33)",
           (),
         )}>
