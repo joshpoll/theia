@@ -333,7 +333,7 @@ and prettyFreeze = (~nestNum=0, {ops, args, holePos}, arg) => {
       <div
         style={ReactDOMRe.Style.make(
           ~display="inline",
-          ~backgroundColor="hsla(240, 100%, " ++ string_of_int(80 - nestNum * 10) ++ "%, 0.33)",
+          ~backgroundColor="hsla(240, 100%, " ++ string_of_int(80 - nestNum * 5) ++ "%, 0.33)",
           (),
         )}>
         arg

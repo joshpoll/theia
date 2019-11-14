@@ -1,14 +1,3 @@
-/* Hardfork of previous version with a key difference: No tiered environments. Tiered environments
-   were introduced for let expressions; however, their role should be subsumed by CoW. Also may
-   bring this implementation closer to what would come out of the actual interpreter since each
-   frame may literally be a recursive call (though not all recursive calls in the interpreter are
-   represented).
-
-   also returns val envs explicitly in many places to more closely match semantics and make
-   modularity work better. Consider a list of val bindings. Each one must be evaluated in a new
-   frame. That frame should return a val env so it can be added to the basis by the root frame.
-   */
-
 /* Building up a very wrong, very simplistic SML interpreter. Grammar is not correct. */
 /* This time we're letting the program section do ALL the traversal and the rewrite do ALL the computation. */
 /* Following SML 97 and HaMLet closely.
@@ -24,10 +13,14 @@
    this!*/
 /* TODO: how to represent derived forms??? */
 /* TODO: how to make variable lookup more granular?? */
-/* TODO: separate initial basis from rest of the environment so it's easier to hide.
-     may be possible to achieve by ALWAYS creating a new frame at the beginning/set up rules so this
-     happens.
-   */
+/* TODO: switch program representation to {frames: list({rewrite: {focus, ctxts}, envs:
+ * list(valEnv)})}
+ *
+ * semantics:
+ *   - every function call creates a new frame. exiting a call pops a frame.
+ *   - every let expression creates a new env. exiting a let pops an env
+ */
+/* TODO: id status */
 /* TODO: desugaring toggling per sugar type (e.g. buttons for ite, orelse, andalso) */
 
 /* TODO: figure out how to do monads in reason/ocaml. there's some ppx stuff. */
@@ -96,8 +89,6 @@ type idStatus =
 
 type record = list((lab, val_))
 
-and recordEnv = list((lab, valEnv))
-
 and val_ =
   | SVAL(sVal)
   | BASVAL(basVal)
@@ -105,7 +96,7 @@ and val_ =
   | VIDVAL(vid, val_) /* constructor value(?) */
   | RECORD(record)
   /* TODO: second argument should be an entire env */
-  | FCNCLOSURE(match, valEnv, valEnv)
+  | FCNCLOSURE(match, list(valEnv), list(valEnv))
 
 and valEnv = list((vid, (val_, idStatus)));
 
@@ -134,14 +125,15 @@ type focus =
   | MRule(mrule, val_)
   | Pat(pat, val_)
   | AtPat(atPat, val_)
-  | PatRow(patRow, record, recordEnv)
+  | PatRow(patRow, record)
   | FAIL(val_)
-  | ValEnv(valEnv)
   | Empty;
 
 type ctxt =
   | LETD(hole, exp)
+  | LETE(hole, hole)
   | VALBINDE(pat, hole, option(valBind))
+  | VALBINDP(hole, hole, option(valBind))
   | SEQL(hole, strDec)
   | DECD(hole)
   | APPL(hole, atExp)
@@ -152,10 +144,11 @@ type ctxt =
   | PROGRAML(hole, program)
   | MATCHMR(hole, option(match))
   | MRULEP(hole, exp)
+  | MRULEE(hole, hole)
   | RECVB(hole)
   | RECORDPR(hole)
-  | STRDECSD(hole, option(topDec))
-  | FIELDP((lab, hole, option(patRow)), record, recordEnv);
+  | STRDECSD(hole, topDec)
+  | FIELDP((lab, hole, option(patRow)), record);
 
 type ctxts = list(ctxt);
 
@@ -166,7 +159,7 @@ type rewrite = {
 
 type frame = {
   rewrite,
-  env: valEnv,
+  env: list(valEnv),
 };
 
 type configuration = list(frame);
@@ -191,60 +184,26 @@ let apply = (f, v) =>
   | _ => failwith("unknown built-in function: " ++ f)
   };
 
-let recEnv = ve =>
+let recOneEnv = ve =>
   List.map(
     fun
-    | (x, (FCNCLOSURE(m, e, _), Var)) => (x, (FCNCLOSURE(m, e, ve), Var))
+    | (x, (FCNCLOSURE(m, e, _), Var)) => (x, (FCNCLOSURE(m, e, [ve]), Var))
     | xv => xv,
+    ve,
+  );
+
+let recEnv = ve =>
+  List.map(
+    List.map(
+      fun
+      | (x, (FCNCLOSURE(m, e, _), Var)) => (x, (FCNCLOSURE(m, e, ve), Var))
+      | xv => xv,
+    ),
     ve,
   );
 
 let step = (c: configuration): option(configuration) =>
   switch (c) {
-  /* frame pop */
-  // TODO: maybe this one should check for an empty focus and push the env?
-  | [
-      {rewrite: {focus: ValEnv(ve), ctxts: []}, env: _},
-      {rewrite: {focus: Empty, ctxts}, env},
-      ...frames,
-    ] =>
-    Js.log("frame pop ValEnv");
-    Some([{
-            rewrite: {
-              focus: ValEnv(ve),
-              ctxts,
-            },
-            env,
-          }, ...frames]);
-
-  | [
-      {rewrite: {focus: Val(v), ctxts: []}, env: _},
-      {rewrite: {focus: Empty, ctxts}, env},
-      ...frames,
-    ] =>
-    Js.log("frame pop Val");
-    Some([{
-            rewrite: {
-              focus: Val(v),
-              ctxts,
-            },
-            env,
-          }, ...frames]);
-
-  | [
-      {rewrite: {focus: FAIL(v), ctxts: []}, env: _},
-      {rewrite: {focus: Empty, ctxts}, env},
-      ...frames,
-    ] =>
-    Js.log("frame pop FAIL");
-    Some([{
-            rewrite: {
-              focus: FAIL(v),
-              ctxts,
-            },
-            env,
-          }, ...frames]);
-
   /* Atomic Expressions */
   // [90]
   | [{rewrite: {focus: AtExp(SCON(INT(n))), ctxts}, env}, ...frames] =>
@@ -258,7 +217,7 @@ let step = (c: configuration): option(configuration) =>
 
   // [91]
   | [{rewrite: {focus: AtExp(ID(x)), ctxts}, env}, ...frames] =>
-    switch (Util.lookupOne(x, env)) {
+    switch (Util.lookup(x, env)) {
     | None => None
     | Some((v, _)) => Some([{
                                rewrite: {
@@ -299,43 +258,36 @@ let step = (c: configuration): option(configuration) =>
           }, ...frames])
 
   // [93]
-  /* begin let traversal */
-  | [{rewrite: {focus: AtExp(LET(d, e)), ctxts: []}, env}, ...frames] =>
-    Some([{
-            rewrite: {
-              focus: Dec(d),
-              ctxts: [LETD((), e)],
-            },
-            env,
-          }, ...frames])
-  /* continue with exp */
-  | [{rewrite: {focus: ValEnv(ve), ctxts: [LETD((), e), ...ctxts]}, env}, ...frames] =>
-    Some([{
-            rewrite: {
-              focus: Exp(e),
-              ctxts,
-            },
-            env: ve @ env,
-          }, ...frames])
-  /* push LET into a new frame */
   | [{rewrite: {focus: AtExp(LET(d, e)), ctxts}, env}, ...frames] =>
     Some([
       {
         rewrite: {
-          focus: AtExp(LET(d, e)),
-          ctxts: [],
+          focus: Dec(d),
+          ctxts: [LETD((), e), ...ctxts],
         },
-        env,
-      },
-      {
-        rewrite: {
-          focus: Empty,
-          ctxts,
-        },
-        env,
+        env: [[], ...env],
       },
       ...frames,
     ])
+  | [{rewrite: {focus: Empty, ctxts: [LETD((), e), ...ctxts]}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: Exp(e),
+              ctxts: [LETE((), ()), ...ctxts],
+            },
+            env,
+          }, ...frames])
+  | [
+      {rewrite: {focus: Val(v), ctxts: [LETE((), ()), ...ctxts]}, env: [_, ...env]},
+      ...frames,
+    ] =>
+    Some([{
+            rewrite: {
+              focus: Val(v),
+              ctxts,
+            },
+            env,
+          }, ...frames])
 
   // [94]
   | [{rewrite: {focus: AtExp(PAR(e)), ctxts}, env}, ...frames] =>
@@ -413,7 +365,7 @@ let step = (c: configuration): option(configuration) =>
             env,
           }, ...frames])
 
-  // /* TODO: consolidate some of these rules? */
+  /* TODO: consolidate some of these rules? */
   // [97]: no ref check
   | [{rewrite: {focus: Val(VID(vid)), ctxts: [APPL((), a), ...ctxts]}, env}, ...frames] =>
     Js.log("97a");
@@ -495,7 +447,19 @@ let step = (c: configuration): option(configuration) =>
       },
       ...frames,
     ])
-
+  /* return from function call */
+  | [
+      {rewrite: {focus: Val(v), ctxts: []}, env: _},
+      {rewrite: {focus: Empty, ctxts}, env},
+      ...frames,
+    ] =>
+    Some([{
+            rewrite: {
+              focus: Val(v),
+              ctxts,
+            },
+            env,
+          }, ...frames])
   // [108]
   | [{rewrite: {focus: Exp(FN(m)), ctxts}, env}, ...frames] =>
     Some([{
@@ -507,37 +471,25 @@ let step = (c: configuration): option(configuration) =>
           }, ...frames])
 
   /* Matches */
-  /* begin Match traversal */
-  | [{rewrite: {focus: Match(MATCH(mr, om), v), ctxts: []}, env}, ...frames] =>
-    Some([{
-            rewrite: {
-              focus: MRule(mr, v),
-              ctxts: [MATCHMR((), om)],
-            },
-            env,
-          }, ...frames])
-  | [{rewrite: {focus: Match(m, v), ctxts}, env}, ...frames] =>
+  /* TODO: there might be some way to combine env adding in pattern matches and val bindings */
+  | [{rewrite: {focus: Match(MATCH(mr, om), v), ctxts}, env}, ...frames] =>
     Some([
       {
         rewrite: {
-          focus: Match(m, v),
-          ctxts: [],
+          focus: MRule(mr, v),
+          ctxts: [MATCHMR((), om), ...ctxts],
         },
-        env,
-      },
-      {
-        rewrite: {
-          focus: Empty,
-          ctxts,
-        },
-        env,
+        env: [[], ...env],
       },
       ...frames,
     ])
 
   // [109]
   /* mrule success */
-  | [{rewrite: {focus: Val(v), ctxts: [MATCHMR((), _), ...ctxts]}, env}, ...frames] =>
+  | [
+      {rewrite: {focus: Val(v), ctxts: [MATCHMR((), _), ...ctxts]}, env: [_, ...env]},
+      ...frames,
+    ] =>
     Some([{
             rewrite: {
               focus: Val(v),
@@ -547,7 +499,10 @@ let step = (c: configuration): option(configuration) =>
           }, ...frames])
 
   // [110]
-  | [{rewrite: {focus: FAIL(v), ctxts: [MATCHMR((), None), ...ctxts]}, env}, ...frames] =>
+  | [
+      {rewrite: {focus: FAIL(v), ctxts: [MATCHMR((), None), ...ctxts]}, env: [_, ...env]},
+      ...frames,
+    ] =>
     Some([{
             rewrite: {
               focus: FAIL(v),
@@ -557,7 +512,10 @@ let step = (c: configuration): option(configuration) =>
           }, ...frames])
 
   // [111]
-  | [{rewrite: {focus: FAIL(v), ctxts: [MATCHMR((), Some(m)), ...ctxts]}, env}, ...frames] =>
+  | [
+      {rewrite: {focus: FAIL(v), ctxts: [MATCHMR((), Some(m)), ...ctxts]}, env: [_, ...env]},
+      ...frames,
+    ] =>
     Some([{
             rewrite: {
               focus: Match(m, v),
@@ -576,13 +534,21 @@ let step = (c: configuration): option(configuration) =>
             },
             env,
           }, ...frames])
-  | [{rewrite: {focus: ValEnv(ve), ctxts: [MRULEP((), e), ...ctxts]}, env}, ...frames] =>
+  | [{rewrite: {focus: Empty, ctxts: [MRULEP((), e), ...ctxts]}, env}, ...frames] =>
     Some([{
             rewrite: {
               focus: Exp(e),
+              ctxts: [MRULEE((), ()), ...ctxts],
+            },
+            env,
+          }, ...frames])
+  | [{rewrite: {focus: Val(v), ctxts: [MRULEE((), ()), ...ctxts]}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: Val(v),
               ctxts,
             },
-            env: ve @ env,
+            env,
           }, ...frames])
 
   // [113]
@@ -598,19 +564,17 @@ let step = (c: configuration): option(configuration) =>
   /* Declarations */
   // [114ish]: should lift valenv into env
   | [{rewrite: {focus: Dec(VAL(vb)), ctxts}, env}, ...frames] =>
-    Js.log("114 in");
     Some([{
             rewrite: {
               focus: ValBind(vb),
               ctxts,
             },
             env,
-          }, ...frames]);
+          }, ...frames])
 
   /* Value Bindings */
   // [124ish]: doesn't support `and`
   | [{rewrite: {focus: ValBind(PLAIN(p, e, vbs)), ctxts}, env}, ...frames] =>
-    Js.log("124 in e");
     Some([
       {
         rewrite: {
@@ -620,33 +584,46 @@ let step = (c: configuration): option(configuration) =>
         env,
       },
       ...frames,
-    ]);
+    ])
   | [{rewrite: {focus: Val(v), ctxts: [VALBINDE(p, (), None), ...ctxts]}, env}, ...frames] =>
-    Js.log("124 in p");
+    Some([
+      {
+        rewrite: {
+          focus: Pat(p, v),
+          ctxts: [VALBINDP((), (), None), ...ctxts],
+        },
+        env,
+      },
+      ...frames,
+    ])
+  | [{rewrite: {focus: Empty, ctxts: [VALBINDP((), (), None), ...ctxts]}, env}, ...frames] =>
     Some([{
             rewrite: {
-              focus: Pat(p, v),
+              focus: Empty,
               ctxts,
-            },
-            env,
-          }, ...frames]);
-
-  // [126]
-  | [{rewrite: {focus: ValBind(REC(vb)), ctxts}, env}, ...frames] =>
-    Some([{
-            rewrite: {
-              focus: ValBind(vb),
-              ctxts: [RECVB(), ...ctxts],
             },
             env,
           }, ...frames])
-  | [{rewrite: {focus: ValEnv(ve), ctxts: [RECVB (), ...ctxts]}, env}, ...frames] =>
+
+  // [126]
+  | [{rewrite: {focus: ValBind(REC(vb)), ctxts}, env}, ...frames] =>
+    Some([
+      {
+        rewrite: {
+          focus: ValBind(vb),
+          ctxts: [RECVB(), ...ctxts],
+        },
+        env: [[], ...env],
+      },
+      ...frames,
+    ])
+  | [{rewrite: {focus: Empty, ctxts: [RECVB (), ...ctxts]}, env: [ve, ...env]}, ...frames] =>
     Some([{
             rewrite: {
-              focus: ValEnv(recEnv(ve)),
+              focus: Empty,
               ctxts,
             },
-            env,
+            env: [recOneEnv(ve), ...env],
           }, ...frames])
 
   /* Type Bindings */
@@ -658,42 +635,46 @@ let step = (c: configuration): option(configuration) =>
   | [{rewrite: {focus: AtPat(WILDCARD, _), ctxts}, env}, ...frames] =>
     Some([{
             rewrite: {
-              focus: ValEnv([]),
+              focus: Empty,
               ctxts,
             },
             env,
           }, ...frames])
 
   // [135-137ish]
-  | [{rewrite: {focus: AtPat(ID(x), v), ctxts}, env}, ...frames] =>
-    switch (Util.lookupOne(x, env)) {
+  | [{rewrite: {focus: AtPat(ID(x), v), ctxts}, env: [ve, ...env]}, ...frames] =>
+    switch (Util.lookup(x, [ve, ...env])) {
     // [135]
     | None
     | Some((_, Var)) =>
-      Some([{
-              rewrite: {
-                focus: ValEnv([(x, (v, Var))]),
-                ctxts,
-              },
-              env,
-            }, ...frames])
+      Some([
+        {
+          rewrite: {
+            focus: Empty,
+            ctxts,
+          },
+          env: [[(x, (v, Var)), ...ve], ...env],
+        },
+        ...frames,
+      ])
     // [136]
     | Some((v', id)) when v == v' =>
       Some([{
               rewrite: {
-                focus: ValEnv([]),
+                focus: Empty,
                 ctxts,
               },
-              env,
+              env: [ve, ...env],
             }, ...frames])
     // [137]
-    | Some((v', id)) => Some([{
-                                 rewrite: {
-                                   focus: FAIL(v),
-                                   ctxts,
-                                 },
-                                 env,
-                               }, ...frames])
+    | Some((v', id)) =>
+      Some([{
+              rewrite: {
+                focus: FAIL(v),
+                ctxts,
+              },
+              env: [ve, ...env],
+            }, ...frames])
     }
 
   // [138]
@@ -702,7 +683,7 @@ let step = (c: configuration): option(configuration) =>
   | [{rewrite: {focus: AtPat(RECORD(None), RECORD([])), ctxts}, env}, ...frames] =>
     Some([{
             rewrite: {
-              focus: ValEnv([]),
+              focus: Empty,
               ctxts,
             },
             env,
@@ -717,21 +698,18 @@ let step = (c: configuration): option(configuration) =>
           }, ...frames])
   /* start non-empty record pat */
   | [{rewrite: {focus: AtPat(RECORD(Some(pr)), RECORD(r)), ctxts}, env}, ...frames] =>
-    Some([
-      {
-        rewrite: {
-          focus: PatRow(pr, r, []),
-          ctxts: [RECORDPR(), ...ctxts],
-        },
-        env,
-      },
-      ...frames,
-    ])
-  /* complete non-empty record pat */
-  | [{rewrite: {focus: ValEnv(ve), ctxts: [RECORDPR (), ...ctxts]}, env}, ...frames] =>
     Some([{
             rewrite: {
-              focus: ValEnv(ve),
+              focus: PatRow(pr, r),
+              ctxts: [RECORDPR(), ...ctxts],
+            },
+            env,
+          }, ...frames])
+  /* complete non-empty record pat */
+  | [{rewrite: {focus: Empty, ctxts: [RECORDPR (), ...ctxts]}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: Empty,
               ctxts,
             },
             env,
@@ -757,17 +735,14 @@ let step = (c: configuration): option(configuration) =>
 
   /* Pattern Rows */
   // [140]
-  | [{rewrite: {focus: PatRow(DOTS, _, rve), ctxts}, env}, ...frames] =>
-    Some([
-      {
-        rewrite: {
-          focus: ValEnv(rve |> List.map(((_, ve)) => ve) |> List.flatten),
-          ctxts,
-        },
-        env,
-      },
-      ...frames,
-    ])
+  | [{rewrite: {focus: PatRow(DOTS, _), ctxts}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: Empty,
+              ctxts,
+            },
+            env,
+          }, ...frames])
 
   // [141-142]
   /* NOTE: SML '97 says each field should be evaluated in the original environment, but we extend it
@@ -775,24 +750,21 @@ let step = (c: configuration): option(configuration) =>
      temporary environment outside of `env`. This still agrees with SML '97 thanks to the
      left-linear pattern restriction. */
   /* start visiting */
-  | [{rewrite: {focus: PatRow(FIELD(l, p, opr), r, ve), ctxts}, env}, ...frames] =>
+  | [{rewrite: {focus: PatRow(FIELD(l, p, opr), r), ctxts}, env}, ...frames] =>
     /* NOTE: Shouldn't fail for well-typed programs per SML '97 comments. */
     let Some(v) = Util.lookupOne(l, r);
     Some([
       {
         rewrite: {
           focus: Pat(p, v),
-          ctxts: [FIELDP((l, (), opr), r, ve), ...ctxts],
+          ctxts: [FIELDP((l, (), opr), r), ...ctxts],
         },
         env,
       },
       ...frames,
     ]);
   // [141]
-  | [
-      {rewrite: {focus: FAIL(v), ctxts: [FIELDP((_, (), _), _, _), ...ctxts]}, env},
-      ...frames,
-    ] =>
+  | [{rewrite: {focus: FAIL(v), ctxts: [FIELDP((_, (), _), _), ...ctxts]}, env}, ...frames] =>
     Some([{
             rewrite: {
               focus: FAIL(v),
@@ -801,31 +773,21 @@ let step = (c: configuration): option(configuration) =>
             env,
           }, ...frames])
   // [142]
+  | [{rewrite: {focus: Empty, ctxts: [FIELDP((_, (), None), _), ...ctxts]}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: Empty,
+              ctxts,
+            },
+            env,
+          }, ...frames])
   | [
-      {rewrite: {focus: ValEnv(ve), ctxts: [FIELDP((_, (), None), _, rve), ...ctxts]}, env},
-      ...frames,
-    ] =>
-    Some([
-      {
-        rewrite: {
-          focus: ValEnv(ve @ (rve |> List.map(((_, ve)) => ve) |> List.flatten)),
-          ctxts,
-        },
-        env,
-      },
-      ...frames,
-    ])
-  /* TODO: need to propagate ValEnv through */
-  | [
-      {
-        rewrite: {focus: ValEnv(ve), ctxts: [FIELDP((l, (), Some(pr)), r, rve), ...ctxts]},
-        env,
-      },
+      {rewrite: {focus: Empty, ctxts: [FIELDP((_, (), Some(pr)), r), ...ctxts]}, env},
       ...frames,
     ] =>
     Some([{
             rewrite: {
-              focus: PatRow(pr, r, [(l, ve), ...rve]),
+              focus: PatRow(pr, r),
               ctxts,
             },
             env,
@@ -843,7 +805,7 @@ let step = (c: configuration): option(configuration) =>
 
   /* TODO: maybe consolidate 145a and b somehow? */
   | [{rewrite: {focus: Pat(CON(con, ap), VIDVAL(vid, v)), ctxts}, env}, ...frames] =>
-    let Some((VID(vidC), Con)) = Util.lookupOne(con, env);
+    let Some((VID(vidC), Con)) = Util.lookup(con, env);
     if (vidC == vid) {
       // [144]: ignores ref check
       Js.log("144");
@@ -883,23 +845,21 @@ let step = (c: configuration): option(configuration) =>
   /* Structure-level Declarations */
   // [156]
   | [{rewrite: {focus: StrDec(DEC(d)), ctxts}, env}, ...frames] =>
-    Js.log("156 in");
     Some([{
             rewrite: {
               focus: Dec(d),
               ctxts: [DECD(), ...ctxts],
             },
             env,
-          }, ...frames]);
-  | [{rewrite: {focus: ValEnv(ve), ctxts: [DECD (), ...ctxts]}, env}, ...frames] =>
-    Js.log("156 out");
+          }, ...frames])
+  | [{rewrite: {focus: Empty, ctxts: [DECD (), ...ctxts]}, env}, ...frames] =>
     Some([{
             rewrite: {
-              focus: ValEnv(ve),
+              focus: Empty,
               ctxts,
             },
             env,
-          }, ...frames]);
+          }, ...frames])
   // [160]
   | [{rewrite: {focus: StrDec(SEQ(sd1, sd2)), ctxts}, env}, ...frames] =>
     Some([{
@@ -909,8 +869,7 @@ let step = (c: configuration): option(configuration) =>
             },
             env,
           }, ...frames])
-  /* TODO: propagate ValEnv */
-  | [{rewrite: {focus: ValEnv(ve), ctxts: [SEQL((), sd2), ...ctxts]}, env}, ...frames] =>
+  | [{rewrite: {focus: Empty, ctxts: [SEQL((), sd2), ...ctxts]}, env}, ...frames] =>
     Some([{
             rewrite: {
               focus: StrDec(sd2),
@@ -923,34 +882,33 @@ let step = (c: configuration): option(configuration) =>
 
   /* Top-level Declarations */
   // [184ish]
-  | [{rewrite: {focus: TopDec(STRDEC(sd, otd)), ctxts}, env}, ...frames] =>
-    Js.log("184 in");
+  | [{rewrite: {focus: TopDec(STRDEC(sd, None)), ctxts}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: StrDec(sd),
+              ctxts,
+            },
+            env,
+          }, ...frames])
+  | [{rewrite: {focus: TopDec(STRDEC(sd, Some(td))), ctxts}, env}, ...frames] =>
     Some([
       {
         rewrite: {
           focus: StrDec(sd),
-          ctxts: [STRDECSD((), otd), ...ctxts],
+          ctxts: [STRDECSD((), td), ...ctxts],
         },
         env,
       },
       ...frames,
-    ]);
-  | [{rewrite: {focus: ValEnv(ve), ctxts: [STRDECSD((), td), ...ctxts]}, env}, ...frames] =>
-    Js.log("184 out");
-    Some([
-      {
-        rewrite: {
-          focus:
-            switch (td) {
-            | None => Empty
-            | Some(td) => TopDec(td)
+    ])
+  | [{rewrite: {focus: Empty, ctxts: [STRDECSD((), td), ...ctxts]}, env}, ...frames] =>
+    Some([{
+            rewrite: {
+              focus: TopDec(td),
+              ctxts,
             },
-          ctxts,
-        },
-        env: ve @ env,
-      },
-      ...frames,
-    ]);
+            env,
+          }, ...frames])
 
   /* Programs */
   // [189ish]
@@ -1001,15 +959,17 @@ let inject = e => [
       ctxts: [],
     },
     env: [
-      ("=", (BASVAL("="), Var)),
-      ("+", (BASVAL("+"), Var)),
-      ("-", (BASVAL("-"), Var)),
-      ("*", (BASVAL("*"), Var)),
-      ("<", (BASVAL("<"), Var)),
-      ("true", (VID("true"), Con)),
-      ("false", (VID("false"), Con)),
-      ("nil", (VID("nil"), Con)),
-      ("::", (VID("::"), Con)),
+      [
+        ("=", (BASVAL("="), Var)),
+        ("+", (BASVAL("+"), Var)),
+        ("-", (BASVAL("-"), Var)),
+        ("*", (BASVAL("*"), Var)),
+        ("<", (BASVAL("<"), Var)),
+        ("true", (VID("true"), Con)),
+        ("false", (VID("false"), Con)),
+        ("nil", (VID("nil"), Con)),
+        ("::", (VID("::"), Con)),
+      ],
     ],
   },
 ];

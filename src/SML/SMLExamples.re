@@ -13,6 +13,8 @@ let ex4 = "()";
 
 let ex5 = "(5, 78)";
 
+let ex5_5 = "val (x, y) = (5, 78)";
+
 let ex6 = "val z = 5 + 78";
 
 let ex7 = "val x = 34;
@@ -109,3 +111,9 @@ let lec02_4_sum_list_good_style = "fun sum_list [] = 0
 val it = sum_list [1, 2, 3]";
 
 let valbind_pattern = "val (x, y) = (1, 2)";
+
+let nestedLets = "let
+  val x = 1
+in
+  (let val x = 2 in x + 1 end) + (let val y = x + 2 in y + 1 end)
+end";

@@ -145,15 +145,25 @@ and compileRecord = r =>
     )
   }
 
+and compileRecordEnv = rve =>
+  switch (rve) {
+  | [] => Atom(<> </>)
+  | [(l, ve)] =>
+    Apply2([<> </>, React.string("="), <> </>], [Atom(React.string(l)), compileEnv(ve)])
+  | [(l, ve), ...rve] =>
+    Apply2(
+      [<> </>, React.string("="), React.string(", "), <> </>],
+      [Atom(React.string(l)), compileEnv(ve), compileRecordEnv(rve)],
+    )
+  }
+
 and compileKVs = ((k, (v, id))) =>
   KV2((
     Atom(React.string(k)),
     Apply2([<> </>, React.string(" "), <> </>], [compileVal_(v), compileIdStatus(id)]),
   ))
 
-and compileOneEnv = e => e |> List.map(compileKVs) |> List.rev |> (x => Map2(x))
-
-and compileEnv = e => VSequence(List.map(compileOneEnv, e) |> List.rev);
+and compileEnv = e => e |> List.map(compileKVs) |> List.rev |> (x => Map2(x));
 
 let rec compileStrDec = sd =>
   switch (sd) {
@@ -199,9 +209,12 @@ let compileFocus = f =>
   | MRule(mr, v) => VSequence([compileMRule(mr), compileVal_(v)])
   | Pat(p, v) => VSequence([compilePat(p), compileVal_(v)])
   | AtPat(ap, v) => VSequence([compileAtPat(ap), compileVal_(v)])
-  | PatRow(pr, r) => VSequence([compilePatRow(pr), compileRecord(r)])
+  /* TODO: improve this */
+  | PatRow(pr, r, rve) =>
+    VSequence([compileRecordEnv(rve), compilePatRow(pr), compileRecord(r)])
   | FAIL(v) => VSequence([Atom(React.string("FAIL")), compileVal_(v)])
   /* TODO: visualize this better. should have a highlighting blank space or something */
+  | ValEnv(ve) => compileEnv(ve)
   | Empty => Atom(React.string("EMPTY"))
   };
 
@@ -212,17 +225,11 @@ let compileCtxt = c =>
       args: [compileExp(e)],
       holePos: 0,
     }
-  | LETE((), ()) => {
-      ops: [React.string("let in "), React.string(" end")],
-      args: [],
-      holePos: 0,
-    }
   | VALBINDE(p, (), None) => {
       ops: [<> </>, React.string(" = "), <> </>],
       args: [compilePat(p)],
       holePos: 1,
     }
-  | VALBINDP((), (), None) => {ops: [<> </>, React.string(" = ")], args: [], holePos: 0}
   | APPL((), x) => {
       ops: [<> </>, React.string(" "), <> </>],
       args: [compileAtExp(x)],
@@ -276,24 +283,29 @@ let compileCtxt = c =>
       args: [compileExp(e)],
       holePos: 0,
     }
-  | MRULEE((), ()) => {ops: [React.string(" => "), <> </>], args: [], holePos: 0}
   | RECVB () => {ops: [React.string("rec "), <> </>], args: [], holePos: 0}
   | RECORDPR () => {ops: [React.string("{"), React.string("}")], args: [], holePos: 0}
-  | STRDECSD((), td) => {
+  | STRDECSD((), None) => {ops: [<> </>, <> </>], args: [], holePos: 0}
+  | STRDECSD((), Some(td)) => {
       ops: [<> </>, <> <br /> <br /> </>, <> </>],
       args: [compileTopDec(td)],
       holePos: 0,
     }
-  /* TODO: this printing is very bad! */
-  | FIELDP((l, (), None), r) => {
-      ops: [<> </>, React.string("="), <> </>, <> </>],
-      args: [Atom(React.string(l)), compileRecord(r)],
-      holePos: 1,
+  /* TODO: this printing could probably be better */
+  | FIELDP((l, (), None), r, rve) => {
+      ops: [<> </>, <> </>, React.string("="), <br />, <> </>],
+      args: [compileRecordEnv(rve), Atom(React.string(l)), compileRecord(r)],
+      holePos: 2,
     }
-  | FIELDP((l, (), Some(pr)), r) => {
-      ops: [<> </>, React.string("="), React.string(", "), <> </>, <> </>],
-      args: [Atom(React.string(l)), compilePatRow(pr), compileRecord(r)],
-      holePos: 1,
+  | FIELDP((l, (), Some(pr)), r, rve) => {
+      ops: [<> </>, <> </>, React.string("="), React.string(", "), <br />, <> </>],
+      args: [
+        compileRecordEnv(rve),
+        Atom(React.string(l)),
+        compilePatRow(pr),
+        compileRecord(r),
+      ],
+      holePos: 2,
     }
   };
 
