@@ -178,32 +178,35 @@ let rec kn2Pretty = (~parens=true, k) =>
     Util.interleave(ops, List.map(kn2Pretty, args)) |> Util.prettierList(~parens, ~space=false)
   | EvalCtx(_) => raise(CompileError("There shouldn't be a EvalCtx!"))
   /* | Sequence(l) => <> {Util.interleave(List.map(kn2Pretty, l), (1--(List.length(l) - 1)) |> List.map(_ => React.string(" ~> "))) |> Util.prettierList} </> */
-  | VSequence([kn]) => <> {kn2Pretty(~parens=false, kn)} </>
   | VSequence(l) =>
-    <>
+    <div
+      style={ReactDOMRe.Style.make(
+        ~display="grid",
+        ~gridGap="10px",
+        ~gridAutoFlow="row",
+        ~gridTemplateColumns="1fr",
+        (),
+      )}>
       {List.mapi(
-         (i, kn) =>
-           <div key={string_of_int(i)} style={ReactDOMRe.Style.make(~marginTop="10px", ())}>
-             {kn2Pretty(~parens=false, kn)}
-           </div>,
+         (i, kn) => <div key={string_of_int(i)}> {kn2Pretty(~parens=false, kn)} </div>,
          l,
        )  /* |> List.rev */
        |> Array.of_list
        |> React.array}
-    </>
-  | HSequence([kn]) => <> {kn2Pretty(~parens=false, kn)} </>
+    </div>
   | HSequence(l) =>
-    <div style={ReactDOMRe.Style.make(~float="left", ())}>
+    <div
+      style={ReactDOMRe.Style.make(
+        ~display="grid",
+        ~gridGap="10px",
+        ~gridAutoFlow="column",
+        ~gridTemplateRows="1fr",
+        (),
+      )}>
       {List.mapi(
-         (i, kn) =>
-           <div
-             key={string_of_int(i)}
-             style={ReactDOMRe.Style.make(~float="left", ~marginLeft="10px", ())}>
-             {kn2Pretty(~parens=false, kn)}
-           </div>,
+         (i, kn) => <div key={string_of_int(i)}> {kn2Pretty(~parens=false, kn)} </div>,
          l,
-       )
-       |> List.rev
+       )  /* |> List.rev */
        |> Array.of_list
        |> React.array}
     </div>
@@ -356,20 +359,11 @@ and kn2PrettyList = xs =>
      )
   |> List.fold_left((s1, s2) => <> s1 s2 </>, <> </>);
 
-let fetchLoggedStates = (file, callback) => {
-  Js.Promise.(
-    Fetch.fetch(file) |> then_(Fetch.Response.json) |> then_(json => resolve(callback(json)))
-  );
-};
-
-let cellPrint = ({label, body}, printer, i) => {
-  <fieldset key={string_of_int(i)}>
-    <legend> {React.string(label)} </legend>
-    {printer(body)}
-  </fieldset>;
-};
-
-let cellsPrint = (printer, cs) => cs |> List.mapi((i, c) => cellPrint(c, printer, i));
+/* let fetchLoggedStates = (file, callback) => {
+     Js.Promise.(
+       Fetch.fetch(file) |> then_(Fetch.Response.json) |> then_(json => resolve(callback(json)))
+     );
+   }; */
 
 type configuration = {k: list(ReasonReact.reactElement)};
 

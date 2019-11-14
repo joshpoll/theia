@@ -204,11 +204,10 @@ let compileFocus = f =>
   | ExpRow(er) => compileExpRow(er)
   | Record(r) => compileRecord(r)
   | Program(p) => compileProgram(p)
-  /* TODO: should use HSequence but layout is way too buggy */
-  | Match(m, v) => VSequence([compileMatch(m), compileVal_(v)])
-  | MRule(mr, v) => VSequence([compileMRule(mr), compileVal_(v)])
-  | Pat(p, v) => VSequence([compilePat(p), compileVal_(v)])
-  | AtPat(ap, v) => VSequence([compileAtPat(ap), compileVal_(v)])
+  | Match(m, v) => HSequence([compileVal_(v), compileMatch(m)])
+  | MRule(mr, v) => HSequence([compileVal_(v), compileMRule(mr)])
+  | Pat(p, v) => HSequence([compileVal_(v), compilePat(p)])
+  | AtPat(ap, v) => HSequence([compileVal_(v), compileAtPat(ap)])
   /* TODO: improve this */
   | PatRow(pr, r, rve) =>
     VSequence([compileRecordEnv(rve), compilePatRow(pr), compileRecord(r)])
@@ -313,7 +312,10 @@ let compileRewrite = ({focus, ctxts}) =>
   Kont2(compileFocus(focus), List.map(compileCtxt, ctxts));
 
 let compileFrame = ({rewrite, env}) =>
-  VSequence([Cell2("env", [compileEnv(env)]), Cell2("rewrite", [compileRewrite(rewrite)])]);
+  Cell2(
+    "frame",
+    [Cell2("env", [compileEnv(env)]), Cell2("rewrite", [compileRewrite(rewrite)])],
+  );
 
 /* TODO: HSequence? */
 let smlToTheiaIR = fs => VSequence(List.map(compileFrame, fs) |> List.rev);
