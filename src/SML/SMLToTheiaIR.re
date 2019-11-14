@@ -163,7 +163,8 @@ and compileKVs = ((k, (v, id))) =>
     Apply2([<> </>, React.string(" "), <> </>], [compileVal_(v), compileIdStatus(id)]),
   ))
 
-and compileEnv = e => e |> List.map(compileKVs) |> List.rev |> (x => Map2(x));
+and compileEnv = e =>
+  e |> List.map(compileKVs) |> List.rev |> (x => Map2(x, Some("Id"), Some("Val")));
 
 let rec compileStrDec = sd =>
   switch (sd) {

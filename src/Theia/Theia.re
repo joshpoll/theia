@@ -88,7 +88,7 @@ type theiaIR =
   | EvalCtx(evalCtx)
   | HSequence(list(theiaIR), option(ReactDOMRe.Style.t)) /* horizontal sequencing */
   | VSequence(list(theiaIR), option(ReactDOMRe.Style.t)) /* vertical sequencing */
-  | Map2(list(theiaIR))
+  | Map2(list(theiaIR), option(string), option(string))
   | Kont2(theiaIR, list(evalCtx))
   | KV2((theiaIR, theiaIR))
   | Value2(list(string), list(theiaIR))
@@ -114,7 +114,7 @@ let rec theiaIRDebugPrint = k =>
     ++ prettyList(List.map(theiaIRDebugPrint, args))
     ++ ")"
   | EvalCtx(f) => "EvalCtx(" ++ debugFreezer(f) ++ ")"
-  | Map2(l) => "Map2(" ++ (List.map(theiaIRDebugPrint, l) |> prettyList) ++ ")"
+  // | Map2(l) => "Map2(" ++ (List.map(theiaIRDebugPrint, l) |> prettyList) ++ ")"
   | Kont2(e, fs) =>
     "Kont2(" ++ theiaIRDebugPrint(e) ++ ", " ++ (List.map(debugFreezer, fs) |> prettyList) ++ ")"
   | KV2((k, v)) => "KV2(" ++ theiaIRDebugPrint(k) ++ ", " ++ theiaIRDebugPrint(v) ++ ")"
@@ -224,8 +224,19 @@ let rec kn2Pretty = (~parens=true, k) =>
        )  /* |> List.rev */
        |> rlist}
     </div>;
-  | Map2([]) => kn2Pretty(Map2([KV2((Atom(Util.nbsp), Atom(Util.nbsp)))]))
-  | Map2(l) =>
+  | Map2([], keyName, valName) =>
+    kn2Pretty(Map2([KV2((Atom(Util.nbsp), Atom(Util.nbsp)))], keyName, valName))
+  | Map2(l, keyName, valName) =>
+    let keyName =
+      switch (keyName) {
+      | None => Util.nbsp
+      | Some(keyName) => keyName
+      };
+    let valName =
+      switch (valName) {
+      | None => Util.nbsp
+      | Some(valName) => valName
+      };
     /* https://stackoverflow.com/a/3349181 */
     <table
       style={ReactDOMRe.Style.make(
@@ -243,7 +254,7 @@ let rec kn2Pretty = (~parens=true, k) =>
               ~textAlign="right",
               (),
             )}>
-            {React.string("Id")}
+            {React.string(keyName)}
           </th>
           <th
             style={ReactDOMRe.Style.make(
@@ -252,14 +263,14 @@ let rec kn2Pretty = (~parens=true, k) =>
               ~textAlign="left",
               (),
             )}>
-            {React.string("Val")}
+            {React.string(valName)}
           </th>
         </tr>
       </thead>
       <tbody>
         {l |> List.mapi((i, kv) => <tr key={string_of_int(i)}> {kn2Pretty(kv)} </tr>) |> rlist}
       </tbody>
-    </table>
+    </table>;
   | Kont2(kn, fs) => prettyKont2List(~parens=false, kn, List.rev(fs))
   | KV2((k, v)) =>
     <>
@@ -285,16 +296,24 @@ let rec kn2Pretty = (~parens=true, k) =>
       </td>
     </>
   /* Simple values don't get big borders. */
-  | Value2([], [arg]) =>
-    <table style={ReactDOMRe.Style.make(~display="inline-table", ())}>
-      <tbody>
-        <tr>
-          <td style={ReactDOMRe.Style.make(~border="1px solid gray", ())}>
-            {kn2Pretty(~parens=false, arg)}
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  | Value2([], args) =>
+    <div
+      style={ReactDOMRe.Style.make(
+        ~display="inline-block",
+        ~border="1px solid #000",
+        ~paddingTop="2px",
+        ~paddingRight="2px",
+        ~paddingBottom="2px",
+        ~paddingLeft="2px",
+        (),
+      )}>
+      /* TODO: should probably have a more principled way of doing this. */
+
+        {kn2Pretty(
+           ~parens=false,
+           HSequence(args, Some(ReactDOMRe.Style.make(~display="inline-grid", ()))),
+         )}
+      </div>
   | Value2(ops, args) =>
     <div
       style={ReactDOMRe.Style.make(
@@ -366,12 +385,19 @@ let rec kn2Pretty = (~parens=true, k) =>
 and prettyFreeze = (~nestNum=0, {ops, args, holePos}, arg) => {
   /* TODO: figure out opacity and lightness automatically based on max depth? sacrifices some completeness otherwise */
   //   let parens = nestNum == 0 ? false : true;
+  let backgroundColor =
+    if (arg == React.string(Util.nbsp)) {
+      "red";
+    } else {
+      "hsla(240, 100%, " ++ string_of_int(80 - nestNum * 5) ++ "%, 0.33)";
+    };
   let newArgs =
     Util.insert(
       <div
         style={ReactDOMRe.Style.make(
           ~display="inline-block",
-          ~backgroundColor="hsla(240, 100%, " ++ string_of_int(80 - nestNum * 5) ++ "%, 0.33)",
+          // ~backgroundColor="hsla(240, 100%, " ++ string_of_int(80 - nestNum * 5) ++ "%, 0.33)",
+          ~backgroundColor,
           (),
         )}>
         arg

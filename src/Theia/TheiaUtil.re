@@ -23,11 +23,11 @@ let rec lookup = (k, stack) =>
     }
   };
 
-let renderEnv = (renderValue, env) => {
-  Map2(
-    List.map(({key, value}) => KV2((Atom(React.string(key)), renderValue(value))), env),
-  );
-};
+// let renderEnv = (renderValue, env) => {
+//   Map2(
+//     List.map(({key, value}) => KV2((Atom(React.string(key)), renderValue(value))), env),
+//   );
+// };
 
 /* interpreter boilerplate */
 /* https://stackoverflow.com/a/22472610 */
