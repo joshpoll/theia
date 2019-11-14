@@ -182,33 +182,33 @@ let rec kn2Pretty = (~parens=true, k) =>
     <div
       style={ReactDOMRe.Style.make(
         ~display="grid",
-        ~gridGap="10px",
+        ~gridGap="20px",
         ~gridAutoFlow="row",
         ~gridTemplateColumns="1fr",
+        ~alignItems="center",
         (),
       )}>
       {List.mapi(
          (i, kn) => <div key={string_of_int(i)}> {kn2Pretty(~parens=false, kn)} </div>,
          l,
        )  /* |> List.rev */
-       |> Array.of_list
-       |> React.array}
+       |> rlist}
     </div>
   | HSequence(l) =>
     <div
       style={ReactDOMRe.Style.make(
         ~display="grid",
-        ~gridGap="10px",
+        ~gridGap="20px",
         ~gridAutoFlow="column",
         ~gridTemplateRows="1fr",
+        ~alignItems="center",
         (),
       )}>
       {List.mapi(
          (i, kn) => <div key={string_of_int(i)}> {kn2Pretty(~parens=false, kn)} </div>,
          l,
        )  /* |> List.rev */
-       |> Array.of_list
-       |> React.array}
+       |> rlist}
     </div>
   | Map2([]) => kn2Pretty(Map2([KV2((Atom(Util.nbsp), Atom(Util.nbsp)))]))
   | Map2(l) =>
@@ -243,10 +243,7 @@ let rec kn2Pretty = (~parens=true, k) =>
         </tr>
       </thead>
       <tbody>
-        {l
-         |> List.mapi((i, kv) => <tr key={string_of_int(i)}> {kn2Pretty(kv)} </tr>)
-         |> Array.of_list
-         |> React.array}
+        {l |> List.mapi((i, kv) => <tr key={string_of_int(i)}> {kn2Pretty(kv)} </tr>) |> rlist}
       </tbody>
     </table>
   | Kont2(kn, fs) => prettyKont2List(~parens=false, kn, List.rev(fs))
@@ -312,10 +309,28 @@ let rec kn2Pretty = (~parens=true, k) =>
         </table>
     </fieldset>
   | Cell2(label, children) =>
-    <fieldset>
-      <legend> {React.string(label)} </legend>
+    <div
+      style={ReactDOMRe.Style.make(
+        ~border="1px solid #000",
+        ~paddingTop="10px",
+        ~paddingRight="10px",
+        ~paddingBottom="10px",
+        ~paddingLeft="10px",
+        (),
+      )}>
+      <h1
+        style={ReactDOMRe.Style.make(
+          ~textAlign="center",
+          ~marginTop="-10px",
+          ~fontSize="15px",
+          (),
+        )}>
+        <span style={ReactDOMRe.Style.make(~backgroundColor="white", ())}>
+          {React.string(label)}
+        </span>
+      </h1>
       {rlist(List.map(kn2Pretty(~parens=false), children))}
-    </fieldset>
+    </div>
   }
 /* bracket style */
 /* and prettyFreeze = (~nestNum=0, {ops, args, holePos}, arg) => {
