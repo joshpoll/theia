@@ -212,9 +212,8 @@ let compileFocus = f =>
   | PatRow(pr, r, rve) =>
     VSequence([compileRecordEnv(rve), compilePatRow(pr), compileRecord(r)], None)
   | FAIL(v) => HSequence([Atom(React.string("FAIL")), compileVal_(v)], None)
-  /* TODO: visualize this better. should have a highlighting blank space or something */
   | ValEnv(ve) => compileEnv(ve)
-  | Empty => Atom(React.string("EMPTY"))
+  | Empty => Atom(Util.nbsp)
   };
 
 let compileCtxt = c =>
