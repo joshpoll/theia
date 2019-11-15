@@ -498,8 +498,196 @@ let annotateFrame = ({rewrite, env}, a) => {
 };
 
 let annotateFrames = (fs, a) => fs |> List.map(annotateFrame(_, a));
+let annotateConfiguration = annotateFrames;
 
-let annotateConfiguration = (c, a) => c |> List.map(annotateFrame(a));
+let stripSCon = (sc: sConAnno('a)): sCon =>
+  switch (sc) {
+  | INT_A(n, _) => INT(n)
+  };
+
+let rec stripAtExp = e =>
+  switch (e) {
+  | SCON_A(sc_a, _) => SCON(stripSCon(sc_a))
+  | ID_A(vid, _) => ID(vid)
+  | RECORD_A(None, _) => RECORD(None)
+  | RECORD_A(Some(er_a), _) => RECORD(Some(stripExpRow(er_a)))
+  | LET_A(d_a, e_a, _) => LET(stripDec(d_a), stripExp(e_a))
+  | PAR_A(e_a, _) => PAR(stripExp(e_a))
+  }
+
+and stripExpRow = er =>
+  switch (er) {
+  | EXPROW_A(l, e_a, None, _) => EXPROW(l, stripExp(e_a), None)
+  | EXPROW_A(l, e_a, Some(er_a), _) => EXPROW(l, stripExp(e_a), Some(stripExpRow(er_a)))
+  }
+
+and stripExp = e =>
+  switch (e) {
+  | ATEXP_A(ae_a, _) => ATEXP(stripAtExp(ae_a))
+  | APP_A(e_a, ae_a, _) => APP(stripExp(e_a), stripAtExp(ae_a))
+  | RAISE_A(e_a, _) => RAISE(stripExp(e_a))
+  | FN_A(m_a, _) => FN(stripMatch(m_a))
+  }
+
+and stripMatch = m =>
+  switch (m) {
+  | MATCH_A(mr_a, None, _) => MATCH(stripMRule(mr_a), None)
+  | MATCH_A(mr_a, Some(m_a), _) => MATCH(stripMRule(mr_a), Some(stripMatch(m_a)))
+  }
+
+and stripMRule = mr =>
+  switch (mr) {
+  | MRULE_A(p_a, e_a, _) => MRULE(stripPat(p_a), stripExp(e_a))
+  }
+
+and stripDec = d =>
+  switch (d) {
+  | VAL_A(vb_a, _) => VAL(stripValBind(vb_a))
+  }
+
+and stripValBind = vb =>
+  switch (vb) {
+  | PLAIN_A(p_a, e_a, None, _) => PLAIN(stripPat(p_a), stripExp(e_a), None)
+  | PLAIN_A(p_a, e_a, Some(vb_a), _) =>
+    PLAIN(stripPat(p_a), stripExp(e_a), Some(stripValBind(vb_a)))
+  | REC_A(vb_a, _) => REC(stripValBind(vb_a))
+  }
+
+and stripAtPat = ap =>
+  switch (ap) {
+  | WILDCARD_A(_) => WILDCARD
+  | ID_A(vid, _) => ID(vid)
+  | RECORD_A(None, _) => RECORD(None)
+  | RECORD_A(Some(pr_a), _) => RECORD(Some(stripPatRow(pr_a)))
+  | PAR_A(p_a, _) => PAR(stripPat(p_a))
+  }
+
+and stripPatRow = pr =>
+  switch (pr) {
+  | DOTS_A(_) => DOTS
+  | FIELD_A(l, p_a, None, _) => FIELD(l, stripPat(p_a), None)
+  | FIELD_A(l, p_a, Some(pr_a), _) => FIELD(l, stripPat(p_a), Some(stripPatRow(pr_a)))
+  }
+
+and stripPat = p =>
+  switch (p) {
+  | ATPAT_A(ap_a, _) => ATPAT(stripAtPat(ap_a))
+  | CON_A(vid, ap_a, _) => CON(vid, stripAtPat(ap_a))
+  };
+
+let stripSVal = sv =>
+  switch (sv) {
+  | INT_A(n, _) => INT(n)
+  };
+
+let stripIdStatus = is =>
+  switch (is) {
+  | Var_A(_) => Var
+  | Con_A(_) => Con
+  | Exc_A(_) => Exc
+  };
+
+let rec stripRecord = r => r |> List.map(((l, v_a)) => (l, stripVal_(v_a)))
+
+and stripRecordEnv = re => re |> List.map(((l, ve_a)) => (l, stripValEnv(ve_a)))
+
+and stripVal_ = v =>
+  switch (v) {
+  | SVAL_A(sv_a, _) => SVAL(stripSVal(sv_a))
+  | BASVAL_A(bv, _) => BASVAL(bv)
+  | VID_A(vid, _) => VID(vid)
+  | VIDVAL_A(vid, v_a, _) => VIDVAL(vid, stripVal_(v_a))
+  | RECORD_A(r_a, _) => RECORD(stripRecord(r_a))
+  | FCNCLOSURE_A(m_a, e_a, ve_a, _) =>
+    FCNCLOSURE(stripMatch(m_a), stripValEnv(e_a), stripValEnv(ve_a))
+  }
+
+and stripValEnv = ve =>
+  ve |> List.map(((vid, (v_a, is_a))) => (vid, (stripVal_(v_a), stripIdStatus(is_a))));
+
+let rec stripStrDec = sd =>
+  switch (sd) {
+  | DEC_A(d_a, _) => DEC(stripDec(d_a))
+  | SEQ_A(sd1_a, sd2_a, _) => SEQ(stripStrDec(sd1_a), stripStrDec(sd2_a))
+  };
+
+let rec stripTopDec = td =>
+  switch (td) {
+  | STRDEC_A(sd_a, None, _) => STRDEC(stripStrDec(sd_a), None)
+  | STRDEC_A(sd_a, Some(td_a), _) => STRDEC(stripStrDec(sd_a), Some(stripTopDec(td_a)))
+  };
+
+let rec stripProgram = p =>
+  switch (p) {
+  | PROGRAM_A(td_a, None, _) => PROGRAM(stripTopDec(td_a), None)
+  | PROGRAM_A(td_a, Some(p_a), _) => PROGRAM(stripTopDec(td_a), Some(stripProgram(p_a)))
+  };
+
+let stripFocus = f =>
+  switch (f) {
+  | AtExp_A(ae_a, _) => AtExp(stripAtExp(ae_a))
+  | Exp_A(e_a, _) => Exp(stripExp(e_a))
+  | Val_A(v_a, _) => Val(stripVal_(v_a))
+  | Dec_A(d_a, _) => Dec(stripDec(d_a))
+  | ValBind_A(vb_a, _) => ValBind(stripValBind(vb_a))
+  | StrDec_A(sd_a, _) => StrDec(stripStrDec(sd_a))
+  | TopDec_A(td_a, _) => TopDec(stripTopDec(td_a))
+  | ExpRow_A(er_a, _) => ExpRow(stripExpRow(er_a))
+  | Record_A(r_a, _) => Record(stripRecord(r_a))
+  | Program_A(p_a, _) => Program(stripProgram(p_a))
+  | Match_A(m_a, v_a, _) => Match(stripMatch(m_a), stripVal_(v_a))
+  | MRule_A(mr_a, v_a, _) => MRule(stripMRule(mr_a), stripVal_(v_a))
+  | Pat_A(p_a, v_a, _) => Pat(stripPat(p_a), stripVal_(v_a))
+  | AtPat_A(ap_a, v_a, _) => AtPat(stripAtPat(ap_a), stripVal_(v_a))
+  | PatRow_A(pr_a, r_a, re_a, _) =>
+    PatRow(stripPatRow(pr_a), stripRecord(r_a), stripRecordEnv(re_a))
+  | FAIL_A(v_a, _) => FAIL(stripVal_(v_a))
+  | ValEnv_A(ve_a, _) => ValEnv(stripValEnv(ve_a))
+  | Empty_A(_) => Empty
+  };
+
+let stripCtxt = c =>
+  switch (c) {
+  | LETD_A((), e_a, _) => LETD((), stripExp(e_a))
+  | VALBINDE_A(p_a, (), None, _) => VALBINDE(stripPat(p_a), (), None)
+  | VALBINDE_A(p_a, (), Some(vb_a), _) =>
+    VALBINDE(stripPat(p_a), (), Some(stripValBind(vb_a)))
+  | SEQL_A((), sd_a, _) => SEQL((), stripStrDec(sd_a))
+  | DECD_A((), _) => DECD()
+  | APPL_A((), ae_a, _) => APPL((), stripAtExp(ae_a))
+  | APPR_A(v, (), _) => APPR(stripVal_(v), ())
+  | RECORDER_A((), _) => RECORDER()
+  | EXPROWE_A(r_a, l, (), None, _) => EXPROWE(stripRecord(r_a), l, (), None)
+  | EXPROWE_A(r_a, l, (), Some(er_a), _) =>
+    EXPROWE(stripRecord(r_a), l, (), Some(stripExpRow(er_a)))
+  | PROGRAML_A((), p_a, _) => PROGRAML((), stripProgram(p_a))
+  | MATCHMR_A((), None, _) => MATCHMR((), None)
+  | MATCHMR_A((), Some(m_a), _) => MATCHMR((), Some(stripMatch(m_a)))
+  | MRULEP_A((), e_a, _) => MRULEP((), stripExp(e_a))
+  | RECVB_A((), _) => RECVB()
+  | RECORDPR_A((), _) => RECORDPR()
+  | STRDECSD_A((), None, _) => STRDECSD((), None)
+  | STRDECSD_A((), Some(td_a), _) => STRDECSD((), Some(stripTopDec(td_a)))
+  | FIELDP_A((l, (), None), r_a, re_a, _) =>
+    FIELDP((l, (), None), stripRecord(r_a), stripRecordEnv(re_a))
+  | FIELDP_A((l, (), Some(pr_a)), r_a, re_a, _) =>
+    FIELDP((l, (), Some(stripPatRow(pr_a))), stripRecord(r_a), stripRecordEnv(re_a))
+  };
+
+let stripCtxts = List.map(stripCtxt);
+
+let stripRewrite = ({focusAnno, ctxtsAnno}) => {
+  focus: stripFocus(focusAnno),
+  ctxts: stripCtxts(ctxtsAnno),
+};
+
+let stripFrame = ({rewriteAnno, envAnno}) => {
+  rewrite: stripRewrite(rewriteAnno),
+  env: stripValEnv(envAnno),
+};
+
+let stripFrames = List.map(stripFrame);
+let stripConfiguration = stripFrames;
 
 let apply = (f, v) =>
   switch (f, v) {
@@ -1375,16 +1563,16 @@ let inject = e => [
   },
 ];
 
-/* let advance = c =>
-   switch (step(c)) {
-   | None => None
-   | Some({lhs: _, rhs: c_anno}) => stripConfiguration(c_anno)
-   }; */
+let advance = c =>
+  switch (step(c)) {
+  | None => None
+  | Some({lhs: _, rhs: c_anno}) => Some(stripConfiguration(c_anno))
+  };
 
 let interpretTraceBounded = (~maxDepth=100, p) =>
   TheiaUtil.takeWhileInclusive(
     c => !isFinal(c),
-    TheiaUtil.iterateMaybeMaxDepth(maxDepth, step, inject(p)),
+    TheiaUtil.iterateMaybeMaxDepth(maxDepth, advance, inject(p)),
   );
 let interpretTrace = p =>
-  TheiaUtil.takeWhileInclusive(c => !isFinal(c), TheiaUtil.iterateMaybe(step, inject(p)));
+  TheiaUtil.takeWhileInclusive(c => !isFinal(c), TheiaUtil.iterateMaybe(advance, inject(p)));
