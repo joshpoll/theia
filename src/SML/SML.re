@@ -35,6 +35,7 @@
 /* TODO: highlight code blocks, too? Might be useful for nested let expressions. */
 type hole = unit;
 
+/* TODO: these should be annotated too */
 type vid = string;
 type lab = string;
 type basVal = string;
@@ -171,6 +172,139 @@ type frame = {
 
 type configuration = list(frame);
 
+/* annotated state */
+type sConAnno('a) =
+  | INT_ANNO(int, 'a);
+
+type atExpAnno('a) =
+  | SCON_ANNO(sConAnno('a), 'a)
+  | ID_ANNO(vid, 'a)
+  | RECORD_ANNO(option(expRowAnno('a)), 'a)
+  | LET_ANNO(decAnno('a), expAnno('a), 'a)
+  | PAR_ANNO(expAnno('a), 'a)
+
+and expRowAnno('a) =
+  | EXPROW_ANNO(lab, expAnno('a), option(expRowAnno('a)), 'a)
+
+and expAnno('a) =
+  | ATEXP_ANNO(atExpAnno('a), 'a)
+  | APP_ANNO(expAnno('a), atExpAnno('a), 'a)
+  | RAISE_ANNO(expAnno('a), 'a)
+  | FN_ANNO(matchAnno('a), 'a)
+
+and matchAnno('a) =
+  | MATCH_ANNO(mruleAnno('a), option(matchAnno('a)), 'a)
+
+and mruleAnno('a) =
+  | MRULE_ANNO(patAnno('a), expAnno('a), 'a)
+
+and decAnno('a) =
+  /* no tyvar seq */
+  | VAL_ANNO(valBindAnno('a), 'a)
+
+and valBindAnno('a) =
+  | PLAIN_ANNO(patAnno('a), expAnno('a), option(valBindAnno('a)), 'a)
+  | REC(valBindAnno('a), 'a)
+
+and atPatAnno('a) =
+  | WILDCARD_ANNO('a)
+  | ID_ANNO(vid, 'a) /* TODO: add op */
+  | RECORD_ANNO(option(patRowAnno('a)), 'a)
+  | PAR_ANNO(patAnno('a), 'a)
+
+and patRowAnno('a) =
+  | DOTS_ANNO('a)
+  | FIELD_ANNO(lab, patAnno('a), option(patRowAnno('a)), 'a)
+
+and patAnno('a) =
+  | ATPAT_ANNO(atPatAnno('a), 'a)
+  | CON_ANNO(vid, atPatAnno('a), 'a);
+
+type sValAnno('a) =
+  | INT_ANNO(int, 'a);
+
+type idStatusAnno('a) =
+  | Var_ANNO('a)
+  | Con_ANNO('a)
+  | Exc_ANNO('a);
+
+type recordAnno('a) = list((lab, val_Anno('a)))
+
+and recordEnvAnno('a) = list((lab, valEnvAnno('a)))
+
+and val_Anno('a) =
+  | SVAL_ANNO(sValAnno('a), 'a)
+  | BASVAL_ANNO(basVal, 'a)
+  | VID_ANNO(vid, 'a)
+  | VIDVAL_ANNO(vid, val_Anno('a), 'a) /* constructor value(?) */
+  | RECORD_ANNO(recordAnno('a), 'a)
+  /* TODO: second argument should be an entire env */
+  | FCNCLOSURE_ANNO(matchAnno('a), valEnvAnno('a), valEnvAnno('a), 'a)
+
+and valEnvAnno('a) = list((vid, (val_Anno('a), idStatusAnno('a))));
+
+type strDecAnno('a) =
+  | DEC_ANNO(decAnno('a), 'a)
+  | SEQ_ANNO(strDecAnno('a), strDecAnno('a), 'a);
+
+type topDecAnno('a) =
+  | STRDEC_ANNO(strDecAnno('a), option(topDecAnno('a)), 'a);
+
+type programAnno('a) =
+  | PROGRAM_ANNO(topDecAnno('a), option(programAnno('a)), 'a);
+
+type focusAnno('a) =
+  | AtExp_ANNO(atExpAnno('a), 'a)
+  | Exp_ANNO(expAnno('a), 'a)
+  | Val_ANNO(val_Anno('a), 'a)
+  | Dec_ANNO(decAnno('a), 'a)
+  | ValBind_ANNO(valBindAnno('a), 'a)
+  | StrDec_ANNO(strDecAnno('a), 'a)
+  | TopDec_ANNO(topDecAnno('a), 'a)
+  | ExpRow_ANNO(expRowAnno('a), 'a)
+  | Record_ANNO(recordAnno('a), 'a)
+  | Program_ANNO(programAnno('a), 'a)
+  | Match_ANNO(matchAnno('a), val_Anno('a), 'a)
+  | MRule_ANNO(mruleAnno('a), val_Anno('a), 'a)
+  | Pat_ANNO(patAnno('a), val_Anno('a), 'a)
+  | AtPat_ANNO(atPatAnno('a), val_Anno('a), 'a)
+  | PatRow_ANNO(patRowAnno('a), recordAnno('a), recordEnvAnno('a), 'a)
+  | FAIL_ANNO(val_Anno('a), 'a)
+  | ValEnv_ANNO(valEnvAnno('a), 'a)
+  | Empty_ANNO('a);
+
+type ctxtAnno('a) =
+  | LETD_ANNO(hole, expAnno('a), 'a)
+  | VALBINDE_ANNO(patAnno('a), hole, option(valBindAnno('a)), 'a)
+  | SEQL_ANNO(hole, strDecAnno('a), 'a)
+  | DECD_ANNO(hole, 'a)
+  | APPL_ANNO(hole, atExpAnno('a), 'a)
+  | APPR_ANNO(val_Anno('a), hole, 'a)
+  /* is that a... */
+  | RECORDER_ANNO(hole, 'a)
+  | EXPROWE_ANNO(recordAnno('a), lab, hole, option(expRowAnno('a)), 'a)
+  | PROGRAML_ANNO(hole, programAnno('a), 'a)
+  | MATCHMR_ANNO(hole, option(matchAnno('a)), 'a)
+  | MRULEP_ANNO(hole, expAnno('a), 'a)
+  | RECVB_ANNO(hole, 'a)
+  | RECORDPR_ANNO(hole, 'a)
+  | STRDECSD_ANNO(hole, option(topDecAnno('a)), 'a)
+  | FIELDP_ANNO((lab, hole, option(patRowAnno('a))), recordAnno('a), recordEnvAnno('a), 'a);
+
+type ctxtsAnno('a) = list(ctxtAnno('a));
+
+type rewriteAnno('a) = {
+  focusAnno: focusAnno('a),
+  ctxtsAnno: ctxtsAnno('a),
+};
+
+type frameAnno('a) = {
+  rewriteAnno: rewriteAnno('a),
+  envAnno: valEnvAnno('a),
+};
+
+type configurationAnno('a) = list(frameAnno('a));
+
 let apply = (f, v) =>
   switch (f, v) {
   | ("=", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) =>
@@ -199,6 +333,7 @@ let recEnv = ve =>
     ve,
   );
 
+/* TODO: type should be configuration => option({lhs: configurationAnno(option(label)), rhs: configurationAnno(list(label))}) */
 let step = (c: configuration): option(configuration) =>
   switch (c) {
   /* frame pop */
