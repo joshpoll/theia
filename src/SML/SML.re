@@ -330,7 +330,7 @@ and annotateExpRow = (er, a) =>
 and annotateExp = (e, a) =>
   switch (e) {
   | ATEXP(ae) => ATEXP_A(annotateAtExp(ae, a), a)
-  | APP(e, ae) => APP_A(annotateExp(e, a), annotateAtExp(ae, e), a)
+  | APP(e, ae) => APP_A(annotateExp(e, a), annotateAtExp(ae, a), a)
   | RAISE(e) => RAISE_A(annotateExp(e, a), a)
   | FN(m) => FN_A(annotateMatch(m, a), a)
   }
@@ -497,6 +497,8 @@ let annotateFrame = ({rewrite, env}, a) => {
   envAnno: annotateValEnv(env, a),
 };
 
+let annotateFrames = (fs, a) => fs |> List.map(annotateFrame(_, a));
+
 let annotateConfiguration = (c, a) => c |> List.map(annotateFrame(a));
 
 let apply = (f, v) =>
@@ -597,12 +599,11 @@ let step = (c: configuration): option(transition) =>
         {
           rewriteAnno: {
             focusAnno: AtExp_A(SCON_A(INT_A(n, Some(anno)), None), None),
-            /* TODO: need to write default annotation functions */
-            ctxtsAnno: /* annotateCtxts(ctxts) */ [],
+            ctxtsAnno: annotateCtxts(ctxts, None),
           },
-          envAnno: /* annotateEnv(env, None) */ [],
+          envAnno: annotateValEnv(env, None),
         },
-        /* ...annotateFrames(frames, None) */
+        ...annotateFrames(frames, None),
       ],
       rhs: [
         {
@@ -610,9 +611,9 @@ let step = (c: configuration): option(transition) =>
             focusAnno: Val_A(SVAL_A(INT_A(n, [anno]), []), []),
             ctxtsAnno: [],
           },
-          envAnno: /* annotateEnv(env, []) */ [],
+          envAnno: annotateValEnv(env, []),
         },
-        /* annotateFrames(frames, []) */
+        ...annotateFrames(frames, []),
       ],
     });
 
@@ -1373,6 +1374,12 @@ let inject = e => [
     ],
   },
 ];
+
+/* let advance = c =>
+   switch (step(c)) {
+   | None => None
+   | Some({lhs: _, rhs: c_anno}) => stripConfiguration(c_anno)
+   }; */
 
 let interpretTraceBounded = (~maxDepth=100, p) =>
   TheiaUtil.takeWhileInclusive(
