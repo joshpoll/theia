@@ -9,6 +9,9 @@
    frame. That frame should return a val env so it can be added to the basis by the root frame.
    */
 
+/* NOTE: annotating ENTIRE subexpressions! This could be "fixed" by making a shallow annotator, but
+   I'm not sure it actually requires fixing yet, because the annotation still seems to be correct anyway. */
+
 /* Building up a very wrong, very simplistic SML interpreter. Grammar is not correct. */
 /* This time we're letting the program section do ALL the traversal and the rewrite do ALL the computation. */
 /* Following SML 97 and HaMLet closely.
@@ -797,7 +800,7 @@ let step = (c: configuration): option(transition) =>
         {
           rewriteAnno: {
             focusAnno: Val_A(SVAL_A(INT_A(n, [anno]), []), []),
-            ctxtsAnno: [],
+            ctxtsAnno: annotateCtxts(ctxts, []),
           },
           envAnno: annotateValEnv(env, []),
         },
@@ -941,16 +944,32 @@ let step = (c: configuration): option(transition) =>
   //           env,
   //         }, ...frames])
 
-  // /* Expressions */
-  // // [96]
-  // | [{rewrite: {focus: Exp(ATEXP(a)), ctxts}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: AtExp(a),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
+  /* Expressions */
+  // [96]
+  | [{rewrite: {focus: Exp(ATEXP(a)), ctxts}, env}, ...frames] =>
+    let anno0 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Exp_A(ATEXP_A(annotateAtExp(a, Some(anno0)), None), None),
+            ctxtsAnno: annotateCtxts(ctxts, None),
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: AtExp_A(annotateAtExp(a, [anno0]), []),
+            ctxtsAnno: annotateCtxts(ctxts, []),
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
 
   // // helper rule for function application
   // | [{rewrite: {focus: Exp(APP(f, x)), ctxts}, env}, ...frames] =>
@@ -1144,32 +1163,113 @@ let step = (c: configuration): option(transition) =>
   //           env,
   //         }, ...frames])
 
-  // /* Declarations */
-  // // [114ish]: should lift valenv into env
-  // | [{rewrite: {focus: Dec(VAL(vb)), ctxts}, env}, ...frames] =>
-  //   Js.log("114 in");
-  //   Some([{
-  //           rewrite: {
-  //             focus: ValBind(vb),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames]);
+  /* Declarations */
+  // [114ish]: should lift valenv into env
+  | [{rewrite: {focus: Dec(VAL(vb)), ctxts}, env}, ...frames] =>
+    Js.log("114 in");
+    let anno0 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Dec_A(VAL_A(annotateValBind(vb, Some(anno0)), None), None),
+            ctxtsAnno: annotateCtxts(ctxts, None),
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: ValBind_A(annotateValBind(vb, [anno0]), []),
+            ctxtsAnno: annotateCtxts(ctxts, []),
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
 
-  // /* Value Bindings */
-  // // [124ish]: doesn't support `and`
-  // | [{rewrite: {focus: ValBind(PLAIN(p, e, vbs)), ctxts}, env}, ...frames] =>
-  //   Js.log("124 in e");
-  //   Some([
-  //     {
-  //       rewrite: {
-  //         focus: Exp(e),
-  //         ctxts: [VALBINDE(p, (), vbs), ...ctxts],
-  //       },
-  //       env,
-  //     },
-  //     ...frames,
-  //   ]);
+  /* Value Bindings */
+  // [124ish]: doesn't support `and`
+  | [{rewrite: {focus: ValBind(PLAIN(p, e, None)), ctxts}, env}, ...frames] =>
+    Js.log("124 in e");
+    let anno0 = genFresh();
+    let anno1 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno:
+              ValBind_A(
+                PLAIN_A(annotatePat(p, Some(anno0)), annotateExp(e, Some(anno1)), None, None),
+                None,
+              ),
+            ctxtsAnno: annotateCtxts(ctxts, None),
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Exp_A(annotateExp(e, [anno1]), []),
+            ctxtsAnno: [
+              VALBINDE_A(annotatePat(p, [anno0]), (), None, []),
+              ...annotateCtxts(ctxts, []),
+            ],
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
+  | [{rewrite: {focus: ValBind(PLAIN(p, e, Some(vb))), ctxts}, env}, ...frames] =>
+    Js.log("124 in e");
+    let anno0 = genFresh();
+    let anno1 = genFresh();
+    let anno2 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno:
+              ValBind_A(
+                PLAIN_A(
+                  annotatePat(p, Some(anno0)),
+                  annotateExp(e, Some(anno1)),
+                  Some(annotateValBind(vb, Some(anno2))),
+                  None,
+                ),
+                None,
+              ),
+            ctxtsAnno: annotateCtxts(ctxts, None),
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Exp_A(annotateExp(e, [anno1]), []),
+            ctxtsAnno: [
+              VALBINDE_A(
+                annotatePat(p, [anno0]),
+                (),
+                Some(annotateValBind(vb, [anno2])),
+                [],
+              ),
+              ...annotateCtxts(ctxts, []),
+            ],
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
   // | [{rewrite: {focus: Val(v), ctxts: [VALBINDE(p, (), None), ...ctxts]}, env}, ...frames] =>
   //   Js.log("124 in p");
   //   Some([{
@@ -1428,18 +1528,35 @@ let step = (c: configuration): option(transition) =>
   //           env,
   //         }, ...frames]);
 
-  // /* ... */
-  // /* Structure-level Declarations */
-  // // [156]
-  // | [{rewrite: {focus: StrDec(DEC(d)), ctxts}, env}, ...frames] =>
-  //   Js.log("156 in");
-  //   Some([{
-  //           rewrite: {
-  //             focus: Dec(d),
-  //             ctxts: [DECD(), ...ctxts],
-  //           },
-  //           env,
-  //         }, ...frames]);
+  /* ... */
+
+  /* Structure-level Declarations */
+  // [156]
+  | [{rewrite: {focus: StrDec(DEC(d)), ctxts}, env}, ...frames] =>
+    Js.log("156 in");
+    let anno0 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: StrDec_A(DEC_A(annotateDec(d, Some(anno0)), None), None),
+            ctxtsAnno: annotateCtxts(ctxts, None),
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Dec_A(annotateDec(d, [anno0]), []),
+            ctxtsAnno: [DECD_A((), []), ...annotateCtxts(ctxts, [])],
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
   // | [{rewrite: {focus: ValEnv(ve), ctxts: [DECD (), ...ctxts]}, env}, ...frames] =>
   //   Js.log("156 out");
   //   Some([{
@@ -1470,20 +1587,70 @@ let step = (c: configuration): option(transition) =>
 
   // /* ... */
 
-  // /* Top-level Declarations */
-  // // [184ish]
-  // | [{rewrite: {focus: TopDec(STRDEC(sd, otd)), ctxts}, env}, ...frames] =>
-  //   Js.log("184 in");
-  //   Some([
-  //     {
-  //       rewrite: {
-  //         focus: StrDec(sd),
-  //         ctxts: [STRDECSD((), otd), ...ctxts],
-  //       },
-  //       env,
-  //     },
-  //     ...frames,
-  //   ]);
+  /* Top-level Declarations */
+  // [184ish]
+  | [{rewrite: {focus: TopDec(STRDEC(sd, None)), ctxts}, env}, ...frames] =>
+    Js.log("184 in");
+    let anno0 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: TopDec_A(STRDEC_A(annotateStrDec(sd, Some(anno0)), None, None), None),
+            ctxtsAnno: annotateCtxts(ctxts, None),
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: StrDec_A(annotateStrDec(sd, [anno0]), []),
+            ctxtsAnno: [STRDECSD_A((), None, []), ...annotateCtxts(ctxts, [])],
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
+  | [{rewrite: {focus: TopDec(STRDEC(sd, Some(td))), ctxts}, env}, ...frames] =>
+    Js.log("184 in");
+    let anno0 = genFresh();
+    let anno1 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno:
+              TopDec_A(
+                STRDEC_A(
+                  annotateStrDec(sd, Some(anno0)),
+                  Some(annotateTopDec(td, Some(anno1))),
+                  None,
+                ),
+                None,
+              ),
+            ctxtsAnno: annotateCtxts(ctxts, None),
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: StrDec_A(annotateStrDec(sd, [anno0]), []),
+            ctxtsAnno: [
+              STRDECSD_A((), Some(annotateTopDec(td, [anno1])), []),
+              ...annotateCtxts(ctxts, []),
+            ],
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
   // | [{rewrite: {focus: ValEnv(ve), ctxts: [STRDECSD((), td), ...ctxts]}, env}, ...frames] =>
   //   Js.log("184 out");
   //   Some([
@@ -1501,16 +1668,32 @@ let step = (c: configuration): option(transition) =>
   //     ...frames,
   //   ]);
 
-  // /* Programs */
-  // // [189ish]
-  // | [{rewrite: {focus: Program(PROGRAM(td, None)), ctxts}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: TopDec(td),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
+  /* Programs */
+  // [189ish]
+  | [{rewrite: {focus: Program(PROGRAM(td, None)), ctxts}, env}, ...frames] =>
+    let anno = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Program_A(PROGRAM_A(annotateTopDec(td, Some(anno)), None, None), None),
+            ctxtsAnno: annotateCtxts(ctxts, None),
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: TopDec_A(annotateTopDec(td, [anno]), []),
+            ctxtsAnno: annotateCtxts(ctxts, []),
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
   // | [{rewrite: {focus: Program(PROGRAM(td, Some(p))), ctxts}, env}, ...frames] =>
   //   Some([
   //     {
