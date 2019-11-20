@@ -1464,29 +1464,30 @@ let step = (c: configuration): option(transition) =>
     let anno1 = genFresh();
     let anno2 = genFresh();
     let anno3 = genFresh();
+    let envAnno = annotateValEnv(env, [anno3]);
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let framesAnno = annotateFrames(frames, []);
+    let matchAnno = annotateMatch(m, [anno0]);
     Some({
       lhs: [
         {
           rewriteAnno: {
-            focusAnno: Exp_A(FN_A(annotateMatch(m, [anno0]), [anno1])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            focusAnno: Exp_A(FN_A(matchAnno, [anno1])),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, [anno3]),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
-            focusAnno:
-              Val_A(
-                FCNCLOSURE_A(annotateMatch(m, [anno0]), annotateValEnv(env, [anno3]), [], []),
-              ),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            focusAnno: Val_A(FCNCLOSURE_A(annotateMatch(m, [anno0]), envAnno, [], [])),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, [anno3]),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
 
@@ -1584,26 +1585,29 @@ let step = (c: configuration): option(transition) =>
   | [{rewrite: {focus: Dec(VAL(vb)), ctxts}, env}, ...frames] =>
     Js.log("114 in");
     let anno0 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
           rewriteAnno: {
             focusAnno: Dec_A(VAL_A(annotateValBind(vb, [anno0]), [])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
             focusAnno: ValBind_A(annotateValBind(vb, [anno0])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
 
@@ -1613,30 +1617,30 @@ let step = (c: configuration): option(transition) =>
     Js.log("124 in e");
     let anno0 = genFresh();
     let anno1 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
           rewriteAnno: {
             focusAnno:
               ValBind_A(PLAIN_A(annotatePat(p, [anno0]), annotateExp(e, [anno1]), None, [])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
             focusAnno: Exp_A(annotateExp(e, [anno1])),
-            ctxtsAnno: [
-              VALBINDE_A(annotatePat(p, [anno0]), (), None, []),
-              ...annotateCtxts(ctxts, []),
-            ],
+            ctxtsAnno: [VALBINDE_A(annotatePat(p, [anno0]), (), None, []), ...ctxtsAnno],
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
   | [{rewrite: {focus: ValBind(PLAIN(p, e, Some(vb))), ctxts}, env}, ...frames] =>
@@ -1644,6 +1648,9 @@ let step = (c: configuration): option(transition) =>
     let anno0 = genFresh();
     let anno1 = genFresh();
     let anno2 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
@@ -1657,11 +1664,11 @@ let step = (c: configuration): option(transition) =>
                   [],
                 ),
               ),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
@@ -1674,41 +1681,41 @@ let step = (c: configuration): option(transition) =>
                 Some(annotateValBind(vb, [anno2])),
                 [],
               ),
-              ...annotateCtxts(ctxts, []),
+              ...ctxtsAnno,
             ],
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
   | [{rewrite: {focus: Val(v), ctxts: [VALBINDE(p, (), None), ...ctxts]}, env}, ...frames] =>
     Js.log("124 in p");
     let anno0 = genFresh();
     let anno1 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
           rewriteAnno: {
             focusAnno: Val_A(annotateVal_(v, [anno0])),
-            ctxtsAnno: [
-              VALBINDE_A(annotatePat(p, [anno1]), (), None, []),
-              ...annotateCtxts(ctxts, []),
-            ],
+            ctxtsAnno: [VALBINDE_A(annotatePat(p, [anno1]), (), None, []), ...ctxtsAnno],
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
             focusAnno: Pat_A(annotatePat(p, [anno1]), annotateVal_(v, [anno0])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
 
@@ -1716,51 +1723,57 @@ let step = (c: configuration): option(transition) =>
   | [{rewrite: {focus: ValBind(REC(vb)), ctxts}, env}, ...frames] =>
     let anno0 = genFresh();
     let anno1 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
           rewriteAnno: {
             focusAnno: ValBind_A(REC_A(annotateValBind(vb, [anno0]), [anno1])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
             focusAnno: ValBind_A(annotateValBind(vb, [anno0])),
-            ctxtsAnno: [RECVB_A((), [anno1]), ...annotateCtxts(ctxts, [])],
+            ctxtsAnno: [RECVB_A((), [anno1]), ...ctxtsAnno],
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
   | [{rewrite: {focus: ValEnv(ve), ctxts: [RECVB (), ...ctxts]}, env}, ...frames] =>
     let anno0 = genFresh();
     let anno1 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
           rewriteAnno: {
             focusAnno: ValEnv_A(annotateValEnv(ve, [anno0])),
-            ctxtsAnno: [RECVB_A((), [anno1]), ...annotateCtxts(ctxts, [])],
+            ctxtsAnno: [RECVB_A((), [anno1]), ...ctxtsAnno],
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
             focusAnno: ValEnv_A(recEnv(annotateValEnv(ve, [anno0]))),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
 
@@ -1789,76 +1802,82 @@ let step = (c: configuration): option(transition) =>
     | Some((_, Var)) =>
       let anno0 = genFresh();
       let anno1 = genFresh();
+      let ctxtsAnno = annotateCtxts(ctxts, []);
+      let envAnno = annotateValEnv(env, []);
+      let framesAnno = annotateFrames(frames, []);
       Some({
         lhs: [
           {
             rewriteAnno: {
               focusAnno: AtPat_A(ID_A(x, []), annotateVal_(v, [anno1])),
-              ctxtsAnno: annotateCtxts(ctxts, []),
+              ctxtsAnno,
             },
-            envAnno: annotateValEnv(env, []),
+            envAnno,
           },
-          ...annotateFrames(frames, []),
+          ...framesAnno,
         ],
         rhs: [
           {
             rewriteAnno: {
               focusAnno: ValEnv_A([(x, (annotateVal_(v, [anno1]), Var_A([])))]),
-              ctxtsAnno: annotateCtxts(ctxts, []),
+              ctxtsAnno,
             },
-            envAnno: annotateValEnv(env, []),
+            envAnno,
           },
-          ...annotateFrames(frames, []),
+          ...framesAnno,
         ],
       });
     // [136]
     | Some((v', id)) when v == v' =>
       let anno0 = genFresh();
+      let ctxtsAnno = annotateCtxts(ctxts, []);
+      let envAnno = annotateValEnv(env, []);
+      let framesAnno = annotateFrames(frames, []);
       Some({
         lhs: [
           {
             rewriteAnno: {
               focusAnno: AtPat_A(ID_A(x, []), annotateVal_(v, [anno0])),
-              ctxtsAnno: annotateCtxts(ctxts, []),
+              ctxtsAnno,
             },
-            envAnno: annotateValEnv(env, []),
+            envAnno,
           },
-          ...annotateFrames(frames, []),
+          ...framesAnno,
         ],
-        rhs: [
-          {
-            rewriteAnno: {
-              focusAnno: ValEnv_A([]),
-              ctxtsAnno: annotateCtxts(ctxts, []),
-            },
-            envAnno: annotateValEnv(env, []),
-          },
-          ...annotateFrames(frames, []),
-        ],
+        rhs: [{
+                rewriteAnno: {
+                  focusAnno: ValEnv_A([]),
+                  ctxtsAnno,
+                },
+                envAnno,
+              }, ...framesAnno],
       });
     // [137]
     | Some((v', id)) =>
       let anno1 = genFresh();
+      let ctxtsAnno = annotateCtxts(ctxts, []);
+      let envAnno = annotateValEnv(env, []);
+      let framesAnno = annotateFrames(frames, []);
       Some({
         lhs: [
           {
             rewriteAnno: {
               focusAnno: AtPat_A(ID_A(x, []), annotateVal_(v, [anno1])),
-              ctxtsAnno: annotateCtxts(ctxts, []),
+              ctxtsAnno,
             },
-            envAnno: annotateValEnv(env, []),
+            envAnno,
           },
-          ...annotateFrames(frames, []),
+          ...framesAnno,
         ],
         rhs: [
           {
             rewriteAnno: {
               focusAnno: FAIL_A(annotateVal_(v, [anno1])),
-              ctxtsAnno: annotateCtxts(ctxts, []),
+              ctxtsAnno,
             },
-            envAnno: annotateValEnv(env, []),
+            envAnno,
           },
-          ...annotateFrames(frames, []),
+          ...framesAnno,
         ],
       });
     }
@@ -1867,50 +1886,53 @@ let step = (c: configuration): option(transition) =>
   /* empty record pat */
   /* TODO: special-casing RECORD(None) may be overkill. not sure */
   | [{rewrite: {focus: AtPat(RECORD(None), RECORD([])), ctxts}, env}, ...frames] =>
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
           rewriteAnno: {
             focusAnno: AtPat_A(RECORD_A(None, []), RECORD_A([], [])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
-      rhs: [
-        {
-          rewriteAnno: {
-            focusAnno: ValEnv_A([]),
-            ctxtsAnno: annotateCtxts(ctxts, []),
-          },
-          envAnno: annotateValEnv(env, []),
-        },
-        ...annotateFrames(frames, []),
-      ],
-    })
+      rhs: [{
+              rewriteAnno: {
+                focusAnno: ValEnv_A([]),
+                ctxtsAnno,
+              },
+              envAnno,
+            }, ...framesAnno],
+    });
   | [{rewrite: {focus: AtPat(RECORD(None), v), ctxts}, env}, ...frames] =>
     let anno0 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
           rewriteAnno: {
             focusAnno: AtPat_A(RECORD_A(None, []), annotateVal_(v, [anno0])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
             focusAnno: FAIL_A(annotateVal_(v, [anno0])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
   /* start non-empty record pat */
@@ -1920,6 +1942,9 @@ let step = (c: configuration): option(transition) =>
     let anno2 = genFresh();
     let anno3 = genFresh();
     let anno4 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
@@ -1929,21 +1954,21 @@ let step = (c: configuration): option(transition) =>
                 RECORD_A(Some(annotatePatRow(pr, [anno0])), [anno1]),
                 RECORD_A(annotateRecord(r, [anno2]), [anno3]),
               ),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
             focusAnno: PatRow_A(annotatePatRow(pr, [anno0]), annotateRecord(r, []), []),
-            ctxtsAnno: [RECORDPR_A((), [anno4]), ...annotateCtxts(ctxts, [])],
+            ctxtsAnno: [RECORDPR_A((), [anno4]), ...ctxtsAnno],
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
   // /* complete non-empty record pat */
@@ -2055,27 +2080,30 @@ let step = (c: configuration): option(transition) =>
   | [{rewrite: {focus: Pat(ATPAT(ap), v), ctxts}, env}, ...frames] =>
     let anno0 = genFresh();
     let anno1 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
           rewriteAnno: {
             focusAnno:
               Pat_A(ATPAT_A(annotateAtPat(ap, [anno0]), []), annotateVal_(v, [anno1])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
             focusAnno: AtPat_A(annotateAtPat(ap, [anno0]), annotateVal_(v, [anno1])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
 
@@ -2124,52 +2152,58 @@ let step = (c: configuration): option(transition) =>
   | [{rewrite: {focus: StrDec(DEC(d)), ctxts}, env}, ...frames] =>
     Js.log("156 in");
     let anno0 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
           rewriteAnno: {
             focusAnno: StrDec_A(DEC_A(annotateDec(d, [anno0]), [])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
             focusAnno: Dec_A(annotateDec(d, [anno0])),
-            ctxtsAnno: [DECD_A((), []), ...annotateCtxts(ctxts, [])],
+            ctxtsAnno: [DECD_A((), []), ...ctxtsAnno],
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
   | [{rewrite: {focus: ValEnv(ve), ctxts: [DECD (), ...ctxts]}, env}, ...frames] =>
     Js.log("156 out");
     let anno0 = genFresh();
     let anno1 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
           rewriteAnno: {
             focusAnno: ValEnv_A(annotateValEnv(ve, [anno0])),
-            ctxtsAnno: [DECD_A((), [anno1]), ...annotateCtxts(ctxts, [])],
+            ctxtsAnno: [DECD_A((), [anno1]), ...ctxtsAnno],
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
             focusAnno: ValEnv_A(annotateValEnv(ve, [anno0])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
   // // [160]
@@ -2198,32 +2232,38 @@ let step = (c: configuration): option(transition) =>
   | [{rewrite: {focus: TopDec(STRDEC(sd, None)), ctxts}, env}, ...frames] =>
     Js.log("184 in");
     let anno0 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
           rewriteAnno: {
             focusAnno: TopDec_A(STRDEC_A(annotateStrDec(sd, [anno0]), None, [])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
             focusAnno: StrDec_A(annotateStrDec(sd, [anno0])),
-            ctxtsAnno: [STRDECSD_A((), None, []), ...annotateCtxts(ctxts, [])],
+            ctxtsAnno: [STRDECSD_A((), None, []), ...ctxtsAnno],
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
   | [{rewrite: {focus: TopDec(STRDEC(sd, Some(td))), ctxts}, env}, ...frames] =>
     Js.log("184 in");
     let anno0 = genFresh();
     let anno1 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
@@ -2232,30 +2272,30 @@ let step = (c: configuration): option(transition) =>
               TopDec_A(
                 STRDEC_A(annotateStrDec(sd, [anno0]), Some(annotateTopDec(td, [anno1])), []),
               ),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
             focusAnno: StrDec_A(annotateStrDec(sd, [anno0])),
-            ctxtsAnno: [
-              STRDECSD_A((), Some(annotateTopDec(td, [anno1])), []),
-              ...annotateCtxts(ctxts, []),
-            ],
+            ctxtsAnno: [STRDECSD_A((), Some(annotateTopDec(td, [anno1])), []), ...ctxtsAnno],
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
   | [{rewrite: {focus: ValEnv(ve), ctxts: [STRDECSD((), td), ...ctxts]}, env}, ...frames] =>
     Js.log("184 out");
     let anno0 = genFresh();
     let anno1 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
@@ -2267,12 +2307,12 @@ let step = (c: configuration): option(transition) =>
                 | None => None
                 | Some(td) => Some(annotateTopDec(td, [anno1]))
                 };
-              [STRDECSD_A((), td, []), ...annotateCtxts(ctxts, [])];
+              [STRDECSD_A((), td, []), ...ctxtsAnno];
             },
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
@@ -2282,11 +2322,11 @@ let step = (c: configuration): option(transition) =>
               | None => Empty_A
               | Some(td) => TopDec_A(annotateTopDec(td, [anno1]))
               },
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(ve, [anno0]) @ annotateValEnv(env, []),
+          envAnno: annotateValEnv(ve, [anno0]) @ envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
 
@@ -2294,26 +2334,29 @@ let step = (c: configuration): option(transition) =>
   // [189ish]
   | [{rewrite: {focus: Program(PROGRAM(td, None)), ctxts}, env}, ...frames] =>
     let anno0 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
           rewriteAnno: {
             focusAnno: Program_A(PROGRAM_A(annotateTopDec(td, [anno0]), None, [])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
             focusAnno: TopDec_A(annotateTopDec(td, [anno0])),
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
   // | [{rewrite: {focus: Program(PROGRAM(td, Some(p))), ctxts}, env}, ...frames] =>
