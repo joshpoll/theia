@@ -1375,35 +1375,32 @@ let step = (c: configuration): option(transition) =>
       {rewrite: {focus: Val(FCNCLOSURE(m, e, ve)), ctxts: [APPL((), a), ...ctxts]}, env},
       ...frames,
     ] =>
-    let anno0 = genFresh();
     let anno1 = genFresh();
-    let anno2 = genFresh();
+    let fcnClosureAnno = annotateVal_(FCNCLOSURE(m, e, ve), [genFresh()]);
+    let aAnno = annotateAtExp(a, [genFresh()]);
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
           rewriteAnno: {
-            focusAnno: Val_A(annotateVal_(FCNCLOSURE(m, e, ve), [anno0])),
-            ctxtsAnno: [
-              APPL_A((), annotateAtExp(a, [anno2]), [anno1]),
-              ...annotateCtxts(ctxts, []),
-            ],
+            focusAnno: Val_A(fcnClosureAnno),
+            ctxtsAnno: [APPL_A((), aAnno, [anno1]), ...ctxtsAnno],
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
           rewriteAnno: {
-            focusAnno: AtExp_A(annotateAtExp(a, [anno2])),
-            ctxtsAnno: [
-              APPR_A(annotateVal_(FCNCLOSURE(m, e, ve), [anno0]), (), [anno1]),
-              ...annotateCtxts(ctxts, []),
-            ],
+            focusAnno: AtExp_A(aAnno),
+            ctxtsAnno: [APPR_A(fcnClosureAnno, (), [anno1]), ...ctxtsAnno],
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
   /* TODO: NEED TO BE ABLE TO LABEL FRAMES!!!! */
