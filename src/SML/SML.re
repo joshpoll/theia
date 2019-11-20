@@ -9,6 +9,9 @@
    frame. That frame should return a val env so it can be added to the basis by the root frame.
    */
 
+/* OBSERVATION: Labels take precedence over no labels in children. This is because the presence of a
+   label signals a change whereas the absence of a label indicates no change. */
+
 /* NOTE: annotating ENTIRE subexpressions! This could be "fixed" by making a shallow annotator, but
    I'm not sure it actually requires fixing yet, because the annotation still seems to be correct anyway. */
 
@@ -697,20 +700,53 @@ let stripConfiguration = stripFrames;
 
 let apply = (f, v) =>
   switch (f, v) {
-  | ("=", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) =>
+  | (
+      "=",
+      RECORD_A(
+        [("1", SVAL_A(INT_A(a, anno0), _)), ("2", SVAL_A(INT_A(b, anno1), _))],
+        anno2,
+      ),
+    ) =>
     if (a == b) {
-      VID("true");
+      VID_A("true", anno0 @ anno1 @ anno2);
     } else {
-      VID("false");
+      VID_A("false", anno0 @ anno1 @ anno2);
     }
-  | ("+", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) => SVAL(INT(a + b))
-  | ("-", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) => SVAL(INT(a - b))
-  | ("*", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) => SVAL(INT(a * b))
-  | ("<", RECORD([("1", SVAL(INT(a))), ("2", SVAL(INT(b)))])) =>
+  | (
+      "+",
+      RECORD_A(
+        [("1", SVAL_A(INT_A(a, anno0), _)), ("2", SVAL_A(INT_A(b, anno1), _))],
+        anno2,
+      ),
+    ) =>
+    SVAL_A(INT_A(a + b, anno0 @ anno1 @ anno2), [])
+  | (
+      "-",
+      RECORD_A(
+        [("1", SVAL_A(INT_A(a, anno0), _)), ("2", SVAL_A(INT_A(b, anno1), _))],
+        anno2,
+      ),
+    ) =>
+    SVAL_A(INT_A(a - b, anno0 @ anno1 @ anno2), [])
+  | (
+      "*",
+      RECORD_A(
+        [("1", SVAL_A(INT_A(a, anno0), _)), ("2", SVAL_A(INT_A(b, anno1), _))],
+        anno2,
+      ),
+    ) =>
+    SVAL_A(INT_A(a * b, anno0 @ anno1 @ anno2), [])
+  | (
+      "<",
+      RECORD_A(
+        [("1", SVAL_A(INT_A(a, anno0), _)), ("2", SVAL_A(INT_A(b, anno1), _))],
+        anno2,
+      ),
+    ) =>
     if (a < b) {
-      VID("true");
+      VID_A("true", anno0 @ anno1 @ anno2);
     } else {
-      VID("false");
+      VID_A("false", anno0 @ anno1 @ anno2);
     }
   | _ => failwith("unknown built-in function: " ++ f)
   };
@@ -1386,27 +1422,66 @@ let step = (c: configuration): option(transition) =>
       ],
     });
 
-  // // [101]
-  // /* TODO: may want a more coarse-grained traversal, not sure */
-  // | [{rewrite: {focus: Val(BASVAL(f)), ctxts: [APPL((), a), ...ctxts]}, env}, ...frames] =>
-  //   Some([
-  //     {
-  //       rewrite: {
-  //         focus: AtExp(a),
-  //         ctxts: [APPR(BASVAL(f), ()), ...ctxts],
-  //       },
-  //       env,
-  //     },
-  //     ...frames,
-  //   ])
-  // | [{rewrite: {focus: Val(v), ctxts: [APPR(BASVAL(f), ()), ...ctxts]}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: Val(apply(f, v)),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
+  // [101]
+  /* TODO: may want a more coarse-grained traversal, not sure */
+  | [{rewrite: {focus: Val(BASVAL(f)), ctxts: [APPL((), a), ...ctxts]}, env}, ...frames] =>
+    let anno0 = genFresh();
+    let anno1 = genFresh();
+    let aAnno = annotateAtExp(a, [genFresh()]);
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Val_A(BASVAL_A(f, [anno0])),
+            ctxtsAnno: [APPL_A((), aAnno, [anno1]), ...ctxtsAnno],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: AtExp_A(aAnno),
+            ctxtsAnno: [APPR_A(BASVAL_A(f, [anno0]), (), [anno1]), ...ctxtsAnno],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+    });
+  | [{rewrite: {focus: Val(v), ctxts: [APPR(BASVAL(f), ()), ...ctxts]}, env}, ...frames] =>
+    let vAnno = annotateVal_(v, [genFresh()]);
+    let anno0 = genFresh();
+    let anno1 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Val_A(vAnno),
+            ctxtsAnno: [APPR_A(BASVAL_A(f, [anno0]), (), [anno1]), ...ctxtsAnno],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Val_A(apply(f, vAnno)),
+            ctxtsAnno,
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+    });
 
   // [102]
   | [
@@ -1454,6 +1529,9 @@ let step = (c: configuration): option(transition) =>
     let anno5 = genFresh();
     let anno6 = genFresh();
     let anno7 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, [genFresh()]);
+    let framesAnno = annotateFrames(frames, []);
     Some({
       lhs: [
         {
@@ -1470,12 +1548,12 @@ let step = (c: configuration): option(transition) =>
                 (),
                 [anno4],
               ),
-              ...annotateCtxts(ctxts, []),
+              ...ctxtsAnno,
             ],
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
       rhs: [
         {
@@ -1483,16 +1561,16 @@ let step = (c: configuration): option(transition) =>
             focusAnno: Match_A(annotateMatch(m, [anno1]), annotateVal_(v, [anno0])),
             ctxtsAnno: [],
           },
-          envAnno: recEnv(annotateValEnv(ve, [anno3])) @ annotateValEnv(e, [anno2]) /* "backwards" compared to spec b/c 4.2 says lookup happens in RHS first */
+          envAnno: recEnv(annotateValEnv(ve, [anno3])) @ envAnno /* "backwards" compared to spec b/c 4.2 says lookup happens in RHS first */
         },
         {
           rewriteAnno: {
             focusAnno: Empty_A,
-            ctxtsAnno: annotateCtxts(ctxts, []),
+            ctxtsAnno,
           },
-          envAnno: annotateValEnv(env, []),
+          envAnno,
         },
-        ...annotateFrames(frames, []),
+        ...framesAnno,
       ],
     });
 
@@ -1529,94 +1607,254 @@ let step = (c: configuration): option(transition) =>
       ],
     });
 
-  // /* Matches */
-  // /* begin Match traversal */
-  // | [{rewrite: {focus: Match(MATCH(mr, om), v), ctxts: []}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: MRule(mr, v),
-  //             ctxts: [MATCHMR((), om)],
-  //           },
-  //           env,
-  //         }, ...frames])
-  // | [{rewrite: {focus: Match(m, v), ctxts}, env}, ...frames] =>
-  //   Some([
-  //     {
-  //       rewrite: {
-  //         focus: Match(m, v),
-  //         ctxts: [],
-  //       },
-  //       env,
-  //     },
-  //     {
-  //       rewrite: {
-  //         focus: Empty,
-  //         ctxts,
-  //       },
-  //       env,
-  //     },
-  //     ...frames,
-  //   ])
+  /* Matches */
+  /* begin Match traversal */
+  | [{rewrite: {focus: Match(MATCH(mr, om), v), ctxts: []}, env}, ...frames] =>
+    let mrAnno = annotateMRule(mr, [genFresh()]);
+    let omAnno =
+      switch (om) {
+      | None => None
+      | Some(m) => Some(annotateMatch(m, [genFresh()]))
+      };
+    let vAnno = annotateVal_(v, [genFresh()]);
+    let anno0 = genFresh();
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Match_A(MATCH_A(mrAnno, omAnno, [anno0]), vAnno),
+            ctxtsAnno: [],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: MRule_A(mrAnno, vAnno),
+            ctxtsAnno: [MATCHMR_A((), omAnno, [anno0])],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+    });
+  | [{rewrite: {focus: Match(m, v), ctxts}, env}, ...frames] =>
+    let envAnno = annotateValEnv(env, [genFresh()]);
+    let framesAnno = annotateFrames(frames, []);
+    let mAnno = annotateMatch(m, [genFresh()]);
+    let vAnno = annotateVal_(v, [genFresh()]);
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Match_A(mAnno, vAnno),
+            ctxtsAnno,
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Match_A(mAnno, vAnno),
+            ctxtsAnno: [],
+          },
+          envAnno,
+        },
+        {
+          rewriteAnno: {
+            focusAnno: Empty_A,
+            ctxtsAnno,
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+    });
 
-  // // [109]
-  // /* mrule success */
-  // | [{rewrite: {focus: Val(v), ctxts: [MATCHMR((), _), ...ctxts]}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: Val(v),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
+  // [109]
+  /* mrule success */
+  | [{rewrite: {focus: Val(v), ctxts: [MATCHMR((), oldM), ...ctxts]}, env}, ...frames] =>
+    let vAnno = annotateVal_(v, [genFresh()]);
+    let oldMAnno =
+      switch (oldM) {
+      | None => None
+      | Some(m) => Some(annotateMatch(m, [genFresh()]))
+      };
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Val_A(vAnno),
+            ctxtsAnno: [MATCHMR_A((), oldMAnno, [genFresh()]), ...ctxtsAnno],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [{
+              rewriteAnno: {
+                focusAnno: Val_A(vAnno),
+                ctxtsAnno,
+              },
+              envAnno,
+            }, ...framesAnno],
+    });
 
-  // // [110]
-  // | [{rewrite: {focus: FAIL(v), ctxts: [MATCHMR((), None), ...ctxts]}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: FAIL(v),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
+  // [110]
+  | [{rewrite: {focus: FAIL(v), ctxts: [MATCHMR((), None), ...ctxts]}, env}, ...frames] =>
+    let vAnno = annotateVal_(v, [genFresh()]);
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: FAIL_A(vAnno),
+            ctxtsAnno: [MATCHMR_A((), None, [genFresh()]), ...ctxtsAnno],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [{
+              rewriteAnno: {
+                focusAnno: FAIL_A(vAnno),
+                ctxtsAnno,
+              },
+              envAnno,
+            }, ...framesAnno],
+    });
 
-  // // [111]
-  // | [{rewrite: {focus: FAIL(v), ctxts: [MATCHMR((), Some(m)), ...ctxts]}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: Match(m, v),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
+  // [111]
+  | [{rewrite: {focus: FAIL(v), ctxts: [MATCHMR((), Some(m)), ...ctxts]}, env}, ...frames] =>
+    let vAnno = annotateVal_(v, [genFresh()]);
+    let mAnno = annotateMatch(m, [genFresh()]);
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: FAIL_A(vAnno),
+            ctxtsAnno: [MATCHMR_A((), Some(mAnno), [genFresh()]), ...ctxtsAnno],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Match_A(mAnno, vAnno),
+            ctxtsAnno,
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+    });
 
-  // /* Match Rules */
-  // // [112]
-  // | [{rewrite: {focus: MRule(MRULE(p, e), v), ctxts}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: Pat(p, v),
-  //             ctxts: [MRULEP((), e), ...ctxts],
-  //           },
-  //           env,
-  //         }, ...frames])
-  // | [{rewrite: {focus: ValEnv(ve), ctxts: [MRULEP((), e), ...ctxts]}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: Exp(e),
-  //             ctxts,
-  //           },
-  //           env: ve @ env,
-  //         }, ...frames])
+  /* Match Rules */
+  // [112]
+  | [{rewrite: {focus: MRule(MRULE(p, e), v), ctxts}, env}, ...frames] =>
+    let pAnno = annotatePat(p, [genFresh()]);
+    let eAnno = annotateExp(e, [genFresh()]);
+    let vAnno = annotateVal_(v, [genFresh()]);
+    let anno0 = genFresh();
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: MRule_A(MRULE_A(pAnno, eAnno, [anno0]), vAnno),
+            ctxtsAnno,
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Pat_A(pAnno, vAnno),
+            ctxtsAnno: [MRULEP_A((), eAnno, [anno0]), ...ctxtsAnno],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+    });
+  | [{rewrite: {focus: ValEnv(ve), ctxts: [MRULEP((), e), ...ctxts]}, env}, ...frames] =>
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, [genFresh()]);
+    let framesAnno = annotateFrames(frames, []);
+    let veAnno = annotateValEnv(ve, [genFresh()]);
+    let eAnno = annotateExp(e, [genFresh()]);
+    let anno0 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: ValEnv_A(veAnno),
+            ctxtsAnno: [MRULEP_A((), eAnno, [anno0]), ...ctxtsAnno],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Exp_A(eAnno),
+            ctxtsAnno,
+          },
+          envAnno: veAnno @ envAnno,
+        },
+        ...framesAnno,
+      ],
+    });
 
-  // // [113]
-  // | [{rewrite: {focus: FAIL(v), ctxts: [MRULEP((), _), ...ctxts]}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: FAIL(v),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
+  // [113]
+  | [{rewrite: {focus: FAIL(v), ctxts: [MRULEP((), oldE), ...ctxts]}, env}, ...frames] =>
+    let vAnno = annotateVal_(v, [genFresh()]);
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    let oldEAnno = annotateExp(oldE, []);
+
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: FAIL_A(vAnno),
+            ctxtsAnno: [MRULEP_A((), oldEAnno, [genFresh()]), ...ctxtsAnno],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [{
+              rewriteAnno: {
+                focusAnno: FAIL_A(vAnno),
+                ctxtsAnno,
+              },
+              envAnno,
+            }, ...framesAnno],
+    });
 
   /* Declarations */
   // [114ish]: should lift valenv into env
@@ -2009,33 +2247,85 @@ let step = (c: configuration): option(transition) =>
         ...framesAnno,
       ],
     });
-  // /* complete non-empty record pat */
-  // | [{rewrite: {focus: ValEnv(ve), ctxts: [RECORDPR (), ...ctxts]}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: ValEnv(ve),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
-  // | [{rewrite: {focus: FAIL(v), ctxts: [RECORDPR (), ...ctxts]}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: FAIL(v),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
+  /* complete non-empty record pat */
+  | [{rewrite: {focus: ValEnv(ve), ctxts: [RECORDPR (), ...ctxts]}, env}, ...frames] =>
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    let veAnno = annotateValEnv(ve, [genFresh()]);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: ValEnv_A(veAnno),
+            ctxtsAnno: [RECORDPR_A((), [genFresh()]), ...ctxtsAnno],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [{
+              rewriteAnno: {
+                focusAnno: ValEnv_A(veAnno),
+                ctxtsAnno,
+              },
+              envAnno,
+            }, ...framesAnno],
+    });
+  | [{rewrite: {focus: FAIL(v), ctxts: [RECORDPR (), ...ctxts]}, env}, ...frames] =>
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    let vAnno = annotateVal_(v, [genFresh()]);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: FAIL_A(vAnno),
+            ctxtsAnno: [RECORDPR_A((), [genFresh()]), ...ctxtsAnno],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [{
+              rewriteAnno: {
+                focusAnno: FAIL_A(vAnno),
+                ctxtsAnno,
+              },
+              envAnno,
+            }, ...framesAnno],
+    });
 
-  // // [139]
-  // | [{rewrite: {focus: AtPat(PAR(p), v), ctxts}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: Pat(p, v),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
+  // [139]
+  | [{rewrite: {focus: AtPat(PAR(p), v), ctxts}, env}, ...frames] =>
+    let pAnno = annotatePat(p, [genFresh()]);
+    let vAnno = annotateVal_(v, [genFresh()]);
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: AtPat_A(PAR_A(pAnno, [genFresh()]), vAnno),
+            ctxtsAnno,
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Pat_A(pAnno, vAnno),
+            ctxtsAnno,
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+    });
 
   // /* Pattern Rows */
   // // [140]
@@ -2051,67 +2341,161 @@ let step = (c: configuration): option(transition) =>
   //     ...frames,
   //   ])
 
-  // // [141-142]
-  // /* NOTE: SML '97 says each field should be evaluated in the original environment, but we extend it
-  //    after every field. This simplifies our implementation since we don't need to maintain a
-  //    temporary environment outside of `env`. This still agrees with SML '97 thanks to the
-  //    left-linear pattern restriction. */
-  // /* start visiting */
-  // | [{rewrite: {focus: PatRow(FIELD(l, p, opr), r, ve), ctxts}, env}, ...frames] =>
-  //   /* NOTE: Shouldn't fail for well-typed programs per SML '97 comments. */
-  //   let Some(v) = Util.lookupOne(l, r);
-  //   Some([
-  //     {
-  //       rewrite: {
-  //         focus: Pat(p, v),
-  //         ctxts: [FIELDP((l, (), opr), r, ve), ...ctxts],
-  //       },
-  //       env,
-  //     },
-  //     ...frames,
-  //   ]);
-  // // [141]
-  // | [
-  //     {rewrite: {focus: FAIL(v), ctxts: [FIELDP((_, (), _), _, _), ...ctxts]}, env},
-  //     ...frames,
-  //   ] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: FAIL(v),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
-  // // [142]
-  // | [
-  //     {rewrite: {focus: ValEnv(ve), ctxts: [FIELDP((_, (), None), _, rve), ...ctxts]}, env},
-  //     ...frames,
-  //   ] =>
-  //   Some([
-  //     {
-  //       rewrite: {
-  //         focus: ValEnv(ve @ (rve |> List.map(((_, ve)) => ve) |> List.flatten)),
-  //         ctxts,
-  //       },
-  //       env,
-  //     },
-  //     ...frames,
-  //   ])
-  // /* TODO: need to propagate ValEnv through */
-  // | [
-  //     {
-  //       rewrite: {focus: ValEnv(ve), ctxts: [FIELDP((l, (), Some(pr)), r, rve), ...ctxts]},
-  //       env,
-  //     },
-  //     ...frames,
-  //   ] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: PatRow(pr, r, [(l, ve), ...rve]),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
+  // [141-142]
+  /* NOTE: SML '97 says each field should be evaluated in the original environment, but we extend it
+     after every field. This simplifies our implementation since we don't need to maintain a
+     temporary environment outside of `env`. This still agrees with SML '97 thanks to the
+     left-linear pattern restriction. */
+  /* start visiting */
+  | [{rewrite: {focus: PatRow(FIELD(l, p, opr), r, ve), ctxts}, env}, ...frames] =>
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    let pAnno = annotatePat(p, [genFresh()]);
+    let oprAnno =
+      switch (opr) {
+      | None => None
+      | Some(pr) => Some(annotatePatRow(pr, [genFresh()]))
+      };
+    let rAnno = annotateRecord(r, [genFresh()]);
+    let veAnno = annotateRecordEnv(ve, [genFresh()]);
+    let anno0 = genFresh(); /* TODO: not sure if this is used correctly. */
+    /* NOTE: Shouldn't fail for well-typed programs per SML '97 comments. */
+    let Some(v) = Util.lookupOne(l, r);
+    let vAnno = annotateVal_(v, [genFresh()]);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: PatRow_A(FIELD_A(l, pAnno, oprAnno, [anno0]), rAnno, veAnno),
+            ctxtsAnno,
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Pat_A(pAnno, vAnno),
+            ctxtsAnno: [FIELDP_A((l, (), oprAnno), rAnno, veAnno, [anno0]), ...ctxtsAnno],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+    });
+  // [141]
+  | [
+      {rewrite: {focus: FAIL(v), ctxts: [FIELDP((_l, (), _opr), _r, _rve), ...ctxts]}, env},
+      ...frames,
+    ] =>
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    let vAnno = annotateVal_(v, []);
+    let _oprAnno =
+      switch (_opr) {
+      | None => None
+      | Some(pr) => Some(annotatePatRow(pr, [genFresh()]))
+      };
+    let _rAnno = annotateRecord(_r, [genFresh()]);
+    let _rveAnno = annotateRecordEnv(_rve, [genFresh()]);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: FAIL_A(vAnno),
+            ctxtsAnno: [
+              FIELDP_A((_l, (), _oprAnno), _rAnno, _rveAnno, [genFresh()]),
+              ...ctxtsAnno,
+            ],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [{
+              rewriteAnno: {
+                focusAnno: FAIL_A(vAnno),
+                ctxtsAnno,
+              },
+              envAnno,
+            }, ...framesAnno],
+    });
+  // [142]
+  | [
+      {rewrite: {focus: ValEnv(ve), ctxts: [FIELDP((_l, (), None), _r, rve), ...ctxts]}, env},
+      ...frames,
+    ] =>
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    let veAnno = annotateValEnv(ve, [genFresh()]);
+    let _rAnno = annotateRecord(_r, [genFresh()]);
+    let rveAnno = annotateRecordEnv(rve, [genFresh()]);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: ValEnv_A(veAnno),
+            ctxtsAnno: [FIELDP_A((_l, (), None), _rAnno, rveAnno, [genFresh()]), ...ctxtsAnno],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno:
+              ValEnv_A(veAnno @ (rveAnno |> List.map(((_, ve)) => ve) |> List.flatten)),
+            ctxtsAnno,
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+    });
+  | [
+      {
+        rewrite: {focus: ValEnv(ve), ctxts: [FIELDP((l, (), Some(pr)), r, rve), ...ctxts]},
+        env,
+      },
+      ...frames,
+    ] =>
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    let veAnno = annotateValEnv(ve, [genFresh()]);
+    let prAnno = annotatePatRow(pr, [genFresh()]);
+    let rAnno = annotateRecord(r, [genFresh()]);
+    let rveAnno = annotateRecordEnv(rve, [genFresh()]);
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: ValEnv_A(veAnno),
+            ctxtsAnno: [
+              FIELDP_A((l, (), Some(prAnno)), rAnno, rveAnno, [genFresh()]),
+              ...ctxtsAnno,
+            ],
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: PatRow_A(prAnno, rAnno, [(l, veAnno), ...rveAnno]),
+            ctxtsAnno,
+          },
+          envAnno,
+        },
+        ...framesAnno,
+      ],
+    });
 
   /* Patterns */
   // [143]
@@ -2145,32 +2529,60 @@ let step = (c: configuration): option(transition) =>
       ],
     });
 
-  // /* TODO: maybe consolidate 145a and b somehow? */
-  // | [{rewrite: {focus: Pat(CON(con, ap), VIDVAL(vid, v)), ctxts}, env}, ...frames] =>
-  //   let Some((VID(vidC), Con)) = Util.lookupOne(con, env);
-  //   if (vidC == vid) {
-  //     // [144]: ignores ref check
-  //     Js.log("144");
-  //     Js.log(con);
-  //     Js.log(ap);
-  //     Some([{
-  //             rewrite: {
-  //               focus: AtPat(ap, v),
-  //               ctxts,
-  //             },
-  //             env,
-  //           }, ...frames]);
-  //   } else {
-  //     // [145a]
-  //     Js.log("145a");
-  //     Some([{
-  //             rewrite: {
-  //               focus: FAIL(VIDVAL(vid, v)),
-  //               ctxts,
-  //             },
-  //             env,
-  //           }, ...frames]);
-  //   };
+  /* TODO: maybe consolidate 145a and b somehow? */
+  | [{rewrite: {focus: Pat(CON(con, ap), VIDVAL(vid, v)), ctxts}, env}, ...frames] =>
+    let ctxtsAnno = annotateCtxts(ctxts, []);
+    let envAnno = annotateValEnv(env, []);
+    let framesAnno = annotateFrames(frames, []);
+    let apAnno = annotateAtPat(ap, [genFresh()]);
+    let vAnno = annotateVal_(v, [genFresh()]);
+    let anno0 = genFresh();
+    let lhs = [
+      {
+        rewriteAnno: {
+          focusAnno: Pat_A(CON_A(con, apAnno, [genFresh()]), VIDVAL_A(vid, vAnno, [anno0])),
+          ctxtsAnno,
+        },
+        envAnno,
+      },
+      ...framesAnno,
+    ];
+    let Some((VID(vidC), Con)) = Util.lookupOne(con, env);
+    if (vidC == vid) {
+      // [144]: ignores ref check
+      Js.log("144");
+      Js.log(con);
+      Js.log(ap);
+      Some({
+        lhs,
+        rhs: [
+          {
+            rewriteAnno: {
+              focusAnno: AtPat_A(apAnno, vAnno),
+              ctxtsAnno,
+            },
+            envAnno,
+          },
+          ...framesAnno,
+        ],
+      });
+    } else {
+      // [145a]
+      Js.log("145a");
+      Some({
+        lhs,
+        rhs: [
+          {
+            rewriteAnno: {
+              focusAnno: FAIL_A(VIDVAL_A(vid, vAnno, [anno0])),
+              ctxtsAnno,
+            },
+            envAnno,
+          },
+          ...framesAnno,
+        ],
+      });
+    };
 
   // // [145b]
   // | [{rewrite: {focus: Pat(CON(_, _), v), ctxts}, env}, ...frames] =>
