@@ -869,34 +869,85 @@ let step = (c: configuration): option(transition) =>
       })
     }
 
-  // // [92]
-  // /* empty record */
-  // | [{rewrite: {focus: AtExp(RECORD(None)), ctxts}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: Val(RECORD([])),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
-  // /* start non-empty record */
-  // | [{rewrite: {focus: AtExp(RECORD(Some(er))), ctxts}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: ExpRow(er),
-  //             ctxts: [RECORDER(), ...ctxts],
-  //           },
-  //           env,
-  //         }, ...frames])
-  // /* complete non-empty record */
-  // | [{rewrite: {focus: Record(r), ctxts: [RECORDER (), ...ctxts]}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: Val(RECORD(r)),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
+  // [92]
+  /* empty record */
+  | [{rewrite: {focus: AtExp(RECORD(None)), ctxts}, env}, ...frames] =>
+    let anno0 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: AtExp_A(RECORD_A(None, Some(anno0)), None),
+            ctxtsAnno: annotateCtxts(ctxts, None),
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Val_A(RECORD_A([], [anno0]), []),
+            ctxtsAnno: annotateCtxts(ctxts, []),
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
+  /* start non-empty record */
+  | [{rewrite: {focus: AtExp(RECORD(Some(er))), ctxts}, env}, ...frames] =>
+    let anno0 = genFresh();
+    let anno1 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno:
+              AtExp_A(RECORD_A(Some(annotateExpRow(er, Some(anno0))), Some(anno1)), None),
+            ctxtsAnno: annotateCtxts(ctxts, None),
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: ExpRow_A(annotateExpRow(er, [anno0]), []),
+            ctxtsAnno: [RECORDER_A((), [anno1]), ...annotateCtxts(ctxts, [])],
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
+  /* complete non-empty record */
+  | [{rewrite: {focus: Record(r), ctxts: [RECORDER (), ...ctxts]}, env}, ...frames] =>
+    let anno0 = genFresh();
+    let anno1 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Record_A(annotateRecord(r, Some(anno0)), None),
+            ctxtsAnno: [RECORDER_A((), Some(anno1)), ...annotateCtxts(ctxts, None)],
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Val_A(RECORD_A(annotateRecord(r, [anno0]), [anno1]), []),
+            ctxtsAnno: annotateCtxts(ctxts, []),
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
 
   // [93]
   /* begin let traversal */
@@ -1021,50 +1072,164 @@ let step = (c: configuration): option(transition) =>
       ],
     });
 
-  // /* Expression Rows */
-  // // [95]
-  // // start visiting
-  // | [{rewrite: {focus: ExpRow(EXPROW(l, e, r)), ctxts}, env}, ...frames] =>
-  //   Some([
-  //     {
-  //       rewrite: {
-  //         focus: Exp(e),
-  //         ctxts: [EXPROWE([], l, (), r), ...ctxts],
-  //       },
-  //       env,
-  //     },
-  //     ...frames,
-  //   ])
-  // // mid visiting
-  // | [
-  //     {
-  //       rewrite: {
-  //         focus: Val(v),
-  //         ctxts: [EXPROWE(r, l1, (), Some(EXPROW(l2, e, rest))), ...ctxts],
-  //       },
-  //       env,
-  //     },
-  //     ...frames,
-  //   ] =>
-  //   Some([
-  //     {
-  //       rewrite: {
-  //         focus: Exp(e),
-  //         ctxts: [EXPROWE(r @ [(l1, v)], l2, (), rest), ...ctxts],
-  //       },
-  //       env,
-  //     },
-  //     ...frames,
-  //   ])
-  // // complete visiting
-  // | [{rewrite: {focus: Val(v), ctxts: [EXPROWE(r, l, (), None), ...ctxts]}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: Record(r @ [(l, v)]),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
+  /* Expression Rows */
+  /* TODO: can't annotate the label!!!! */
+  /* TODO: focus probably doesn't need a top-level annotation. */
+  /* TODO: would like lhs and rhs annotation types to be equal so could hoist optional. or at least
+     to have monadic stuff I guess. */
+  // [95]
+  // start visiting
+  | [{rewrite: {focus: ExpRow(EXPROW(l, e, r)), ctxts}, env}, ...frames] =>
+    let anno0 = genFresh();
+    let anno1 = genFresh();
+    let anno2 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno:
+              ExpRow_A(
+                EXPROW_A(
+                  l,
+                  annotateExp(e, Some(anno0)),
+                  switch (r) {
+                  | None => None
+                  | Some(er) => Some(annotateExpRow(er, Some(anno1)))
+                  },
+                  Some(anno2),
+                ),
+                None,
+              ),
+            ctxtsAnno: annotateCtxts(ctxts, None),
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Exp_A(annotateExp(e, [anno0]), []),
+            ctxtsAnno: [
+              EXPROWE_A(
+                [],
+                l,
+                (),
+                switch (r) {
+                | None => None
+                | Some(er) => Some(annotateExpRow(er, [anno1]))
+                },
+                [anno2],
+              ),
+              ...annotateCtxts(ctxts, []),
+            ],
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
+  // mid visiting
+  | [
+      {
+        rewrite: {
+          focus: Val(v),
+          ctxts: [EXPROWE(r, l1, (), Some(EXPROW(l2, e, rest))), ...ctxts],
+        },
+        env,
+      },
+      ...frames,
+    ] =>
+    let anno0 = genFresh();
+    let anno1 = genFresh();
+    let anno2 = genFresh();
+    let anno3 = genFresh();
+    let anno4 = genFresh();
+    let anno5 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Val_A(annotateVal_(v, Some(anno0)), None),
+            ctxtsAnno: [
+              EXPROWE_A(
+                annotateRecord(r, Some(anno1)),
+                l1,
+                (),
+                Some(
+                  EXPROW_A(
+                    l2,
+                    annotateExp(e, Some(anno4)),
+                    switch (rest) {
+                    | None => None
+                    | Some(rest) => Some(annotateExpRow(rest, Some(anno5)))
+                    },
+                    Some(anno3),
+                  ),
+                ),
+                Some(anno2),
+              ),
+              ...annotateCtxts(ctxts, None),
+            ],
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Exp_A(annotateExp(e, [anno4]), []),
+            ctxtsAnno: [
+              EXPROWE_A(
+                annotateRecord(r, [anno1]) @ [(l1, annotateVal_(v, [anno0]))],
+                l2,
+                (),
+                switch (rest) {
+                | None => None
+                | Some(rest) => Some(annotateExpRow(rest, [anno5]))
+                },
+                [anno3],
+              ),
+              ...annotateCtxts(ctxts, []),
+            ],
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
+  // complete visiting
+  | [{rewrite: {focus: Val(v), ctxts: [EXPROWE(r, l, (), None), ...ctxts]}, env}, ...frames] =>
+    let anno0 = genFresh();
+    let anno1 = genFresh();
+    let anno2 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: Val_A(annotateVal_(v, Some(anno0)), None),
+            ctxtsAnno: [
+              EXPROWE_A(annotateRecord(r, Some(anno1)), l, (), None, Some(anno2)),
+              ...annotateCtxts(ctxts, None),
+            ],
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno:
+              Record_A(annotateRecord(r, [anno1]) @ [(l, annotateVal_(v, [anno0]))], []),
+            ctxtsAnno: annotateCtxts(ctxts, []),
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
 
   /* Expressions */
   // [96]
@@ -1724,37 +1889,90 @@ let step = (c: configuration): option(transition) =>
       });
     }
 
-  // // [138]
-  // /* empty record pat */
-  // /* TODO: special-casing RECORD(None) may be overkill. not sure */
-  // | [{rewrite: {focus: AtPat(RECORD(None), RECORD([])), ctxts}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: ValEnv([]),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
-  // | [{rewrite: {focus: AtPat(RECORD(None), v), ctxts}, env}, ...frames] =>
-  //   Some([{
-  //           rewrite: {
-  //             focus: FAIL(v),
-  //             ctxts,
-  //           },
-  //           env,
-  //         }, ...frames])
-  // /* start non-empty record pat */
-  // | [{rewrite: {focus: AtPat(RECORD(Some(pr)), RECORD(r)), ctxts}, env}, ...frames] =>
-  //   Some([
-  //     {
-  //       rewrite: {
-  //         focus: PatRow(pr, r, []),
-  //         ctxts: [RECORDPR(), ...ctxts],
-  //       },
-  //       env,
-  //     },
-  //     ...frames,
-  //   ])
+  // [138]
+  /* empty record pat */
+  /* TODO: special-casing RECORD(None) may be overkill. not sure */
+  | [{rewrite: {focus: AtPat(RECORD(None), RECORD([])), ctxts}, env}, ...frames] =>
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: AtPat_A(RECORD_A(None, None), RECORD_A([], None), None),
+            ctxtsAnno: annotateCtxts(ctxts, None),
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: ValEnv_A([], []),
+            ctxtsAnno: annotateCtxts(ctxts, []),
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    })
+  | [{rewrite: {focus: AtPat(RECORD(None), v), ctxts}, env}, ...frames] =>
+    let anno0 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno: AtPat_A(RECORD_A(None, None), annotateVal_(v, Some(anno0)), None),
+            ctxtsAnno: annotateCtxts(ctxts, None),
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: FAIL_A(annotateVal_(v, [anno0]), []),
+            ctxtsAnno: annotateCtxts(ctxts, []),
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
+  /* start non-empty record pat */
+  | [{rewrite: {focus: AtPat(RECORD(Some(pr)), RECORD(r)), ctxts}, env}, ...frames] =>
+    let anno0 = genFresh();
+    let anno1 = genFresh();
+    let anno2 = genFresh();
+    let anno3 = genFresh();
+    let anno4 = genFresh();
+    Some({
+      lhs: [
+        {
+          rewriteAnno: {
+            focusAnno:
+              AtPat_A(
+                RECORD_A(Some(annotatePatRow(pr, Some(anno0))), Some(anno1)),
+                RECORD_A(annotateRecord(r, Some(anno2)), Some(anno3)),
+                None,
+              ),
+            ctxtsAnno: annotateCtxts(ctxts, None),
+          },
+          envAnno: annotateValEnv(env, None),
+        },
+        ...annotateFrames(frames, None),
+      ],
+      rhs: [
+        {
+          rewriteAnno: {
+            focusAnno: PatRow_A(annotatePatRow(pr, [anno0]), annotateRecord(r, []), [], []),
+            ctxtsAnno: [RECORDPR_A((), [anno4]), ...annotateCtxts(ctxts, [])],
+          },
+          envAnno: annotateValEnv(env, []),
+        },
+        ...annotateFrames(frames, []),
+      ],
+    });
   // /* complete non-empty record pat */
   // | [{rewrite: {focus: ValEnv(ve), ctxts: [RECORDPR (), ...ctxts]}, env}, ...frames] =>
   //   Some([{

@@ -73,32 +73,32 @@ let traceProgram = ({name, text}) => {
 let traces =
   SMLExamples.(
     [|
-      {name: "ex0", text: ex0},
-      {name: "ex1", text: ex1},
-      {name: "ex2", text: ex2},
-      {name: "ex3", text: ex3},
-      {name: "ex4", text: ex4},
-      {name: "ex5", text: ex5},
-      {name: "ex5.5", text: ex5_5},
-      {name: "ex6", text: ex6},
-      {name: "ex7", text: ex7},
-      {name: "ex8", text: ex8},
-      {name: "ex9", text: ex9},
-      {name: "ex10", text: ex10},
-      {name: "ex11", text: ex11},
-      {name: "ex11.5", text: ex11_5},
-      {name: "ex12", text: ex12},
-      {name: "id", text: idEx},
+      // {name: "ex0", text: ex0},
+      // {name: "ex1", text: ex1},
+      // {name: "ex2", text: ex2},
+      // {name: "ex3", text: ex3},
+      // {name: "ex4", text: ex4},
+      // {name: "ex5", text: ex5},
+      // {name: "ex5.5", text: ex5_5},
+      // {name: "ex6", text: ex6},
+      // {name: "ex7", text: ex7},
+      // {name: "ex8", text: ex8},
+      // {name: "ex9", text: ex9},
+      // {name: "ex10", text: ex10},
+      // {name: "ex11", text: ex11},
+      // {name: "ex11.5", text: ex11_5},
+      // {name: "ex12", text: ex12},
+      // {name: "id", text: idEx},
       /* shows off tail recursion behavior! no TCO currently. that would be a semantic change */
-      {name: "lec02-1-simple", text: lec02_1_simpler},
-      {name: "lec02-2-simple", text: lec02_2_simple},
-      {name: "lec02-3", text: lec02_3},
+      // {name: "lec02-1-simple", text: lec02_1_simpler},
+      // {name: "lec02-2-simple", text: lec02_2_simple},
+      // {name: "lec02-3", text: lec02_3},
       /* rendered output requires too much memory! recursion too deep(?) not sure how to circumvent yet */
       // {name: "lec02-4-sum_list", text: lec02_4_sum_list},
       /* shows off call stacks and list pattern matching */
       {name: "lec02-4-sum_list-good-style", text: lec02_4_sum_list_good_style},
-      {name: "valbind pattern", text: valbind_pattern},
-      {name: "nested lets", text: nestedLets},
+      // {name: "valbind pattern", text: valbind_pattern},
+      // {name: "nested lets", text: nestedLets},
     |]
   )
   |> Array.map(traceProgram);
