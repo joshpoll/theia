@@ -88,3 +88,14 @@ let rec lookup = (key, stack) =>
     | Some(v) => Some(v)
     }
   };
+
+/* https://stackoverflow.com/a/244104 */
+let (--) = (i, j) => {
+  let rec aux = (n, acc) =>
+    if (n < i) {
+      acc;
+    } else {
+      aux(n - 1, [n, ...acc]);
+    };
+  aux(j, []);
+};

@@ -39,7 +39,14 @@ type test = {
 };
 
 let trace = ({name, example}) =>
-  Theia.{name, states: example |> SML.interpretTrace |> List.map(SMLToTheiaIR.smlToTheiaIR)};
+  Theia2.{
+    name,
+    states:
+      example
+      |> SML.interpretTrace
+      |> List.map(SMLToTheiaAM.smlToTheiaAM)
+      |> List.map(SMLStyle.addRendering),
+  };
 
 let jsonToProgram = json => {
   Js.Console.log(json);
@@ -73,7 +80,7 @@ let traceProgram = ({name, text}) => {
 let traces =
   SMLExamples.(
     [|
-      // {name: "ex0", text: ex0},
+      {name: "ex0", text: ex0},
       // {name: "ex1", text: ex1},
       // {name: "ex2", text: ex2},
       // {name: "ex3", text: ex3},
@@ -105,5 +112,5 @@ let traces =
 
 Js.Promise.all(traces)
 |> Js.Promise.then_(theiaIRTraces =>
-     Js.Promise.resolve(ReactDOMRe.render(<Theia theiaIRTraces />, makeContainer("Theia")))
+     Js.Promise.resolve(ReactDOMRe.render(<Theia2 theiaIRTraces />, makeContainer("Theia")))
    ) /* ReactDOMRe.render(<DagreTest />, makeContainer("DagreTest"))*/;
