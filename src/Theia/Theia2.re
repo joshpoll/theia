@@ -15,28 +15,28 @@ let rec render = theiaViz => {
       ReactDOMRe.Style.make(~display="grid", ~gridAutoFlow="column", ~gridTemplateRows="1fr", ())
       |> ReactDOMRe.Style.combine(style);
     <div style>
-      {Array.mapi(
+      {List.mapi(
          (i, e) => <div key={string_of_int(i)}> {render(e)} </div>,
          l /* |> List.rev */
        )
-       |> React.array}
+       |> rlist}
     </div>;
   | VSequence(l, style) =>
     let style =
       ReactDOMRe.Style.make(~display="grid", ~gridAutoFlow="column", ~gridTemplateRows="1fr", ())
       |> ReactDOMRe.Style.combine(style);
     <div style>
-      {Array.mapi((i, e) => <div key={string_of_int(i)}> {render(e)} </div>, l)  /* |> List.rev */
-       |> React.array}
+      {List.mapi((i, e) => <div key={string_of_int(i)}> {render(e)} </div>, l)  /* |> List.rev */
+       |> rlist}
     </div>;
   | Map(mapHeader, l, renderMapHeader, renderKV, renderMap) =>
     renderMap(
       renderMapHeader(mapHeader),
       l
-      |> Array.map(({keyRender, valueRender}) =>
+      |> List.map(({keyRender, valueRender}) =>
            {keyRenderViz: render(keyRender), valueRenderViz: render(valueRender)}
          )
-      |> Array.map(renderKV),
+      |> List.map(renderKV),
     )
   | Kont(focus, evalCtxts, renderEC) =>
     let evalCtxtsLength = List.length(evalCtxts);

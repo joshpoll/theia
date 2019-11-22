@@ -19,18 +19,18 @@ let rec addRendering = ({id, theiaAMADT}) => {
       )
     | HSequence(l) =>
       HSequence(
-        Array.map(addRendering, l),
+        List.map(addRendering, l),
         ReactDOMRe.Style.make(~gridGap="20px", ~alignItems="center", ()),
       )
     | VSequence(l) =>
       VSequence(
-        Array.map(addRendering, l),
+        List.map(addRendering, l),
         ReactDOMRe.Style.make(~gridGap="20px", ~alignItems="center", ()),
       )
     | Map({keyHeader, valueHeader}, kvs) =>
       Map(
         {keyHeader, valueHeader},
-        Array.map(
+        List.map(
           ({key, value}) => {keyRender: addRendering(key), valueRender: addRendering(value)},
           kvs,
         ),
@@ -100,7 +100,7 @@ let rec addRendering = ({id, theiaAMADT}) => {
               (),
             )}>
             <thead> <tr> keyHeaderRender valueHeaderRender </tr> </thead>
-            <tbody> {kvVizes |> React.array} </tbody>
+            <tbody> {kvVizes |> rlist} </tbody>
           </table>,
       )
     | Kont(focus, evalCtxts) =>
@@ -149,11 +149,7 @@ let rec addRendering = ({id, theiaAMADT}) => {
             )}>
             {Theia2.render({
                id: "val args",
-               theiaVizADT:
-                 HSequence(
-                   args |> Array.of_list,
-                   ReactDOMRe.Style.make(~display="inline-grid", ()),
-                 ),
+               theiaVizADT: HSequence(args, ReactDOMRe.Style.make(~display="inline-grid", ())),
              })}
           </div>
         | ops =>
@@ -187,8 +183,7 @@ let rec addRendering = ({id, theiaAMADT}) => {
                    args
                    |> List.map(arg =>
                         {id: "val arg", theiaVizADT: Value([], [arg], renderValue)}
-                      )
-                   |> Array.of_list,
+                      ),
                    ReactDOMRe.Style.make(~display="inline-grid", ()),
                  ),
              })}
