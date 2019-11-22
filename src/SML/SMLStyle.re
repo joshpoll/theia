@@ -14,20 +14,17 @@ let rec addRendering = ({id, theiaAMADT}) => {
       Apply(
         List.map(addRendering, ops),
         List.map(addRendering, args),
-        ({theiaVizADT: Apply(ops, args, r)}) =>
-          Util.interleave(List.map(Theia2.render, ops), List.map(Theia2.render, args))
-          |> Util.prettierList(~parens=false, ~space=false),
+        (opsViz, argsViz) =>
+          Util.interleave(opsViz, argsViz) |> Util.prettierList(~parens=false, ~space=false),
       )
     | HSequence(l) =>
       HSequence(
         Array.map(addRendering, l),
-        Theia2.render,
         ReactDOMRe.Style.make(~gridGap="20px", ~alignItems="center", ()),
       )
     | VSequence(l) =>
       VSequence(
         Array.map(addRendering, l),
-        Theia2.render,
         ReactDOMRe.Style.make(~gridGap="20px", ~alignItems="center", ()),
       )
     | Map({keyHeader, valueHeader}, kvs) =>
@@ -135,7 +132,7 @@ let rec addRendering = ({id, theiaAMADT}) => {
           );
         Util.interleave(opsRenderViz, newArgs) |> Util.prettierList(~parens=false, ~space=false);
       };
-      Kont(addRendering(focus), evalCtxtsRender, Theia2.render, renderEC);
+      Kont(addRendering(focus), evalCtxtsRender, renderEC);
     | Value(ops, args) =>
       let rec renderValue = ({theiaVizADT: Value(ops, args, _)}) =>
         switch (ops) {
@@ -155,7 +152,6 @@ let rec addRendering = ({id, theiaAMADT}) => {
                theiaVizADT:
                  HSequence(
                    args |> Array.of_list,
-                   Theia2.render,
                    ReactDOMRe.Style.make(~display="inline-grid", ()),
                  ),
              })}
@@ -193,7 +189,6 @@ let rec addRendering = ({id, theiaAMADT}) => {
                         {id: "val arg", theiaVizADT: Value([], [arg], renderValue)}
                       )
                    |> Array.of_list,
-                   Theia2.render,
                    ReactDOMRe.Style.make(~display="inline-grid", ()),
                  ),
              })}
@@ -204,7 +199,7 @@ let rec addRendering = ({id, theiaAMADT}) => {
       Cell(
         name,
         List.map(addRendering, children),
-        ({theiaVizADT: Cell(name, children, _)}) =>
+        childrenViz =>
           <div
             style={ReactDOMRe.Style.make(
               ~border="1px solid #000",
@@ -225,7 +220,7 @@ let rec addRendering = ({id, theiaAMADT}) => {
                 {React.string(name)}
               </span>
             </h1>
-            {rlist(List.map(Theia2.render, children))}
+            {rlist(childrenViz)}
           </div>,
       )
     },
