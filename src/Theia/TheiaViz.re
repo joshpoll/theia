@@ -20,9 +20,9 @@ type theiaViz = {
 and theiaVizADT =
   | Atom(ReasonReact.reactElement, render)
   | Apply(list(theiaViz), list(theiaViz), render)
-  | HSequence(list(theiaViz), render, ReactDOMRe.Style.t)
-  | VSequence(list(theiaViz), render, ReactDOMRe.Style.t)
-  | Map(mapHeader, list(mapKeyValue), renderMapHeader, renderKV, renderMap)
+  | HSequence(array(theiaViz), render, ReactDOMRe.Style.t)
+  | VSequence(array(theiaViz), render, ReactDOMRe.Style.t)
+  | Map(mapHeader, array(mapKeyValue), renderMapHeader, renderKV, renderMap)
   | Kont(theiaViz, list(evalCtxt), render, renderEC)
   | Value(list(string), list(theiaViz), render)
   | Cell(string, list(theiaViz), render)
@@ -30,14 +30,23 @@ and mapKeyValue = {
   keyRender: theiaViz,
   valueRender: theiaViz,
 }
+and mapKeyValueViz = {
+  keyRenderViz: ReasonReact.reactElement,
+  valueRenderViz: ReasonReact.reactElement,
+}
 and evalCtxt = {
   opsRender: list(theiaViz),
   argsRender: list(theiaViz),
   holePosRender: int,
 }
+and evalCtxtViz = {
+  opsRenderViz: list(ReasonReact.reactElement),
+  argsRenderViz: list(ReasonReact.reactElement),
+  holePosRenderViz: int,
+}
 and render = theiaViz => ReasonReact.reactElement
 and renderMapHeader = mapHeader => mapHeaderViz
-and renderKV = mapKeyValue => ReasonReact.reactElement
-and renderMap = (mapHeaderViz, list(ReasonReact.reactElement)) => ReasonReact.reactElement
+and renderKV = mapKeyValueViz => ReasonReact.reactElement
+and renderMap = (mapHeaderViz, array(ReasonReact.reactElement)) => ReasonReact.reactElement
 // length, depth, ctxt, hole contents
-and renderEC = (int, int, evalCtxt, ReasonReact.reactElement) => ReasonReact.reactElement;
+and renderEC = (int, int, evalCtxtViz, ReasonReact.reactElement) => ReasonReact.reactElement;

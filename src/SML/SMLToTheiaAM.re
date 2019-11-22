@@ -256,7 +256,7 @@ and compileEnv = e => {
   theiaAMADT:
     Map(
       {keyHeader: Some("Id"), valueHeader: Some("Value")},
-      e |> List.map(compileKVs) |> List.rev,
+      e |> List.map(compileKVs) |> List.rev |> Array.of_list,
     ),
 };
 
@@ -321,23 +321,23 @@ let compileFocus = f =>
   | Program(p) => compileProgram(p)
   | Match(m, v) => {
       id: "Match focus",
-      theiaAMADT: HSequence([compileVal_(v), compileMatch(m)]),
+      theiaAMADT: HSequence([|compileVal_(v), compileMatch(m)|]),
     }
   | MRule(mr, v) => {
       id: "MRule focus",
-      theiaAMADT: HSequence([compileVal_(v), compileMRule(mr)]),
+      theiaAMADT: HSequence([|compileVal_(v), compileMRule(mr)|]),
     }
-  | Pat(p, v) => {id: "Pat focus", theiaAMADT: HSequence([compileVal_(v), compilePat(p)])}
+  | Pat(p, v) => {id: "Pat focus", theiaAMADT: HSequence([|compileVal_(v), compilePat(p)|])}
   | AtPat(ap, v) => {
       id: "AtPat focus",
-      theiaAMADT: HSequence([compileVal_(v), compileAtPat(ap)]),
+      theiaAMADT: HSequence([|compileVal_(v), compileAtPat(ap)|]),
     }
   /* TODO: improve this */
   | PatRow(pr, r, rve) => {
       id: "PatRow focus",
-      theiaAMADT: VSequence([compileRecordEnv(rve), compilePatRow(pr), compileRecord(r)]),
+      theiaAMADT: VSequence([|compileRecordEnv(rve), compilePatRow(pr), compileRecord(r)|]),
     }
-  | FAIL(v) => {id: "FAIL", theiaAMADT: HSequence([theiaStr("FAIL"), compileVal_(v)])}
+  | FAIL(v) => {id: "FAIL", theiaAMADT: HSequence([|theiaStr("FAIL"), compileVal_(v)|])}
   | ValEnv(ve) => compileEnv(ve)
   | Empty => {id: "Empty", theiaAMADT: Atom(Util.nbsp)}
   };
@@ -467,5 +467,5 @@ let compileFrame = ({rewrite, env}) => {
 
 let smlToTheiaAM = fs => {
   id: "sml",
-  theiaAMADT: VSequence(List.map(compileFrame, fs) |> List.rev),
+  theiaAMADT: VSequence(List.map(compileFrame, fs) |> List.rev |> Array.of_list),
 };

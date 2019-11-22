@@ -13,9 +13,9 @@ type theiaAM = {
 and theiaAMADT =
   | Atom(ReasonReact.reactElement)
   | Apply(list(theiaAM), list(theiaAM))
-  | HSequence(list(theiaAM))
-  | VSequence(list(theiaAM))
-  | Map(mapHeader, list(mapKeyValue))
+  | HSequence(array(theiaAM))
+  | VSequence(array(theiaAM))
+  | Map(mapHeader, array(mapKeyValue))
   | Kont(theiaAM, list(evalCtxt))
   | Value(list(string), list(theiaAM))
   | Cell(string, list(theiaAM))

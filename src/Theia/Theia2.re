@@ -6,6 +6,7 @@ exception CompileError(string);
 /* and finally pretty printing! */
 let rec render = theiaViz => {
   let {id, theiaVizADT} = theiaViz;
+  // Js.log("rendering: " ++ id);
   switch (theiaVizADT) {
   | Atom(_, render) => render(theiaViz)
   | Apply(_, _, render) => render(theiaViz)
@@ -14,19 +15,29 @@ let rec render = theiaViz => {
       ReactDOMRe.Style.make(~display="grid", ~gridAutoFlow="column", ~gridTemplateRows="1fr", ())
       |> ReactDOMRe.Style.combine(style);
     <div style>
-      {List.mapi((i, e) => <div key={string_of_int(i)}> {renderElement(e)} </div>, l)  /* |> List.rev */
-       |> rlist}
+      {Array.mapi(
+         (i, e) => <div key={string_of_int(i)}> {renderElement(e)} </div>,
+         l /* |> List.rev */
+       )
+       |> React.array}
     </div>;
   | VSequence(l, renderElement, style) =>
     let style =
       ReactDOMRe.Style.make(~display="grid", ~gridAutoFlow="column", ~gridTemplateRows="1fr", ())
       |> ReactDOMRe.Style.combine(style);
     <div style>
-      {List.mapi((i, e) => <div key={string_of_int(i)}> {renderElement(e)} </div>, l)  /* |> List.rev */
-       |> rlist}
+      {Array.mapi((i, e) => <div key={string_of_int(i)}> {renderElement(e)} </div>, l)  /* |> List.rev */
+       |> React.array}
     </div>;
   | Map(mapHeader, l, renderMapHeader, renderKV, renderMap) =>
-    renderMap(renderMapHeader(mapHeader), List.map(renderKV, l))
+    renderMap(
+      renderMapHeader(mapHeader),
+      l
+      |> Array.map(({keyRender, valueRender}) =>
+           {keyRenderViz: render(keyRender), valueRenderViz: render(valueRender)}
+         )
+      |> Array.map(renderKV),
+    )
   | Kont(focus, evalCtxts, renderFocus, renderEC) =>
     let evalCtxtsLength = List.length(evalCtxts);
     let rec renderKont = (ecs, depth) =>
@@ -34,7 +45,18 @@ let rec render = theiaViz => {
       | [] => renderFocus(focus)
       | [ec, ...ecs] => renderEC(evalCtxtsLength, depth, ec, renderKont(ecs, depth + 1))
       };
-    renderKont(List.rev(evalCtxts), 0);
+    renderKont(
+      evalCtxts
+      |> List.map(({opsRender, argsRender, holePosRender}) =>
+           {
+             opsRenderViz: List.map(render, opsRender),
+             argsRenderViz: List.map(render, argsRender),
+             holePosRenderViz: holePosRender,
+           }
+         )
+      |> List.rev,
+      0,
+    );
   | Value(_, _, render) => render(theiaViz)
   | Cell(_, _, render) => render(theiaViz)
   };

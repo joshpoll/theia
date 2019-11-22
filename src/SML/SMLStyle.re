@@ -20,20 +20,20 @@ let rec addRendering = ({id, theiaAMADT}) => {
       )
     | HSequence(l) =>
       HSequence(
-        List.map(addRendering, l),
+        Array.map(addRendering, l),
         Theia2.render,
         ReactDOMRe.Style.make(~gridGap="20px", ~alignItems="center", ()),
       )
     | VSequence(l) =>
       VSequence(
-        List.map(addRendering, l),
+        Array.map(addRendering, l),
         Theia2.render,
         ReactDOMRe.Style.make(~gridGap="20px", ~alignItems="center", ()),
       )
     | Map({keyHeader, valueHeader}, kvs) =>
       Map(
         {keyHeader, valueHeader},
-        List.map(
+        Array.map(
           ({key, value}) => {keyRender: addRendering(key), valueRender: addRendering(value)},
           kvs,
         ),
@@ -71,7 +71,7 @@ let rec addRendering = ({id, theiaAMADT}) => {
               </th>,
           };
         },
-        ({keyRender, valueRender}) =>
+        ({keyRenderViz, valueRenderViz}) =>
           <tr>
             <td
               style={ReactDOMRe.Style.make(
@@ -81,7 +81,7 @@ let rec addRendering = ({id, theiaAMADT}) => {
                 ~textAlign="right",
                 (),
               )}>
-              {Theia2.render(keyRender)}
+              keyRenderViz
             </td>
             <td
               style={ReactDOMRe.Style.make(
@@ -91,7 +91,7 @@ let rec addRendering = ({id, theiaAMADT}) => {
                 ~textAlign="left",
                 (),
               )}>
-              {Theia2.render(valueRender)}
+              valueRenderViz
             </td>
           </tr>,
         ({keyHeaderRender, valueHeaderRender}, kvVizes) =>
@@ -103,7 +103,7 @@ let rec addRendering = ({id, theiaAMADT}) => {
               (),
             )}>
             <thead> <tr> keyHeaderRender valueHeaderRender </tr> </thead>
-            <tbody> {kvVizes |> rlist} </tbody>
+            <tbody> {kvVizes |> React.array} </tbody>
           </table>,
       )
     | Kont(focus, evalCtxts) =>
@@ -117,7 +117,7 @@ let rec addRendering = ({id, theiaAMADT}) => {
              }
            );
       /* TODO: use length info */
-      let renderEC = (length, depth, {opsRender, argsRender, holePosRender}, hole) => {
+      let renderEC = (length, depth, {opsRenderViz, argsRenderViz, holePosRenderViz}, hole) => {
         let backgroundColor =
           if (hole == React.string(Util.nbsp)) {
             "red";
@@ -130,79 +130,76 @@ let rec addRendering = ({id, theiaAMADT}) => {
             <div style={ReactDOMRe.Style.make(~display="inline-block", ~backgroundColor, ())}>
               hole
             </div>,
-            List.map(Theia2.render, argsRender),
-            holePosRender,
+            argsRenderViz,
+            holePosRenderViz,
           );
-        Util.interleave(List.map(Theia2.render, opsRender), newArgs)
-        |> Util.prettierList(~parens=false, ~space=false);
+        Util.interleave(opsRenderViz, newArgs) |> Util.prettierList(~parens=false, ~space=false);
       };
       Kont(addRendering(focus), evalCtxtsRender, Theia2.render, renderEC);
     | Value(ops, args) =>
-      Value(
-        ops,
-        List.map(addRendering, args),
-        ({theiaVizADT: Value(ops, args, _)}) =>
-          switch (ops) {
-          | [] =>
-            <div
+      let rec renderValue = ({theiaVizADT: Value(ops, args, _)}) =>
+        switch (ops) {
+        | [] =>
+          <div
+            style={ReactDOMRe.Style.make(
+              ~display="inline-block",
+              ~border="1px solid black",
+              ~paddingTop="2px",
+              ~paddingRight="2px",
+              ~paddingBottom="2px",
+              ~paddingLeft="2px",
+              (),
+            )}>
+            {Theia2.render({
+               id: "val args",
+               theiaVizADT:
+                 HSequence(
+                   args |> Array.of_list,
+                   Theia2.render,
+                   ReactDOMRe.Style.make(~display="inline-grid", ()),
+                 ),
+             })}
+          </div>
+        | ops =>
+          <div
+            style={ReactDOMRe.Style.make(
+              ~display="inline-block",
+              ~border="1px solid #000",
+              ~paddingTop="10px",
+              ~paddingRight="10px",
+              ~paddingBottom="10px",
+              ~paddingLeft="10px",
+              (),
+            )}>
+            <h1
               style={ReactDOMRe.Style.make(
-                ~display="inline-block",
-                ~border="1px solid black",
-                ~paddingTop="2px",
-                ~paddingRight="2px",
-                ~paddingBottom="2px",
-                ~paddingLeft="2px",
+                ~textAlign="center",
+                ~marginTop="-10px",
+                ~fontSize="15px",
                 (),
               )}>
-              {Theia2.render({
-                 id: "val args",
-                 theiaVizADT:
-                   HSequence(
-                     args,
-                     Theia2.render,
-                     ReactDOMRe.Style.make(~display="inline-grid", ()),
-                   ),
-               })}
-            </div>
-          | ops =>
-            <div
-              style={ReactDOMRe.Style.make(
-                ~display="inline-block",
-                ~border="1px solid #000",
-                ~paddingTop="10px",
-                ~paddingRight="10px",
-                ~paddingBottom="10px",
-                ~paddingLeft="10px",
-                (),
-              )}>
-              <h1
-                style={ReactDOMRe.Style.make(
-                  ~textAlign="center",
-                  ~marginTop="-10px",
-                  ~fontSize="15px",
-                  (),
-                )}>
-                <span>
-                  {Util.interleave(ops, 1 -- (List.length(ops) - 1) |> List.map(_ => "•"))
-                   |> List.fold_left((++), "")
-                   |> React.string}
-                </span>
-              </h1>
-              {Theia2.render({
-                 id: "val args",
-                 theiaVizADT:
-                   HSequence(
-                     args
-                     |> List.map(arg =>
-                          {id: "val arg", theiaVizADT: Value([], [arg], Theia2.render)}
-                        ),
-                     Theia2.render,
-                     ReactDOMRe.Style.make(~display="inline-grid", ()),
-                   ),
-               })}
-            </div>
-          },
-      )
+              <span>
+                {Util.interleave(ops, 1 -- (List.length(ops) - 1) |> List.map(_ => "•"))
+                 |> List.fold_left((++), "")
+                 |> React.string}
+              </span>
+            </h1>
+            {Theia2.render({
+               id: "val args",
+               theiaVizADT:
+                 HSequence(
+                   args
+                   |> List.map(arg =>
+                        {id: "val arg", theiaVizADT: Value([], [arg], renderValue)}
+                      )
+                   |> Array.of_list,
+                   Theia2.render,
+                   ReactDOMRe.Style.make(~display="inline-grid", ()),
+                 ),
+             })}
+          </div>
+        };
+      Value(ops, List.map(addRendering, args), renderValue);
     | Cell(name, children) =>
       Cell(
         name,
