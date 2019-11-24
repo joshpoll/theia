@@ -5,11 +5,38 @@ open TheiaViz;
 
 let rlist = l => l |> Array.of_list |> React.array;
 
+let box = (~padding, re) =>
+  <div
+    style={ReactDOMRe.Style.make(
+      ~display="inline-block",
+      ~border="1px solid black",
+      ~paddingTop=string_of_int(padding) ++ "px",
+      ~paddingRight=string_of_int(padding) ++ "px",
+      ~paddingBottom=string_of_int(padding) ++ "px",
+      ~paddingLeft=string_of_int(padding) ++ "px",
+      (),
+    )}>
+    re
+  </div>;
+
+let inlineHGrid = re =>
+  <div
+    style={ReactDOMRe.Style.make(
+      ~display="inline-grid",
+      ~gridAutoFlow="column",
+      ~gridTemplateRows="1fr",
+      ~gridGap="20px",
+      ~alignItems="center",
+      (),
+    )}>
+    re
+  </div>;
+
 let rec addRendering = ({id, theiaAMADT}) => {
   id,
   theiaVizADT:
     switch (theiaAMADT) {
-    | Atom(re) => Atom(re, ({theiaVizADT: Atom(re, _)}) => re)
+    | Atom(re) => Atom(re)
     | Apply(ops, args) =>
       Apply(
         List.map(addRendering, ops),
@@ -134,60 +161,29 @@ let rec addRendering = ({id, theiaAMADT}) => {
       };
       Kont(addRendering(focus), evalCtxtsRender, renderEC);
     | Value(ops, args) =>
-      let rec renderValue = ({theiaVizADT: Value(ops, args, _)}) =>
+      let rec renderValue = (ops, args: list(ReasonReact.reactElement)) =>
         switch (ops) {
-        | [] =>
-          <div
-            style={ReactDOMRe.Style.make(
-              ~display="inline-block",
-              ~border="1px solid black",
-              ~paddingTop="2px",
-              ~paddingRight="2px",
-              ~paddingBottom="2px",
-              ~paddingLeft="2px",
-              (),
-            )}>
-            {Theia2.render({
-               id: "val args",
-               theiaVizADT: HSequence(args, ReactDOMRe.Style.make(~display="inline-grid", ())),
-             })}
-          </div>
+        | [] => box(~padding=2, inlineHGrid(args |> rlist))
         | ops =>
-          <div
-            style={ReactDOMRe.Style.make(
-              ~display="inline-block",
-              ~border="1px solid #000",
-              ~paddingTop="10px",
-              ~paddingRight="10px",
-              ~paddingBottom="10px",
-              ~paddingLeft="10px",
-              (),
-            )}>
-            <h1
-              style={ReactDOMRe.Style.make(
-                ~textAlign="center",
-                ~marginTop="-10px",
-                ~fontSize="15px",
-                (),
-              )}>
-              <span>
-                {Util.interleave(ops, 1 -- (List.length(ops) - 1) |> List.map(_ => "•"))
-                 |> List.fold_left((++), "")
-                 |> React.string}
-              </span>
-            </h1>
-            {Theia2.render({
-               id: "val args",
-               theiaVizADT:
-                 HSequence(
-                   args
-                   |> List.map(arg =>
-                        {id: "val arg", theiaVizADT: Value([], [arg], renderValue)}
-                      ),
-                   ReactDOMRe.Style.make(~display="inline-grid", ()),
-                 ),
-             })}
-          </div>
+          box(
+            ~padding=10,
+            <>
+              <h1
+                style={ReactDOMRe.Style.make(
+                  ~textAlign="center",
+                  ~marginTop="-10px",
+                  ~fontSize="15px",
+                  (),
+                )}>
+                <span>
+                  {Util.interleave(ops, 1 -- (List.length(ops) - 1) |> List.map(_ => "•"))
+                   |> List.fold_left((++), "")
+                   |> React.string}
+                </span>
+              </h1>
+              {inlineHGrid(List.map(box(~padding=2), args) |> rlist)}
+            </>,
+          )
         };
       Value(ops, List.map(addRendering, args), renderValue);
     | Cell(name, children) =>
@@ -220,3 +216,5 @@ let rec addRendering = ({id, theiaAMADT}) => {
       )
     },
 };
+
+let hideById = TheiaAbs.applyStyleToId(ReactDOMRe.Style.make(~display="none", ()));

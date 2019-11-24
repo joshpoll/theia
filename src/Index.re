@@ -1,5 +1,4 @@
 // Entry point
-
 [@bs.val] external document: Js.t({..}) = "document";
 
 // We're using raw DOM manipulations here, to avoid making you read
@@ -41,11 +40,9 @@ type test = {
 let trace = ({name, example}) =>
   Theia2.{
     name,
-    states:
-      example
-      |> SML.interpretTrace
-      |> List.map(SMLToTheiaAM.smlToTheiaAM)
-      |> List.map(SMLStyle.addRendering),
+    states: example |> SML.interpretTrace |> List.map(SMLToTheiaAM.smlToTheiaAM),
+    renderer: SMLStyle.addRendering,
+    abstractions: [] /* SMLStyle.hideById("env") */,
   };
 
 let jsonToProgram = json => {

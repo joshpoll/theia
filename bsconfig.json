@@ -24,7 +24,9 @@
     "bs-fetch",
     "bs-webapi",
     "@glennsl/bs-json",
-    "@arnau/bs-dagre"
+    "@arnau/bs-dagre",
+    "bs-abstract",
+    "relude"
   ],
   "refmt": 3
 }

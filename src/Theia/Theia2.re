@@ -1,14 +1,12 @@
+open Relude.Function.Infix;
 open TheiaViz;
 let rlist = l => l |> Array.of_list |> React.array;
 
-exception CompileError(string);
-
-/* and finally pretty printing! */
 let rec render = theiaViz => {
   let {id, theiaVizADT} = theiaViz;
   // Js.log("rendering: " ++ id);
   switch (theiaVizADT) {
-  | Atom(_, render) => render(theiaViz)
+  | Atom(re) => re
   | Apply(ops, args, renderApply) => renderApply(List.map(render, ops), List.map(render, args))
   | HSequence(l, style) =>
     let style =
@@ -57,7 +55,9 @@ let rec render = theiaViz => {
       |> List.rev,
       0,
     );
-  | Value(_, _, render) => render(theiaViz)
+  | Value(ops, args, renderValue) => renderValue(ops, List.map(render, args))
+  /* NOTE: first argument currently unused because it is used in renderCell. May want to change it
+     to a theiaViz. */
   | Cell(_, children, renderCell) => renderCell(List.map(render, children))
   };
 };
@@ -74,21 +74,24 @@ type action =
   | StepBack
   | StepForward;
 
-type print =
-  | KNode
-  | TheiaIR
-  | TheiaIRShort
-  | Json
-  | Theia;
-
-/* TODO: error handling */
-let handleClick = (~theiaIRTrace, dispatch, _event) => {
-  dispatch(UpdateMachineState({k: List.map(render, theiaIRTrace)}));
-};
-
 type trace = {
   name: string,
-  states: list(theiaViz) // TODO: this should be theiaAM and rendering should go somewhere.
+  states: list(TheiaAM.theiaAM),
+  renderer: TheiaAM.theiaAM => theiaViz,
+  abstractions: list(theiaViz => theiaViz),
+};
+
+/* TODO: error handling */
+let handleClick = ({states, renderer, abstractions}, dispatch, _event) => {
+  dispatch(
+    UpdateMachineState({
+      k:
+        List.map(
+          renderer >> List.fold_left((>>), Relude.Function.id, abstractions) >> render,
+          states,
+        ),
+    }),
+  );
 };
 
 type traceOutput = {
@@ -132,10 +135,8 @@ let make = (~theiaIRTraces: array(trace)) => {
     <button onClick={_ => dispatch(StepBack)}> {React.string("<-")} </button>
     <button onClick={_ => dispatch(StepForward)}> {React.string("->")} </button>
     {theiaIRTraces
-     |> Array.map(({states, name}) =>
-          <button onClick={handleClick(~theiaIRTrace=states, dispatch)}>
-            {React.string(name)}
-          </button>
+     |> Array.map(trace =>
+          <button onClick={handleClick(trace, dispatch)}> {React.string(trace.name)} </button>
         )
      |> React.array}
     {
